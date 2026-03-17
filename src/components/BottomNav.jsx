@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Home, CheckSquare, Cpu, Calendar, MoreHorizontal } from 'lucide-react'
 
+// TODO: Update Robo icon
 const tabs = [
     { label: 'Home',     icon: Home,           path: '/' },
     { label: 'Tasks',    icon: CheckSquare,     path: '/tasks' },
@@ -9,6 +10,7 @@ const tabs = [
     { label: 'More',     icon: MoreHorizontal,  path: '/more' },
 ]
 
+// Bottom Navigation bar
 function BottomNav() {
     const navigate = useNavigate()
     const location = useLocation()

@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronLeft, Command } from 'lucide-react'
 import Button from '../components/Button'
+import Header from '../components/Header'
+
 
 const priorities = ['low', 'med', 'high']
 const effortColors = {
@@ -78,21 +80,7 @@ function TaskCreate() {
         <div className="page flex flex-col pb-24" style={{ color: 'var(--color-text)' }}>
 
             {/* header */}
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '16px 20px',
-                borderBottom: '1px solid var(--color-surface-alt)',
-            }}>
-                <button
-                    onClick={() => navigate(-1)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text)', display: 'flex', alignItems: 'center' }}
-                >
-                    <ChevronLeft size={22} />
-                </button>
-                <span style={{ fontSize: '17px', fontWeight: 600 }}>Add A New Task</span>
-            </div>
+            <Header title="Add A New Task" backLabel="Tasks" />
 
             <div className="flex flex-col gap-5 p-5">
 

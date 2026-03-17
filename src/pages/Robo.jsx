@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Command } from 'lucide-react'
+import Header from '../components/Header'
 
 const moods = ['😄', '🙂', '😊', '😐', '😕', '😮']
 
@@ -35,30 +36,15 @@ function Robo() {
         <div className="page flex flex-col gap-6 p-5 pb-24" style={{ color: 'var(--color-text)' }}>
 
             {/* header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <p style={{ color: 'var(--color-text-muted)', fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em' }}>
-                        YOUR COMPANION
-                    </p>
-                    <h1 style={{ fontSize: '28px', fontWeight: 700, margin: 0 }}>Robo</h1>
-                </div>
-                <button style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    border: '1.5px solid var(--color-text)',
-                    borderRadius: '20px',
-                    padding: '8px 16px',
-                    background: 'none',
-                    color: 'var(--color-text)',
-                    fontWeight: 600,
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                }}>
-                    <Command size={14} />
-                    CHAT
-                </button>
-            </div>
+            <Header
+                subtitle="YOUR COMPANION"
+                title="Robo"
+                rightAction={
+                    <button style={{ display: 'flex', alignItems: 'center', gap: '6px', border: '1.5px solid var(--color-text)', borderRadius: '20px', padding: '8px 16px', background: 'none', color: 'var(--color-text)', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
+                        <Command size={14} /> CHAT
+                    </button>
+                }
+            />
 
             {/* mood selector */}
             <div>

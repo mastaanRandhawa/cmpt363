@@ -11,10 +11,10 @@ export const tasks = [
         location: { type: 'fixed', label: 'Library' },
         repeat: null,
         subtasks: [
-            { id: 's1', label: 'Review week 1-3 slides',       done: true },
-            { id: 's2', label: 'Review week 4-6 slides',       done: false },
-            { id: 's3', label: 'Complete practice questions',  done: false },
-            { id: 's4', label: 'Make summary sheet',           done: false },
+    { id: 's1', label: 'Review week 1-3 slides',      done: true,  ai: true  },
+    { id: 's2', label: 'Review week 4-6 slides',       done: false, ai: true  },
+    { id: 's3', label: 'Complete practice questions',  done: false, ai: false },
+    { id: 's4', label: 'Make summary sheet',           done: false, ai: false },
         ],
     },
     {
