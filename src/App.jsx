@@ -12,6 +12,7 @@ import Timer from './pages/Timer'
 import Toast from './components/Toast'
 import useToastStore from './data/useToastStore'
 import useTaskStore from './data/useTaskStore'
+import DebugPanel from './components/DebugPanel'
 
 const themes = [
     { value: 'lavender', label: 'Lavender Mist' },
@@ -72,72 +73,79 @@ function App() {
                 </button>
             </div>
 
-            {/* iPhone frame */}
-            <div style={{
-                width: '440px',
-                height: '956px',
-                background: 'var(--color-bg)',
-                borderRadius: '56px',
-                border: '8px solid #2a2a2a',
-                boxShadow: '0 0 0 1px #444, 0 32px 80px rgba(0,0,0,0.6)',
-                overflow: 'hidden',
-                position: 'relative',
-                display: 'flex',
-                flexDirection: 'column',
-            }}>
+            {/* phone + debug panel side by side */}
+            <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
 
-                {/* Dynamic Island */}
+                {/* iPhone frame */}
                 <div style={{
-                    position: 'absolute',
-                    top: '12px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: '126px',
-                    height: '36px',
-                    background: '#0a0a0a',
-                    borderRadius: '20px',
-                    zIndex: 10,
-                }} />
+                    width: '440px',
+                    height: '956px',
+                    background: 'var(--color-bg)',
+                    borderRadius: '56px',
+                    border: '8px solid #2a2a2a',
+                    boxShadow: '0 0 0 1px #444, 0 32px 80px rgba(0,0,0,0.6)',
+                    overflow: 'hidden',
+                    position: 'relative',
+                    display: 'flex',
+                    flexDirection: 'column',
+                }}>
 
-                <BrowserRouter>
-                    <div
-                        className="phone-scroll"
-                        style={{
-                            flex: 1,
-                            overflowY: 'auto',
-                            paddingTop: '60px',
-                            paddingLeft: '8px',
-                            paddingRight: '8px',
-                            msOverflowStyle: 'none',
-                            scrollbarWidth: 'none',
-                        }}
-                    >
-                        <Routes>
-                            <Route path="/" element={<Home />} />
-                            <Route path="/tasks" element={<Tasks />} />
-                            <Route path="/tasks/create" element={<TaskCreate />} />
-                            <Route path="/tasks/:id" element={<TaskDetail />} />
-                            <Route path="/robo" element={<Robo />} />
-                            <Route path="/calendar" element={<Calendar />} />
-                            <Route path="/more" element={<More />} />
-                            <Route path="/timer" element={<Timer />} />
-                        </Routes>
-                    </div>
+                    {/* Dynamic Island */}
+                    <div style={{
+                        position: 'absolute',
+                        top: '12px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: '126px',
+                        height: '36px',
+                        background: '#0a0a0a',
+                        borderRadius: '20px',
+                        zIndex: 10,
+                    }} />
 
-                    {/* Global toast — rendered above BottomNav so it persists across routes */}
-                    {toast && (
-                        <Toast
-                            message={toast.message}
-                            icon={toast.icon}
-                            progress={toast.progress}
-                            barColor={toast.barColor}
-                            actionLabel={toast.actionLabel}
-                            onAction={toast.onAction}
-                        />
-                    )}
+                    <BrowserRouter>
+                        <div
+                            className="phone-scroll"
+                            style={{
+                                flex: 1,
+                                overflowY: 'auto',
+                                paddingTop: '60px',
+                                paddingLeft: '8px',
+                                paddingRight: '8px',
+                                msOverflowStyle: 'none',
+                                scrollbarWidth: 'none',
+                            }}
+                        >
+                            <Routes>
+                                <Route path="/" element={<Home />} />
+                                <Route path="/tasks" element={<Tasks />} />
+                                <Route path="/tasks/create" element={<TaskCreate />} />
+                                <Route path="/tasks/:id" element={<TaskDetail />} />
+                                <Route path="/robo" element={<Robo />} />
+                                <Route path="/calendar" element={<Calendar />} />
+                                <Route path="/more" element={<More />} />
+                                <Route path="/timer" element={<Timer />} />
+                            </Routes>
+                        </div>
 
-                    <BottomNav />
-                </BrowserRouter>
+                        {/* Global toast — rendered above BottomNav so it persists across routes */}
+                        {toast && (
+                            <Toast
+                                message={toast.message}
+                                icon={toast.icon}
+                                progress={toast.progress}
+                                barColor={toast.barColor}
+                                actionLabel={toast.actionLabel}
+                                onAction={toast.onAction}
+                            />
+                        )}
+
+                        <BottomNav />
+                    </BrowserRouter>
+
+                </div>
+
+                <DebugPanel />
 
             </div>
         </div>
