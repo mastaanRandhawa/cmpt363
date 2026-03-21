@@ -6,7 +6,6 @@ import useToastStore from '../data/useToastStore'
 import TaskCard from '../components/TaskCard'
 import Header from '../components/Header'
 import SearchBar from '../components/SearchBar'
-import FadeOverlay from '../components/FadeOverlay'
 import ConfirmDialog from '../components/ConfirmDialog'
 import useSwipeList from '../hooks/useSwipeList'
 
@@ -45,7 +44,6 @@ function Tasks() {
     const [search, setSearch]                        = useState('')
     const [filter, setFilter]                        = useState('all')
     const { getSwipeProps, closeAll }                = useSwipeList()
-    const [deletePending, setDeletePending]           = useState(false)
     const [pendingDeleteTask, setPendingDeleteTask]   = useState(null)
 
     const today = new Date()
@@ -74,21 +72,14 @@ function Tasks() {
     function confirmSwipeDelete() {
         const task = pendingDeleteTask
         setPendingDeleteTask(null)
-        setDeletePending(true)
 
         showToast({
             message:     `"${task.name}" deleted`,
             icon:        <Trash2 size={16} color="var(--color-danger)" />,
             barColor:    'var(--color-danger)',
             actionLabel: 'Undo',
-            onAction: () => {
-                setDeletePending(false)
-                dismissToast()
-            },
-            onExpire: () => {
-                deleteTask(task.id)
-                setDeletePending(false)
-            },
+            onAction: () => dismissToast(),
+            onExpire: () => deleteTask(task.id),
             duration: 5000,
         })
     }
@@ -99,9 +90,6 @@ function Tasks() {
             style={{ color: 'var(--color-text)', position: 'relative' }}
             onClick={closeAll}
         >
-            {/* fade overlay — dims the list while a swipe-delete is pending */}
-            <FadeOverlay visible={deletePending} />
-
             {/* header */}
             <Header
                 subtitle={`TODAY · ${today}`}

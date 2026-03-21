@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Pencil, Plus, MapPin, Repeat, Trash2, Play, CheckCircle, X } from 'lucide-react'
 import { priority as priorityMap } from '../data/priority'
@@ -7,7 +7,6 @@ import useToastStore from '../data/useToastStore'
 import Header from '../components/Header'
 import CircleCheck from '../components/CircleCheck'
 import ProgressBar from '../components/ProgressBar'
-import Toast from '../components/Toast'
 import FadeOverlay from '../components/FadeOverlay'
 import ConfirmDialog from '../components/ConfirmDialog'
 
@@ -30,11 +29,6 @@ function TaskDetail() {
     const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
 
     const { show: showToast, dismiss: dismissToast } = useToastStore()
-
-    const [showUndoToast, setShowUndoToast]     = useState(false)
-    const [undoProgress, setUndoProgress]       = useState(100)
-    const undoTimerRef                          = useRef(null)
-    const undoIntervalRef                       = useRef(null)
 
     // Tracks whether a delete is pending so the fade overlay shows
     const [deletePending, setDeletePending]   = useState(false)
@@ -68,22 +62,6 @@ function TaskDetail() {
             .toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
     }
 
-    function startProgressTimer(setProgress, onExpire, duration = 5000) {
-        const interval = 50
-        const steps    = duration / interval
-        let current    = steps
-        const iv = setInterval(() => {
-            current -= 1
-            setProgress((current / steps) * 100)
-            if (current <= 0) clearInterval(iv)
-        }, interval)
-        const t = setTimeout(() => {
-            clearInterval(iv)
-            onExpire()
-        }, duration)
-        return { timer: t, interval: iv }
-    }
-
     // ─── complete ─────────────────────────────────────────────────────────────
     function handleComplete() {
         const allDone = subtasks.length === 0 || completedCount === subtasks.length
@@ -93,27 +71,27 @@ function TaskDetail() {
 
     function markComplete() {
         setShowCompleteConfirm(false)
-        // Mark all subtasks done before toggling the task status
-        updateTask(task.id, {
-            subtasks: subtasks.map(s => ({ ...s, done: true }))
-        })
-        toggleComplete(task.id)
-        setShowUndoToast(true)
-        setUndoProgress(100)
-        const { timer, interval } = startProgressTimer(
-            setUndoProgress,
-            () => setShowUndoToast(false)
-        )
-        undoTimerRef.current    = timer
-        undoIntervalRef.current = interval
-    }
 
-    function handleUndo() {
-        clearTimeout(undoTimerRef.current)
-        clearInterval(undoIntervalRef.current)
-        toggleComplete(task.id) // flip back to todo
-        updateTask(task.id, { subtasks: task.subtasks }) // restore original subtask states
-        setShowUndoToast(false)
+        // Snapshot original subtasks before marking all done (needed for undo)
+        const originalSubtasks = task.subtasks
+
+        updateTask(task.id, { subtasks: subtasks.map(s => ({ ...s, done: true })) })
+        toggleComplete(task.id)
+        navigate('/tasks')
+
+        showToast({
+            message:     `"${task.name}" completed`,
+            icon:        <CheckCircle size={16} color="var(--color-success)" />,
+            barColor:    'var(--color-primary)',
+            actionLabel: 'Undo',
+            onAction:    () => {
+                toggleComplete(task.id)
+                updateTask(task.id, { subtasks: originalSubtasks })
+                dismissToast()
+            },
+            onExpire: () => {},
+            duration: 5000,
+        })
     }
 
     // ─── delete ───────────────────────────────────────────────────────────────
@@ -136,7 +114,7 @@ function TaskDetail() {
         }, HALF)
 
         showToast({
-            message:     'Task deleted',
+            message:     `"${task.name}" deleted`,
             icon:        <Trash2 size={16} color="var(--color-danger)" />,
             barColor:    'var(--color-danger)',
             actionLabel: 'Undo',
@@ -177,8 +155,8 @@ function TaskDetail() {
             <FadeOverlay visible={deletePending} navigating={navigating} />
 
             <Header
-                subtitle="TASK DETAILS"
-                title={task.name}
+                title="Task Details"
+                subtitle={" "}
                 onBack={() => navigate(-1)}
                 rightAction={
                     <button
@@ -406,16 +384,6 @@ function TaskDetail() {
                     onCancel={() => setShowCompleteConfirm(false)}
                 />
             )}
-
-            {/* undo complete toast */}
-            {showUndoToast && <Toast
-                message="Task marked complete"
-                icon={<CheckCircle size={16} color="var(--color-success)" />}
-                progress={undoProgress}
-                barColor="var(--color-primary)"
-                actionLabel="Undo"
-                onAction={handleUndo}
-            />}
 
         </div>
     )
