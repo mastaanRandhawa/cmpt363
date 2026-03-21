@@ -1,3 +1,5 @@
+// TODO Chat Icon larger
+
 import { useState } from 'react'
 import { Command } from 'lucide-react'
 import Header from '../components/Header'
@@ -19,7 +21,7 @@ const upgrades = [
     { label: 'Energy Calibrator',     level: 5,  description: 'Robo checks your energy level before making suggestions. Beast mode? Big tasks. Survival mode? Easy wins. No mismatch, no guilt.',                                           unlocked: false },
     { label: 'Habit Scanner',         level: 6,  description: 'Robo quietly notices your patterns and starts planning around them. Less "why is this scheduled then?" and more "oh wow, Robo actually gets me."',                           unlocked: false },
     { label: 'Celebration Unit',      level: 7,  description: 'Hit a personal best? Robo goes full confetti mode. Every win counts, and Robo will make sure you know it.',                                                                  unlocked: false },
-    { label: 'Mid-Week Pulse',        level: 8,  description: 'Every Wednesday, Robo checks in with a quick progress update. Think of it as a friendly tap on the shoulder, not a performance review.',                                     unlocked: false },
+    { label: 'Mid-Week Pulse',        level: 8,  description: 'Once a week, Robo checks in with a quick progress update. Think of it as a friendly tap on the shoulder, not a performance review.',                                     unlocked: false },
     { label: 'Victory Log',           level: 9,  description: 'A running record of everything you\'ve completed. Open it on a hard day and remember — past you was pretty capable. Current you is too.',                                    unlocked: false },
     { label: 'CBT Chip',              level: 10, description: 'Robo\'s most powerful upgrade. Gentle, evidence-based prompts to help you reflect, reframe, and build better habits over time. Still your Robo — just a little wiser. Toggle on or off anytime in Settings.', unlocked: false },
 ]

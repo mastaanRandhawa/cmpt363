@@ -9,6 +9,9 @@ import Calendar from './pages/Calendar'
 import More from './pages/More'
 import BottomNav from './components/BottomNav'
 import Timer from './pages/Timer'
+import Toast from './components/Toast'
+import useToastStore from './data/useToastStore'
+import useTaskStore from './data/useTaskStore'
 
 const themes = [
     { value: 'lavender', label: 'Lavender Mist' },
@@ -17,11 +20,24 @@ const themes = [
     { value: 'matcha',   label: 'Matcha Latte' },
 ]
 
+const devControlStyle = {
+    background: '#1a1a1a',
+    color: '#888',
+    border: '1px solid #333',
+    borderRadius: '8px',
+    padding: '6px 12px',
+    fontSize: '13px',
+    cursor: 'pointer',
+    outline: 'none',
+}
+
 function App() {
     const [theme, setTheme] = useState(() => {
         document.documentElement.setAttribute('data-theme', 'lavender')
         return 'lavender'
     })
+    const toast       = useToastStore(s => s.toast)
+    const resetToSeed = useTaskStore(s => s.resetToSeed)
 
     function handleTheme(value) {
         setTheme(value)
@@ -39,26 +55,22 @@ function App() {
             padding: '40px 0',
         }}>
 
-            {/* theme picker */}
-            <select
-                value={theme}
-                onChange={e => handleTheme(e.target.value)}
-                style={{
-                    marginBottom: '16px',
-                    background: '#1a1a1a',
-                    color: '#888',
-                    border: '1px solid #333',
-                    borderRadius: '8px',
-                    padding: '6px 12px',
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    outline: 'none',
-                }}
-            >
-                {themes.map(t => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-            </select>
+            {/* dev controls */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                <select
+                    value={theme}
+                    onChange={e => handleTheme(e.target.value)}
+                    style={devControlStyle}
+                >
+                    {themes.map(t => (
+                        <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                </select>
+
+                <button onClick={resetToSeed} style={devControlStyle}>
+                    ↺ Reset Tasks
+                </button>
+            </div>
 
             {/* iPhone frame */}
             <div style={{
@@ -111,6 +123,19 @@ function App() {
                             <Route path="/timer" element={<Timer />} />
                         </Routes>
                     </div>
+
+                    {/* Global toast — rendered above BottomNav so it persists across routes */}
+                    {toast && (
+                        <Toast
+                            message={toast.message}
+                            icon={toast.icon}
+                            progress={toast.progress}
+                            barColor={toast.barColor}
+                            actionLabel={toast.actionLabel}
+                            onAction={toast.onAction}
+                        />
+                    )}
+
                     <BottomNav />
                 </BrowserRouter>
 
