@@ -2,10 +2,31 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { Home, CheckSquare, Cpu, Calendar, MoreHorizontal } from 'lucide-react'
 
 // TODO: Update Robo icon
+
+// BottomNav
+// Persistent bottom navigation bar. Renders the five primary tabs and highlights the active
+// route. Sticks to the bottom of the phone frame via position: sticky.
+//
+// No props — reads the current route from React Router's useLocation automatically.
+//
+// Tab routes:
+//   /          → Home
+//   /tasks     → Tasks
+//   /robo      → Robo  (AI companion)
+//   /calendar  → Calendar
+//   /more      → More  (Settings, Notifications, Help)
+//
+// Usage:
+//   Place once inside <BrowserRouter>, below the scrollable content area.
+//   <BrowserRouter>
+//     <div className="phone-scroll"> <Routes>...</Routes> </div>
+//     <BottomNav />
+//   </BrowserRouter>
+
 const tabs = [
     { label: 'Home',     icon: Home,           path: '/' },
     { label: 'Tasks',    icon: CheckSquare,     path: '/tasks' },
-    { label: 'Robo',       icon: Cpu,             path: '/Robo' },
+    { label: 'Robo',       icon: Cpu,             path: '/robo' },
     { label: 'Calendar', icon: Calendar,        path: '/calendar' },
     { label: 'More',     icon: MoreHorizontal,  path: '/more' },
 ]

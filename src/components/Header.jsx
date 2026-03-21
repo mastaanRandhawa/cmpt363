@@ -1,6 +1,37 @@
 import { ChevronLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
+// Header
+// Top-of-page title bar with optional back button, subtitle, and right-side action slot.
+//
+// Props:
+//   title       – string, large bold page title
+//   subtitle    – string, small caps label displayed above the title (e.g. 'TIMER', 'YOUR COMPANION')
+//   onBack      – () => void, if provided renders a back chevron; if omitted no back button is shown.
+//                 If you just want default navigate(-1) behaviour, pass onBack={true} or a no-op.
+//   rightAction – ReactNode, anything rendered on the right side (icon buttons, chips, etc.)
+//
+// Usage examples:
+//   // Simple page title (no back)
+//   <Header title="Tasks" />
+//
+//   // Back navigation with subtitle (e.g. Task Detail / Timer)
+//   <Header subtitle="TIMER" title="Write CMPT376W Essay" onBack={() => navigate(-1)} />
+//
+//   // Title with right-side action (e.g. Home screen with level chip + notification bell)
+//   <Header
+//     title="Good Morning, Bob!"
+//     rightAction={
+//       <>
+//         <Chip label="LVL 4 · 330XP" color="primary" />
+//         <Bell size={20} color="var(--color-text-muted)" />
+//       </>
+//     }
+//   />
+//
+//   // Add Task (back to Tasks list)
+//   <Header title="Add A New Task" onBack={() => navigate('/tasks')} />
+
 function Header({ title, subtitle, onBack, rightAction }) {
     const navigate = useNavigate()
 

@@ -1,9 +1,43 @@
+// TaskCard
+// Swipeable task row for the Tasks list. Swipe left to reveal delete, swipe right to reveal edit.
+//
+// Props:
+//   title         – string, task name
+//   due           – string, due date display (e.g. 'Feb 27th, 2026')
+//   time          – string, optional time (e.g. '3:00 PM'), shown after due date
+//   priority      – 'low' | 'med' | 'high' (default 'med')
+//   subtasks      – array of { label: string }, first item shown as preview, rest counted
+//   onClick       – () => void, tap to open Task Detail
+//   onDelete      – () => void, called when delete action is confirmed via swipe
+//   onEdit        – () => void, called when edit action is confirmed via swipe
+//   swipeX        – number (controlled), current horizontal swipe offset in px
+//   onSwipeChange – (x: number) => void, reports new swipe offset to parent
+//
+// Swipe state is intentionally lifted to the parent so the list can ensure only one card
+// is swiped open at a time. See Tasks.jsx for the recommended pattern:
+//
+//   const [swipeId, setSwipeId] = useState(null)
+//   const [swipeX,  setSwipeX]  = useState(0)
+//
+//   tasks.map(task => (
+//     <TaskCard
+//       key={task.id}
+//       {...task}
+//       swipeX={swipeId === task.id ? swipeX : 0}
+//       onSwipeChange={x => { setSwipeId(task.id); setSwipeX(x) }}
+//       onDelete={() => handleDelete(task.id)}
+//       onEdit={() => navigate(`/tasks/${task.id}/edit`)}
+//       onClick={() => navigate(`/tasks/${task.id}`)}
+//     />
+//   ))
+
 import { useState, useRef } from 'react'
 import { priority as priorityMap } from '../data/priority'
 import { Pencil, Trash2 } from 'lucide-react'
+import CircleCheck from './CircleCheck'
 
-function TaskCard({ title, due, time, priority = 'med', subtasks = [], onClick, onDelete, onEdit, swipeX, onSwipeChange }) {
-    const [done, setDone] = useState(false)
+function TaskCard({ title, due, time, priority = 'med', subtasks = [], completed = false, onComplete, onClick, onDelete, onEdit, swipeX, onSwipeChange }) {
+    const done                  = completed
     const [swiping, setSwiping] = useState(false)
     const startX = useRef(null)
     const p = priorityMap[priority]
@@ -11,12 +45,11 @@ function TaskCard({ title, due, time, priority = 'med', subtasks = [], onClick, 
     const remaining = subtasks.length - 1
     const THRESHOLD = 60
 
-    // Swipe Actions for TaskCards
-        // Swipe Left to Delete
-        // Swipe Right to Edit
     function onTouchStart(e) {
         startX.current = e.touches[0].clientX
         setSwiping(true)
+        // Notify parent immediately so any other open card snaps closed
+        onSwipeChange(0)
     }
 
     function onTouchMove(e) {
@@ -107,43 +140,23 @@ function TaskCard({ title, due, time, priority = 'med', subtasks = [], onClick, 
                 }}
             >
                 {/* checkbox */}
-                <div
-                    onClick={e => { e.stopPropagation(); setDone(d => !d) }}
-                    style={{
-                        width: '22px',
-                        height: '22px',
-                        borderRadius: '50%',
-                        border: `2px solid ${done ? 'var(--color-success)' : 'var(--color-surface-alt)'}`,
-                        background: done ? 'var(--color-success)' : 'none',
-                        flexShrink: 0,
-                        marginTop: '2px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'all 0.15s',
-                        cursor: 'pointer',
-                    }}
-                >
-                    {done && (
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                            <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                    )}
+                <div style={{ marginTop: '2px' }}>
+                    <CircleCheck checked={done} onChange={val => onComplete?.(val)} />
                 </div>
 
                 {/* content */}
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
-            <span style={{
-                color: done ? 'var(--color-text-muted)' : 'var(--color-text)',
-                fontWeight: 600,
-                fontSize: '14px',
-                flex: 1,
-                textDecoration: done ? 'line-through' : 'none',
-                transition: 'all 0.2s',
-            }}>
-              {title}
-            </span>
+                        <span style={{
+                            color: done ? 'var(--color-text-muted)' : 'var(--color-text)',
+                            fontWeight: 600,
+                            fontSize: '14px',
+                            flex: 1,
+                            textDecoration: done ? 'line-through' : 'none',
+                            transition: 'all 0.2s',
+                        }}>
+                            {title}
+                        </span>
                         {!done && (
                             <span style={{
                                 background: `color-mix(in srgb, ${p.color} 15%, transparent)`,
@@ -155,21 +168,21 @@ function TaskCard({ title, due, time, priority = 'med', subtasks = [], onClick, 
                                 borderRadius: '20px',
                                 whiteSpace: 'nowrap',
                             }}>
-                {p.label}
-              </span>
+                                {p.label}
+                            </span>
                         )}
                     </div>
 
                     {!done && (due || time) && (
                         <span style={{ color: 'var(--color-text-muted)', fontSize: '12px' }}>
-              Due: {due}{time ? ` · ${time}` : ''}
-            </span>
+                            Due: {due}{time ? ` · ${time}` : ''}
+                        </span>
                     )}
 
                     {!done && firstSubtask && (
                         <span style={{ color: 'var(--color-text-muted)', fontSize: '11px' }}>
-              ↳ {firstSubtask.label}{remaining > 0 ? ` · +${remaining} more tasks` : ''}
-            </span>
+                            ↳ {firstSubtask.label}{remaining > 0 ? ` · +${remaining} more tasks` : ''}
+                        </span>
                     )}
                 </div>
             </div>
