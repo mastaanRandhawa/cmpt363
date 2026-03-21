@@ -1,6 +1,3 @@
-import { ChevronLeft } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-
 // Header
 // Top-of-page title bar with optional back button, subtitle, and right-side action slot.
 //
@@ -32,72 +29,93 @@ import { useNavigate } from 'react-router-dom'
 //   // Add Task (back to Tasks list)
 //   <Header title="Add A New Task" onBack={() => navigate('/tasks')} />
 
+import { ChevronLeft } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+
 function Header({ title, subtitle, onBack, rightAction }) {
     const navigate = useNavigate()
 
     function handleBack() {
-        if (onBack) onBack()
+        if (typeof onBack === 'function') onBack()
         else navigate(-1)
     }
 
     return (
         <div style={{
             display: 'flex',
-            alignItems: 'flex-end',
+            alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '16px 20px 12px',
+            padding: '0 20px',
+            height: '72px',
+            flexShrink: 0,
         }}>
 
-            {/* left side */}
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
-                {onBack && (
-                    <button
-                        onClick={handleBack}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            color: 'var(--color-text-muted)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            padding: '0 4px 2px 0',
-                        }}
-                    >
-                        <ChevronLeft size={22} />
-                    </button>
-                )}
-                <div>
-                    {subtitle && (
-                        <p style={{
-                            fontSize: '11px',
-                            fontWeight: 600,
-                            letterSpacing: '0.08em',
-                            color: 'var(--color-text-muted)',
-                            margin: 0,
-                        }}>
-                            {subtitle}
-                        </p>
+            {/* text column */}
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1, minWidth: 0, paddingLeft: '28px' }}>
+
+                {/* subtitle — fixed height, never affects layout below */}
+                <p style={{
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    letterSpacing: '0.08em',
+                    color: 'var(--color-text-muted)',
+                    margin: 0,
+                    height: '16px',
+                    lineHeight: '16px',
+                    visibility: subtitle ? 'visible' : 'hidden',
+                    userSelect: 'none',
+                }}>
+                    {subtitle || 'X'}
+                </p>
+
+                {/* title row — back arrow sits inline with the title */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                    {onBack && (
+                        <button
+                            onClick={handleBack}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color: 'var(--color-text-muted)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                padding: '0',
+                                flexShrink: 0,
+                                marginLeft: '-28px',
+                            }}
+                        >
+                            <ChevronLeft size={22} />
+                        </button>
                     )}
                     {title && (
                         <h1 style={{
-                            fontSize: '28px',
+                            fontSize: '22px',
                             fontWeight: 700,
                             color: 'var(--color-text)',
                             margin: 0,
-                            lineHeight: 1.1,
+                            lineHeight: 1.15,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
                         }}>
                             {title}
                         </h1>
                     )}
                 </div>
+
             </div>
 
             {/* right side */}
-            {rightAction && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingBottom: '4px' }}>
-                    {rightAction}
-                </div>
-            )}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                flexShrink: 0,
+                visibility: rightAction ? 'visible' : 'hidden',
+            }}>
+                {rightAction || <span style={{ width: '44px', height: '44px' }} />}
+            </div>
 
         </div>
     )
