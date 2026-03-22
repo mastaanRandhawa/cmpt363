@@ -15,6 +15,31 @@ html, body {
   display: none;
 }
 
+/* Fade the modal backdrop in and out */
+/* https://dev.to/kevinbism/css-animation-with-display-none-4pan */
+.modal-backdrop {
+  background: var(--color-modal-shade);
+  opacity: 1;
+  transition: opacity 0.1s ease;
+
+  @starting-style {
+    opacity: 0;
+  }
+}
+
+.bottom-tray {
+  transition: transform 0.2s ease-out;
+}
+
+.bottom-tray[data-swipe-mode=touching] {
+  transition: none;
+}
+
+.bottom-tray[data-swipe-mode=dismiss] {
+  transition: transform 0.15s linear;
+  pointer-events: none; /* disable interactivity when dismissing */
+}
+
 [data-theme="lavender"] {
   --color-primary:       #7C6FCD;
   --color-primary-soft:  #A89FDC;
@@ -23,6 +48,7 @@ html, body {
   --color-bg:            #1E1B2E;
   --color-surface:       #2A2640;
   --color-surface-alt:   #332F4A;
+  --color-modal-shade:   #211f2855;
   --color-text:          #F5F0FF;
   --color-text-muted:    #A89FDC;
   --color-danger:        #E07070;
@@ -39,6 +65,7 @@ html, body {
   --color-bg:            #1A1714;
   --color-surface:       #26211D;
   --color-surface-alt:   #2F2A25;
+  --color-modal-shade:   #100f0f55;
   --color-text:          #F0F4F8;
   --color-text-muted:    #4EC9D4;
   --color-danger:        #E8735A;
@@ -55,6 +82,7 @@ html, body {
   --color-bg:            #161C24;
   --color-surface:       #1F2D3D;
   --color-surface-alt:   #263545;
+  --color-modal-shade:   #171c2155;
   --color-text:          #EDF2FA;
   --color-text-muted:    #7AACE8;
   --color-danger:        #E05555;
@@ -71,6 +99,7 @@ html, body {
   --color-bg:            #F5F2EC;
   --color-surface:       #E8E2D8;
   --color-surface-alt:   #D8D0C4;
+  --color-modal-shade:   #eae9e655;
   --color-text:          #2C2418;
   --color-text-muted:    #4A7C5F;
   --color-danger:        #B03030;

@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Home, CheckSquare, Cpu, Calendar, MoreHorizontal } from 'lucide-react'
+import { Home, CheckSquare, Cpu, Calendar, MoreHorizontal, Cog } from 'lucide-react'
+import useBottomTrayStore from '../data/useBottomTrayStore'
 
 // TODO: Update Robo icon
 
@@ -28,13 +29,29 @@ const tabs = [
     { label: 'Tasks',    icon: CheckSquare,     path: '/tasks' },
     { label: 'Robo',       icon: Cpu,             path: '/robo' },
     { label: 'Calendar', icon: Calendar,        path: '/calendar' },
-    { label: 'More',     icon: MoreHorizontal,  path: '/more' },
+    { label: 'More',     icon: MoreHorizontal,  action: showMoreTray },
 ]
+
+const trayItems = [
+    { label: 'Settings', icon: Cog, path: '/settings' }
+]
+
+function showMoreTray({ bottomTrayStore }) {
+    const { show } = bottomTrayStore;
+    show({
+        contents: (
+            <div>
+                This is the tray.
+            </div>
+        ),
+    })
+}
 
 // Bottom Navigation bar
 function BottomNav() {
     const navigate = useNavigate()
     const location = useLocation()
+    const bottomTrayStore = useBottomTrayStore()
 
     return (
         <div style={{
@@ -47,12 +64,21 @@ function BottomNav() {
             alignItems: 'center',
             padding: '12px 0 28px',
         }}>
-            {tabs.map(({ label, icon: Icon, path }) => {
+            {tabs.map(({ label, icon: Icon, path, action }) => {
                 const active = location.pathname === path
                 return (
                     <button
-                        key={path}
-                        onClick={() => navigate(path)}
+                        key={path ?? label}
+                        onClick={() => {
+                            // If the tab is an action instead of a path, run the action.
+                            if (action != null) {
+                                return action({
+                                    bottomTrayStore
+                                })
+                            }
+
+                            navigate(path)
+                        }}
                         style={{
                             display: 'flex',
                             flexDirection: 'column',

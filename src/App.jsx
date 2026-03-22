@@ -8,10 +8,12 @@ import Robo from './pages/Robo'
 import Calendar from './pages/Calendar'
 import More from './pages/More'
 import BottomNav from './components/BottomNav'
+import BottomTray from './components/BottomTray'
 import Timer from './pages/Timer'
 import Toast from './components/Toast'
 import useToastStore from './data/useToastStore'
 import useTaskStore from './data/useTaskStore'
+import useBottomTrayStore from './data/useBottomTrayStore'
 import DebugPanel from './components/DebugPanel'
 
 const themes = [
@@ -37,6 +39,7 @@ function App() {
         document.documentElement.setAttribute('data-theme', 'lavender')
         return 'lavender'
     })
+    const bottomTray  = useBottomTrayStore(s => s.contents)
     const toast       = useToastStore(s => s.toast)
     const resetToSeed = useTaskStore(s => s.resetToSeed)
 
@@ -100,7 +103,7 @@ function App() {
                         height: '36px',
                         background: '#0a0a0a',
                         borderRadius: '20px',
-                        zIndex: 10,
+                        zIndex: 1000,
                     }} />
 
                     <BrowserRouter>
@@ -138,6 +141,13 @@ function App() {
                                 actionLabel={toast.actionLabel}
                                 onAction={toast.onAction}
                             />
+                        )}
+                        
+                        {/* Bottom tray — rendered above BottomNav so it persists across routes */}
+                        {bottomTray && (
+                            <BottomTray>
+                                {bottomTray}
+                            </BottomTray>
                         )}
 
                         <BottomNav />
