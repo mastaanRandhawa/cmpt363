@@ -210,18 +210,22 @@ const useTaskStore = create(
                 ),
             })),
 
-            // Flip a single subtask's done flag
+            // Flip a single subtask's done flag, then auto-derive task status
             toggleSubtask: (taskId, subtaskId) => set((s) => ({
-                tasks: s.tasks.map((t) =>
-                    t.id === taskId
-                        ? {
-                            ...t,
-                            subtasks: t.subtasks.map((sub) =>
-                                sub.id === subtaskId ? { ...sub, done: !sub.done } : sub
-                            ),
-                        }
-                        : t
-                ),
+                tasks: s.tasks.map((t) => {
+                    if (t.id !== taskId) return t
+                    const updatedSubtasks = t.subtasks.map((sub) =>
+                        sub.id === subtaskId ? { ...sub, done: !sub.done } : sub
+                    )
+                    const total     = updatedSubtasks.length
+                    const doneCount = updatedSubtasks.filter(s => s.done).length
+                    const status =
+                        total === 0        ? t.status            // no subtasks — leave as-is
+                            : doneCount === 0  ? 'todo'
+                                : doneCount < total ? 'in-progress'
+                                    : 'completed'
+                    return { ...t, subtasks: updatedSubtasks, status }
+                }),
             })),
 
             // Add a new subtask to a task

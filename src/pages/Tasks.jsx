@@ -64,6 +64,10 @@ function Tasks() {
             case 'high':     return task.priority === 'high'
             default:         return true
         }
+    }).sort((a, b) => {
+        const aComplete = a.status === 'completed' ? 1 : 0
+        const bComplete = b.status === 'completed' ? 1 : 0
+        return aComplete - bComplete
     })
 
     function handleSwipeDelete(task) {

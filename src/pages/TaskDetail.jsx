@@ -131,7 +131,7 @@ function TaskDetail() {
 
     // ─── render ───────────────────────────────────────────────────────────────
     return (
-        <div className="flex flex-col pb-24" style={{ color: 'var(--color-text)', position: 'relative', minHeight: '100%' }}>
+        <div className="flex flex-col pb-0" style={{ color: 'var(--color-text)', position: 'relative', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
 
             <Header
                 title="Task Details"
@@ -301,55 +301,64 @@ function TaskDetail() {
                     </div>
                 </div>
 
-                {/* bottom actions — always visible */}
-                <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
-                    <button
-                        onClick={() => setShowDeleteConfirm(true)}
-                        style={{
-                            flex: 1, padding: '14px',
-                            background: 'none',
-                            border: '1.5px solid var(--color-danger)',
-                            borderRadius: '14px',
-                            color: 'var(--color-danger)',
-                            fontWeight: 700, fontSize: '13px', cursor: 'pointer',
-                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
-                        }}
-                    >
-                        <Trash2 size={16} />
-                        Delete
-                    </button>
-                    <button
-                        onClick={() => navigate('/tasks/create', { state: { editId: id }, replace: true })}
-                        style={{
-                            flex: 1, padding: '14px',
-                            background: 'none',
-                            border: '1.5px solid var(--color-primary)',
-                            borderRadius: '14px',
-                            color: 'var(--color-primary)',
-                            fontWeight: 700, fontSize: '13px', cursor: 'pointer',
-                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
-                        }}
-                    >
-                        <Pencil size={16} />
-                        Edit
-                    </button>
-                    <button
-                        onClick={handleComplete}
-                        style={{
-                            flex: 1, padding: '14px',
-                            background: isComplete ? 'color-mix(in srgb, var(--color-success) 15%, transparent)' : 'none',
-                            border: `1.5px solid var(--color-success)`,
-                            borderRadius: '14px',
-                            color: 'var(--color-success)',
-                            fontWeight: 700, fontSize: '13px', cursor: 'pointer',
-                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
-                        }}
-                    >
-                        <CheckCircle size={16} />
-                        {isComplete ? 'Undo' : 'Complete'}
-                    </button>
-                </div>
+                <div style={{ height: '16px' }} />
 
+            </div>
+
+            {/* action bar — always at the bottom */}
+            <div style={{
+                marginTop: 'auto',
+                padding: '12px 20px 16px',
+                background: 'var(--color-bg)',
+                borderTop: '1px solid var(--color-surface-alt)',
+                display: 'flex',
+                gap: '10px',
+            }}>
+                <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    style={{
+                        flex: 1, padding: '14px',
+                        background: 'none',
+                        border: '1.5px solid var(--color-danger)',
+                        borderRadius: '14px',
+                        color: 'var(--color-danger)',
+                        fontWeight: 700, fontSize: '13px', cursor: 'pointer',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                    }}
+                >
+                    <Trash2 size={16} />
+                    Delete
+                </button>
+                <button
+                    onClick={() => navigate('/tasks/create', { state: { editId: id }, replace: true })}
+                    style={{
+                        flex: 1, padding: '14px',
+                        background: 'none',
+                        border: '1.5px solid var(--color-primary)',
+                        borderRadius: '14px',
+                        color: 'var(--color-primary)',
+                        fontWeight: 700, fontSize: '13px', cursor: 'pointer',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                    }}
+                >
+                    <Pencil size={16} />
+                    Edit
+                </button>
+                <button
+                    onClick={handleComplete}
+                    style={{
+                        flex: 1, padding: '14px',
+                        background: isComplete ? 'color-mix(in srgb, var(--color-success) 15%, transparent)' : 'none',
+                        border: '1.5px solid var(--color-success)',
+                        borderRadius: '14px',
+                        color: 'var(--color-success)',
+                        fontWeight: 700, fontSize: '13px', cursor: 'pointer',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                    }}
+                >
+                    <CheckCircle size={16} />
+                    {isComplete ? 'Undo' : 'Complete'}
+                </button>
             </div>
 
             {/* delete confirm */}
