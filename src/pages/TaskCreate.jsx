@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Command, X, Pencil, Check, Plus, CheckCircle } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { useNavigate, useLocation, useParams } from 'react-router-dom'
+import { Command, X, Pencil, Check, Plus, CheckCircle, MapPin, AlertTriangle } from 'lucide-react'
 import useTaskStore from '../data/useTaskStore'
 import useDebugStore from '../data/useDebugStore'
 import Header from '../components/Header'
@@ -8,6 +8,8 @@ import Input from '../components/Input'
 import Toggle from '../components/Toggle'
 import Button from '../components/Button'
 import RepeatPicker from '../components/RepeatPicker'
+import ConfirmDialog from '../components/ConfirmDialog'
+import FadeOverlay from '../components/FadeOverlay'
 import { priority as priorityMap } from '../data/priority'
 
 const priorities = ['low', 'med', 'high']
@@ -57,19 +59,36 @@ const errorStyle = {
 }
 
 function TaskCreate() {
-    const navigate = useNavigate()
+    const navigate      = useNavigate()
+    const routerLocation = useLocation()
+    const { id: routeId } = useParams()
     const addTask    = useTaskStore(s => s.addTask)
+    const updateTask = useTaskStore(s => s.updateTask)
+    const tasks      = useTaskStore(s => s.tasks)
     const setDebug   = useDebugStore(s => s.set)
 
-    // form
-    const [name, setName]           = useState('')
-    const [date, setDate]           = useState('')
-    const [addTime, setAddTime]     = useState(false)
-    const [time, setTime]           = useState('')
-    const [priority, setPriority]   = useState(null)
-    const [effort, setEffort]       = useState(null)
-    const [notes, setNotes]         = useState('')
-    const [repeat, setRepeat]       = useState(null)
+    // edit mode — driven by either route param (/tasks/:id/edit) or location state
+    const editId   = routeId || routerLocation.state?.editId || null
+    const editTask = editId ? tasks.find(t => t.id === editId) ?? null : null
+    const isEdit   = !!editTask
+
+    // form — pre-filled from editTask if editing
+    const [name, setName]           = useState(editTask?.name        ?? '')
+    const [date, setDate]           = useState(editTask?.due         ?? '')
+    const [addTime, setAddTime]     = useState(!!(editTask?.time))
+    const [time, setTime]           = useState(typeof editTask?.time === 'string' ? editTask.time : '')
+    const [priority, setPriority]   = useState(typeof editTask?.priority === 'string' ? editTask.priority : null)
+    const [effort, setEffort]       = useState(typeof editTask?.effort === 'number' ? editTask.effort : null)
+    const [notes, setNotes]         = useState(typeof editTask?.description === 'string' ? editTask.description : '')
+    const [repeat, setRepeat]       = useState(editTask?.repeat      ?? null)
+    const [location, setLocation]   = useState(
+        typeof editTask?.location === 'string' ? editTask.location :
+            editTask?.location?.label ? editTask.location.label : ''
+    )
+    const [locQuery, setLocQuery]   = useState('')
+    const [locResults, setLocResults] = useState([])
+    const [locLoading, setLocLoading] = useState(false)
+    const [showLocDrop, setShowLocDrop] = useState(false)
     const [aiSuggest, setAiSuggest] = useState(true)
     const [errors, setErrors]       = useState({})
 
@@ -86,6 +105,62 @@ function TaskCreate() {
     const [editLabel, setEditLabel]   = useState('')
     const [newSubtask, setNewSubtask] = useState('')
     const [addingNew, setAddingNew]   = useState(false)
+
+    // ─── unsaved changes guard ────────────────────────────────────────────────
+    const isDirty = step === 'form' && (() => {
+        if (isEdit && editTask) {
+            return (
+                name.trim()    !== (editTask.name        ?? '') ||
+                date           !== (editTask.due         ?? '') ||
+                time           !== (editTask.time        ?? '') ||
+                addTime        !== !!(editTask.time) ||
+                priority       !== (editTask.priority    ?? null) ||
+                effort         !== (editTask.effort      ?? null) ||
+                notes.trim()   !== (editTask.description ?? '') ||
+                (location||'') !== (typeof editTask.location === 'string' ? editTask.location : editTask.location?.label ?? '') ||
+                JSON.stringify(repeat) !== JSON.stringify(editTask.repeat ?? null)
+            )
+        }
+        return (
+            name.trim() !== '' || date !== '' || priority !== null ||
+            effort !== null || notes.trim() !== '' || location !== '' ||
+            addTime || repeat !== null
+        )
+    })()
+    const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
+    const [pendingNav, setPendingNav]             = useState(null)
+
+    // Warn on browser refresh / tab close
+    useEffect(() => {
+        const handler = e => { if (isDirty) { e.preventDefault(); e.returnValue = '' } }
+        window.addEventListener('beforeunload', handler)
+        return () => window.removeEventListener('beforeunload', handler)
+    }, [isDirty])
+
+    // Guarded navigate — use this instead of navigate() everywhere in this component
+    const guardedNavigate = useCallback((to) => {
+        if (isDirty) { setPendingNav(to); setShowLeaveConfirm(true) }
+        else navigate(to, { replace: isEdit })
+    }, [isDirty, navigate, isEdit])
+
+    // ─── location autocomplete (Nominatim) ───────────────────────────────────
+    useEffect(() => {
+        if (!locQuery.trim() || locQuery.length < 2) { setLocResults([]); return }
+        const timer = setTimeout(async () => {
+            setLocLoading(true)
+            try {
+                const res = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locQuery)}&limit=5&addressdetails=1`,
+                    { headers: { 'Accept-Language': 'en' } }
+                )
+                const data = await res.json()
+                setLocResults(data)
+                setShowLocDrop(true)
+            } catch { setLocResults([]) }
+            finally { setLocLoading(false) }
+        }, 350)
+        return () => clearTimeout(timer)
+    }, [locQuery])
 
     // ─── debug output ─────────────────────────────────────────────────────────
     useEffect(() => {
@@ -138,8 +213,24 @@ function TaskCreate() {
 
     function handleFormSubmit() {
         if (!validate()) return
+        if (isEdit) { handleSaveEdit(); return }
         if (aiSuggest) { setStep('thinking') }
         else { setSubtasks([]); setStep('subtasks') }
+    }
+
+    function handleSaveEdit() {
+        if (!validate()) return
+        updateTask(editId, {
+            name:        name.trim(),
+            due:         date,
+            time:        addTime ? time : null,
+            priority,
+            effort,
+            description: notes.trim(),
+            location:    location || null,
+            repeat,
+        })
+        navigate(`/tasks/${editId}`, { replace: true })
     }
 
     function handleConfirmSteps() {
@@ -153,7 +244,7 @@ function TaskCreate() {
             effort,
             description: notes.trim(),
             status:      'todo',
-            location:    null,
+            location:    location || null,
             repeat,
             subtasks,
         })
@@ -441,9 +532,34 @@ function TaskCreate() {
 
     // ─── form step ────────────────────────────────────────────────────────────
     return (
-        <div className="flex flex-col pb-24" style={{ color: 'var(--color-text)' }}>
-            <Header title="Add A New Task" onBack={() => navigate('/tasks')} />
-            <div className="flex flex-col gap-5 p-5">
+        <div className="flex flex-col pb-24" style={{ color: 'var(--color-text)', position: 'relative' }}>
+            <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+            <Header
+                title={isEdit ? 'Edit Task' : 'Add A New Task'}
+                onBack={() => isEdit ? navigate(`/tasks/${editId}`, { replace: true }) : guardedNavigate('/tasks')}
+            />
+
+            <FadeOverlay visible={showLeaveConfirm} />
+
+            {showLeaveConfirm && (
+                <ConfirmDialog
+                    icon={<AlertTriangle size={24} color="var(--color-accent)" />}
+                    title="DISCARD CHANGES?"
+                    message="You have unsaved changes. If you leave now, all entered data will be lost."
+                    confirmLabel="Discard"
+                    confirmVariant="danger"
+                    cancelLabel="Keep Editing"
+                    onConfirm={() => {
+                        setShowLeaveConfirm(false)
+                        navigate(pendingNav ?? (isEdit ? `/tasks/${editId}` : '/tasks'), { replace: isEdit })
+                    }}
+                    onCancel={() => {
+                        setShowLeaveConfirm(false)
+                        setPendingNav(null)
+                    }}
+                />
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', padding: '20px' }}>
 
                 {/* task name */}
                 <div>
@@ -601,26 +717,140 @@ function TaskCreate() {
                 </div>
 
                 {/* notes */}
-                <Input label="NOTES OR CONTEXT" multiline rows={4} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Enter any information you'd like handy while viewing this task" />
+                <div>
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                        <span style={labelStyle}>NOTES OR CONTEXT</span>
+                    </div>
+                    <Input multiline rows={4} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Enter any information you'd like handy while viewing this task" />
+                </div>
 
-                {/* ai suggestions */}
-                <div style={{ background: 'var(--color-surface)', borderRadius: '16px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ background: 'var(--color-surface-alt)', borderRadius: '12px', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Command size={20} color="var(--color-primary)" />
+                {/* location */}
+                <div style={{ position: 'relative' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                        <span style={labelStyle}>LOCATION</span>
+                        {location && (
+                            <button
+                                onClick={() => { setLocation(''); setLocQuery(''); setLocResults([]) }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', marginLeft: '8px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', padding: 0 }}
+                            >
+                                <X size={13} />
+                            </button>
+                        )}
                     </div>
-                    <div style={{ flex: 1 }}>
-                        <p style={{ margin: 0, fontWeight: 700, fontSize: '13px', letterSpacing: '0.04em' }}>AI SUGGESTIONS</p>
-                        <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-muted)' }}>Breakdown and Time Estimate</p>
-                    </div>
-                    <button
-                        onClick={() => setAiSuggest(v => !v)}
-                        style={{
-                            width: '48px', height: '28px', borderRadius: '999px',
-                            border: 'none', flexShrink: 0, cursor: 'pointer',
-                            background: aiSuggest ? 'var(--color-primary)' : 'var(--color-surface-alt)',
-                            position: 'relative', transition: 'background 0.2s',
-                        }}
-                    >
+
+                    {location ? (
+                        <div style={{
+                            background: 'var(--color-surface)',
+                            border: '1.5px solid var(--color-primary)',
+                            borderRadius: '12px',
+                            padding: '12px 14px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                        }}>
+                            <MapPin size={16} color="var(--color-primary)" style={{ flexShrink: 0 }} />
+                            <span style={{ fontSize: '14px', color: 'var(--color-text)', flex: 1 }}>{location}</span>
+                        </div>
+                    ) : (
+                        <>
+                            <div style={{
+                                background: 'var(--color-surface)',
+                                border: '1.5px solid var(--color-surface-alt)',
+                                borderRadius: '12px',
+                                padding: '12px 14px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                            }}>
+                                <MapPin size={16} color="var(--color-text-muted)" style={{ flexShrink: 0 }} />
+                                <input
+                                    value={locQuery}
+                                    onChange={e => { setLocQuery(e.target.value); setShowLocDrop(true) }}
+                                    onFocus={() => locResults.length > 0 && setShowLocDrop(true)}
+                                    placeholder="Search for a location..."
+                                    style={{
+                                        flex: 1,
+                                        background: 'none',
+                                        border: 'none',
+                                        outline: 'none',
+                                        color: 'var(--color-text)',
+                                        fontSize: '14px',
+                                    }}
+                                />
+                                {locLoading && (
+                                    <div style={{ width: '14px', height: '14px', borderRadius: '50%', border: '2px solid var(--color-primary)', borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
+                                )}
+                            </div>
+
+                            {showLocDrop && locResults.length > 0 && (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: 'calc(100% + 4px)',
+                                    left: 0, right: 0,
+                                    background: 'var(--color-surface)',
+                                    border: '1.5px solid var(--color-surface-alt)',
+                                    borderRadius: '12px',
+                                    overflow: 'hidden',
+                                    zIndex: 50,
+                                    boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+                                }}>
+                                    {locResults.map((r, i) => {
+                                        const name    = r.name || r.display_name.split(',')[0]
+                                        const address = r.display_name.replace(name + ', ', '')
+                                        return (
+                                            <button
+                                                key={r.place_id}
+                                                onClick={() => { setLocation(r.display_name); setLocQuery(''); setShowLocDrop(false); setLocResults([]) }}
+                                                style={{
+                                                    width: '100%',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '12px',
+                                                    padding: '12px 14px',
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    borderTop: i > 0 ? '1px solid var(--color-surface-alt)' : 'none',
+                                                    cursor: 'pointer',
+                                                    textAlign: 'left',
+                                                }}
+                                            >
+                                                <MapPin size={15} color="var(--color-text-muted)" style={{ flexShrink: 0 }} />
+                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                    <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: 'var(--color-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                        {name}
+                                                    </p>
+                                                    <p style={{ margin: 0, fontSize: '11px', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                        {address}
+                                                    </p>
+                                                </div>
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
+
+                {/* ai suggestions — create mode only */}
+                {!isEdit && (
+                    <div style={{ background: 'var(--color-surface)', borderRadius: '16px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                        <div style={{ background: 'var(--color-surface-alt)', borderRadius: '12px', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <Command size={20} color="var(--color-primary)" />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <p style={{ margin: 0, fontWeight: 700, fontSize: '13px', letterSpacing: '0.04em' }}>AI SUGGESTIONS</p>
+                            <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-muted)' }}>Breakdown and Time Estimate</p>
+                        </div>
+                        <button
+                            onClick={() => setAiSuggest(v => !v)}
+                            style={{
+                                width: '48px', height: '28px', borderRadius: '999px',
+                                border: 'none', flexShrink: 0, cursor: 'pointer',
+                                background: aiSuggest ? 'var(--color-primary)' : 'var(--color-surface-alt)',
+                                position: 'relative', transition: 'background 0.2s',
+                            }}
+                        >
                         <span style={{
                             position: 'absolute', top: '4px',
                             left: aiSuggest ? '24px' : '4px',
@@ -628,10 +858,48 @@ function TaskCreate() {
                             borderRadius: '50%', background: 'white',
                             transition: 'left 0.2s',
                         }} />
-                    </button>
-                </div>
+                        </button>
+                    </div>
+                )}
 
-                <Button label="Create Task" fullWidth onClick={handleFormSubmit} />
+                {isEdit ? (
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <button
+                            onClick={() => setShowLeaveConfirm(true)}
+                            style={{
+                                flex: 1,
+                                padding: '15px',
+                                background: 'none',
+                                border: '1.5px solid var(--color-surface-alt)',
+                                borderRadius: '14px',
+                                color: 'var(--color-text-muted)',
+                                fontWeight: 600,
+                                fontSize: '14px',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            Discard
+                        </button>
+                        <button
+                            onClick={handleFormSubmit}
+                            style={{
+                                flex: 2,
+                                padding: '15px',
+                                background: 'var(--color-primary)',
+                                border: 'none',
+                                borderRadius: '14px',
+                                color: 'white',
+                                fontWeight: 700,
+                                fontSize: '14px',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            Save Changes
+                        </button>
+                    </div>
+                ) : (
+                    <Button label="Create Task" fullWidth onClick={handleFormSubmit} />
+                )}
 
             </div>
         </div>

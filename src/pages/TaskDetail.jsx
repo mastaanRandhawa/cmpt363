@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Pencil, Plus, MapPin, Repeat, Trash2, Play, CheckCircle, X } from 'lucide-react'
+import { Pencil, Plus, MapPin, Repeat, Trash2, CheckCircle, X } from 'lucide-react'
 import { priority as priorityMap } from '../data/priority'
 import useTaskStore from '../data/useTaskStore'
 import useToastStore from '../data/useToastStore'
 import Header from '../components/Header'
 import CircleCheck from '../components/CircleCheck'
 import ProgressBar from '../components/ProgressBar'
-import FadeOverlay from '../components/FadeOverlay'
 import ConfirmDialog from '../components/ConfirmDialog'
 
 function TaskDetail() {
@@ -18,6 +17,8 @@ function TaskDetail() {
         toggleComplete,
         updateTask,
         deleteTask,
+        softDeleteTask,
+        cancelSoftDelete,
         toggleSubtask,
         addSubtask,
         removeSubtask,
@@ -29,10 +30,6 @@ function TaskDetail() {
     const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
 
     const { show: showToast, dismiss: dismissToast } = useToastStore()
-
-    // Tracks whether a delete is pending so the fade overlay shows
-    const [deletePending, setDeletePending]   = useState(false)
-    const [navigating, setNavigating]         = useState(false)
 
     // ─── task not found ───────────────────────────────────────────────────────
     if (!task) {
@@ -97,38 +94,23 @@ function TaskDetail() {
     // ─── delete ───────────────────────────────────────────────────────────────
     function handleDelete() {
         setShowDeleteConfirm(false)
-        setDeletePending(true)
+        const taskId   = task.id
+        const taskName = task.name
 
-        const DURATION      = 5000
-        const HALF          = DURATION / 2
-        const FADE_DURATION = 350 // ms to fade to black before navigating
-        let navigated       = false
-
-        // At halfway: fade to black, then navigate once transition completes
-        const halfTimer = setTimeout(() => {
-            setNavigating(true)
-            setTimeout(() => {
-                navigated = true
-                navigate('/tasks')
-            }, FADE_DURATION)
-        }, HALF)
+        softDeleteTask(taskId)   // hide immediately
+        navigate('/tasks')       // navigate immediately
 
         showToast({
-            message:     `"${task.name}" deleted`,
+            message:     `"${taskName}" deleted`,
             icon:        <Trash2 size={16} color="var(--color-danger)" />,
             barColor:    'var(--color-danger)',
             actionLabel: 'Undo',
             onAction:    () => {
-                clearTimeout(halfTimer)
-                setDeletePending(false)
-                setNavigating(false)
+                cancelSoftDelete(taskId)
                 dismissToast()
             },
-            onExpire: () => {
-                deleteTask(task.id)
-                if (!navigated) navigate('/tasks')
-            },
-            duration: DURATION,
+            onExpire: () => deleteTask(taskId),
+            duration: 5000,
         })
     }
 
@@ -151,21 +133,10 @@ function TaskDetail() {
     return (
         <div className="flex flex-col pb-24" style={{ color: 'var(--color-text)', position: 'relative', minHeight: '100%' }}>
 
-            {/* fade overlay — dims during delete, goes full black before navigating */}
-            <FadeOverlay visible={deletePending} navigating={navigating} />
-
             <Header
                 title="Task Details"
                 subtitle={" "}
                 onBack={() => navigate(-1)}
-                rightAction={
-                    <button
-                        onClick={() => navigate('/tasks/create')}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)' }}
-                    >
-                        <Pencil size={18} />
-                    </button>
-                }
             />
 
             <div className="flex flex-col gap-5 p-5">
@@ -330,32 +301,54 @@ function TaskDetail() {
                     </div>
                 </div>
 
-                {/* actions */}
-                {!isComplete && (
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
-                        <button
-                            onClick={() => navigate('/timer', { state: { task } })}
-                            style={{ flex: 1, padding: '14px', background: 'var(--color-primary)', border: 'none', borderRadius: '14px', color: 'white', fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
-                        >
-                            <Play size={16} />
-                            Start
-                        </button>
-                        <button
-                            onClick={() => setShowDeleteConfirm(true)}
-                            style={{ flex: 1, padding: '14px', background: 'none', border: '1.5px solid var(--color-danger)', borderRadius: '14px', color: 'var(--color-danger)', fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
-                        >
-                            <Trash2 size={16} />
-                            Delete
-                        </button>
-                        <button
-                            onClick={handleComplete}
-                            style={{ flex: 1, padding: '14px', background: 'none', border: '1.5px solid var(--color-success)', borderRadius: '14px', color: 'var(--color-success)', fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
-                        >
-                            <CheckCircle size={16} />
-                            Complete
-                        </button>
-                    </div>
-                )}
+                {/* bottom actions — always visible */}
+                <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+                    <button
+                        onClick={() => setShowDeleteConfirm(true)}
+                        style={{
+                            flex: 1, padding: '14px',
+                            background: 'none',
+                            border: '1.5px solid var(--color-danger)',
+                            borderRadius: '14px',
+                            color: 'var(--color-danger)',
+                            fontWeight: 700, fontSize: '13px', cursor: 'pointer',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                        }}
+                    >
+                        <Trash2 size={16} />
+                        Delete
+                    </button>
+                    <button
+                        onClick={() => navigate('/tasks/create', { state: { editId: id }, replace: true })}
+                        style={{
+                            flex: 1, padding: '14px',
+                            background: 'none',
+                            border: '1.5px solid var(--color-primary)',
+                            borderRadius: '14px',
+                            color: 'var(--color-primary)',
+                            fontWeight: 700, fontSize: '13px', cursor: 'pointer',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                        }}
+                    >
+                        <Pencil size={16} />
+                        Edit
+                    </button>
+                    <button
+                        onClick={handleComplete}
+                        style={{
+                            flex: 1, padding: '14px',
+                            background: isComplete ? 'color-mix(in srgb, var(--color-success) 15%, transparent)' : 'none',
+                            border: `1.5px solid var(--color-success)`,
+                            borderRadius: '14px',
+                            color: 'var(--color-success)',
+                            fontWeight: 700, fontSize: '13px', cursor: 'pointer',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                        }}
+                    >
+                        <CheckCircle size={16} />
+                        {isComplete ? 'Undo' : 'Complete'}
+                    </button>
+                </div>
 
             </div>
 

@@ -219,6 +219,7 @@ function App() {
                                 <Route path="/calendar" element={<Calendar />} />
                                 <Route path="/more" element={<More />} />
                                 <Route path="/timer" element={<Timer />} />
+                                <Route path="/tasks/:id/edit" element={<TaskCreate />} />
                             </Routes>
                         </div>
 

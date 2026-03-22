@@ -169,6 +169,7 @@ const useTaskStore = create(
     persist(
         (set) => ({
             tasks: SEED_TASKS,
+            pendingDeleteIds: [],
 
             // Add a new task — id is generated here so callers don't have to
             addTask: (task) => set((s) => ({
@@ -179,13 +180,24 @@ const useTaskStore = create(
             })),
 
             // Merge partial changes into a task
-            updateTask: (id, changes) => set((s) => ({
-                tasks: s.tasks.map((t) => t.id === id ? { ...t, ...changes } : t),
+            updateTask: (id, changes) => set(state => ({
+                tasks: state.tasks.map(t => t.id === id ? { ...t, ...changes } : t)
             })),
 
             // Remove a task entirely
             deleteTask: (id) => set((s) => ({
                 tasks: s.tasks.filter((t) => t.id !== id),
+                pendingDeleteIds: s.pendingDeleteIds.filter(i => i !== id),
+            })),
+
+            // Hide task immediately (shows toast, deletes on expire)
+            softDeleteTask: (id) => set((s) => ({
+                pendingDeleteIds: [...s.pendingDeleteIds, id],
+            })),
+
+            // Cancel soft delete (undo)
+            cancelSoftDelete: (id) => set((s) => ({
+                pendingDeleteIds: s.pendingDeleteIds.filter(i => i !== id),
             })),
 
             // Toggle between 'todo' and 'completed'
