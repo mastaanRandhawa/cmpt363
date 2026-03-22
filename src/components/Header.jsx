@@ -51,9 +51,9 @@ function Header({ title, subtitle, onBack, rightAction }) {
         }}>
 
             {/* text column */}
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1, minWidth: 0, paddingLeft: '28px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1, minWidth: 0 }}>
 
-                {/* subtitle — fixed height, never affects layout below */}
+                {/* subtitle — fixed height, indented to match title (skips arrow width) */}
                 <p style={{
                     fontSize: '11px',
                     fontWeight: 600,
@@ -62,32 +62,34 @@ function Header({ title, subtitle, onBack, rightAction }) {
                     margin: 0,
                     height: '16px',
                     lineHeight: '16px',
+                    paddingLeft: '26px',
                     visibility: subtitle ? 'visible' : 'hidden',
                     userSelect: 'none',
                 }}>
                     {subtitle || 'X'}
                 </p>
 
-                {/* title row — back arrow sits inline with the title */}
+                {/* title row — arrow slot always 26px so title never shifts */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                    {onBack && (
-                        <button
-                            onClick={handleBack}
-                            style={{
-                                background: 'none',
-                                border: 'none',
-                                cursor: 'pointer',
-                                color: 'var(--color-text-muted)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                padding: '0',
-                                flexShrink: 0,
-                                marginLeft: '-28px',
-                            }}
-                        >
-                            <ChevronLeft size={22} />
-                        </button>
-                    )}
+                    <div style={{ width: '26px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                        {onBack && (
+                            <button
+                                onClick={handleBack}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    color: 'var(--color-text-muted)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: '0',
+                                }}
+                            >
+                                <ChevronLeft size={22} />
+                            </button>
+                        )}
+                    </div>
+
                     {title && (
                         <h1 style={{
                             fontSize: '22px',
