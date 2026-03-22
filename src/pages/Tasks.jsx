@@ -117,7 +117,7 @@ function Tasks() {
             <div className="flex flex-col gap-4 px-5">
 
                 {/* search */}
-                <div onClick={e => e.stopPropagation()}>
+                <div onClick={e => e.stopPropagation()} style={{ paddingBottom: '8px' }}>
                     <SearchBar value={search} onChange={setSearch} />
                 </div>
 
@@ -158,11 +158,11 @@ function Tasks() {
 
                 {/* divider */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ flex: 1, height: '1px', background: 'var(--color-surface-alt)' }} />
+                    <div style={{ flex: 1, height: '2px', background: 'var(--color-surface-alt)' }} />
                     <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--color-text-muted)' }}>
                         TASKS
                     </span>
-                    <div style={{ flex: 1, height: '1px', background: 'var(--color-surface-alt)' }} />
+                    <div style={{ flex: 1, height: '2px', background: 'var(--color-surface-alt)' }} />
                 </div>
 
                 {/* task list */}

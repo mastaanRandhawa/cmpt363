@@ -48,6 +48,10 @@ function Header({ title, subtitle, onBack, rightAction }) {
             padding: '0 20px',
             height: '72px',
             flexShrink: 0,
+            position: 'sticky',
+            top: 0,
+            zIndex: 10,
+            background: 'var(--color-bg)',
         }}>
 
             {/* text column */}

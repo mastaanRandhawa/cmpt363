@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
 import Tasks from './pages/Tasks'
@@ -32,6 +32,94 @@ const devControlStyle = {
     fontSize: '13px',
     cursor: 'pointer',
     outline: 'none',
+}
+
+function StatusBar() {
+    const [time, setTime] = useState(() => {
+        const now = new Date()
+        return now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+    })
+
+    useEffect(() => {
+        const id = setInterval(() => {
+            const now = new Date()
+            setTime(now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }))
+        }, 1000)
+        return () => clearInterval(id)
+    }, [])
+
+    return (
+        <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '54px',
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'space-between',
+            paddingBottom: '6px',
+            paddingLeft: '28px',
+            paddingRight: '28px',
+            background: 'var(--color-bg)',
+            zIndex: 9,
+            pointerEvents: 'none',
+        }}>
+            {/* time */}
+            <span style={{
+                fontSize: '13px',
+                fontWeight: 700,
+                color: 'var(--color-text)',
+                letterSpacing: '0.01em',
+                lineHeight: 1,
+            }}>
+                {time}
+            </span>
+
+            {/* right icons */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {/* Signal bars */}
+                <svg width="17" height="12" viewBox="0 0 17 12" fill="none">
+                    <rect x="0"  y="8" width="3" height="4" rx="1" fill="var(--color-text)" />
+                    <rect x="4.5" y="5" width="3" height="7" rx="1" fill="var(--color-text)" />
+                    <rect x="9"  y="2.5" width="3" height="9.5" rx="1" fill="var(--color-text)" />
+                    <rect x="13.5" y="0" width="3" height="12" rx="1" fill="var(--color-text)" opacity="0.3" />
+                </svg>
+                {/* Wi-Fi */}
+                <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+                    <path d="M8 9.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z" fill="var(--color-text)" />
+                    <path d="M3.5 6.5C4.9 5.1 6.4 4.4 8 4.4s3.1.7 4.5 2.1" stroke="var(--color-text)" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+                    <path d="M1 3.8C3.1 1.7 5.4.7 8 .7s4.9 1 7 3.1" stroke="var(--color-text)" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.4" />
+                </svg>
+                {/* Battery */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1px' }}>
+                    <div style={{
+                        width: '25px',
+                        height: '12px',
+                        borderRadius: '3px',
+                        border: '1.5px solid var(--color-text)',
+                        padding: '2px',
+                        display: 'flex',
+                        alignItems: 'center',
+                    }}>
+                        <div style={{
+                            width: '75%',
+                            height: '100%',
+                            background: 'var(--color-text)',
+                            borderRadius: '1px',
+                        }} />
+                    </div>
+                    <div style={{
+                        width: '2px',
+                        height: '5px',
+                        background: 'var(--color-text)',
+                        borderRadius: '0 1px 1px 0',
+                        opacity: 0.5,
+                    }} />
+                </div>
+            </div>
+        </div>
+    )
 }
 
 function App() {
@@ -93,6 +181,9 @@ function App() {
                     flexDirection: 'column',
                 }}>
 
+                    {/* Status Bar */}
+                    <StatusBar />
+
                     {/* Dynamic Island */}
                     <div style={{
                         position: 'absolute',
@@ -112,7 +203,7 @@ function App() {
                             style={{
                                 flex: 1,
                                 overflowY: 'auto',
-                                paddingTop: '60px',
+                                paddingTop: '54px',
                                 paddingLeft: '8px',
                                 paddingRight: '8px',
                                 msOverflowStyle: 'none',
