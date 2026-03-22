@@ -145,4 +145,67 @@ function BottomTrayHandle() {
     )
 }
 
+export function BottomTrayItem({ label, icon, rightIcon, onClick }) {
+    const Icon = icon;
+    const RightIcon = rightIcon;
+    const iconSize = 18;
+    return (
+        <button
+            onClick={onClick}
+            style={{
+                display: 'block',
+                width: '100%',
+                background: 'none',
+                cursor: 'pointer',
+                color: 'var(--color-text)',
+                padding: '0px 24px',
+                border: 'none',
+            }}
+        >
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '14px',
+                    borderBottom: 'var(--color-separator) 2px solid',
+                }}
+            >
+                <Icon
+                    size={iconSize}
+                    strokeWidth={1.8}
+                    style={{
+                        flex: '0 0 auto',
+                        width: iconSize,
+                    }}
+                />
+                <div
+                    style={{
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        flex: '1 1',
+                    }}
+                >
+                    {label}
+                </div>
+
+                { /* The right icon or an empty space in its place. */ }
+                { RightIcon && <RightIcon
+                            size={iconSize}
+                            strokeWidth={1.8}
+                            style={{
+                                flex: '0 0 auto',
+                                width: iconSize,
+                                opacity: '0.6',
+                            }}
+                        />
+                }
+                { !RightIcon && <div style={{ width: iconSize }} /> }
+            </div>
+        </button>
+    )
+}
+
 export default BottomTrayModal

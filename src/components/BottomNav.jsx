@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Home, CheckSquare, Cpu, Calendar, MoreHorizontal, Cog } from 'lucide-react'
+import { Home, CheckSquare, Cpu, Calendar, MoreHorizontal, Settings, ChevronRight, HelpCircle, CircleAlert } from 'lucide-react'
 import useBottomTrayStore from '../data/useBottomTrayStore'
+import { BottomTrayItem } from './BottomTray'
 
 // TODO: Update Robo icon
 
@@ -33,16 +34,29 @@ const tabs = [
 ]
 
 const trayItems = [
-    { label: 'Settings', icon: Cog, path: '/settings' }
+    { label: 'Settings', icon: Settings, path: '/settings' },
+    { label: 'Notifications', icon: CircleAlert, path: '/notifications' },
+    { label: 'Help', icon: HelpCircle, path: '/help' },
 ]
 
-function showMoreTray({ bottomTrayStore }) {
-    const { show } = bottomTrayStore;
+function showMoreTray({ bottomTrayStore, navigate }) {
+    const { show, dismiss } = bottomTrayStore;
     show({
         contents: (
-            <div>
-                This is the tray.
-            </div>
+            <>
+                {trayItems.map(item => {
+                    return <BottomTrayItem
+                        key={item.label}
+                        label={item.label}
+                        icon={item.icon}
+                        rightIcon={item.rightIcon ?? ChevronRight}
+                        onClick={() => {
+                            navigate(item.path)
+                            dismiss()
+                        }}
+                    ></BottomTrayItem>
+                })}
+            </>
         ),
     })
 }
@@ -73,7 +87,8 @@ function BottomNav() {
                             // If the tab is an action instead of a path, run the action.
                             if (action != null) {
                                 return action({
-                                    bottomTrayStore
+                                    bottomTrayStore,
+                                    navigate
                                 })
                             }
 

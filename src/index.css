@@ -48,6 +48,7 @@ html, body {
   --color-bg:            #1E1B2E;
   --color-surface:       #2A2640;
   --color-surface-alt:   #332F4A;
+  --color-separator:     #544d80;
   --color-modal-shade:   #211f2855;
   --color-text:          #F5F0FF;
   --color-text-muted:    #A89FDC;
@@ -65,6 +66,7 @@ html, body {
   --color-bg:            #1A1714;
   --color-surface:       #26211D;
   --color-surface-alt:   #2F2A25;
+  --color-separator:     #2e2924;
   --color-modal-shade:   #100f0f55;
   --color-text:          #F0F4F8;
   --color-text-muted:    #4EC9D4;
@@ -82,6 +84,7 @@ html, body {
   --color-bg:            #161C24;
   --color-surface:       #1F2D3D;
   --color-surface-alt:   #263545;
+  --color-separator:     #4a6887;
   --color-modal-shade:   #171c2155;
   --color-text:          #EDF2FA;
   --color-text-muted:    #7AACE8;
@@ -99,6 +102,7 @@ html, body {
   --color-bg:            #F5F2EC;
   --color-surface:       #E8E2D8;
   --color-surface-alt:   #D8D0C4;
+  --color-separator:     #d8d0c5;
   --color-modal-shade:   #eae9e655;
   --color-text:          #2C2418;
   --color-text-muted:    #4A7C5F;
