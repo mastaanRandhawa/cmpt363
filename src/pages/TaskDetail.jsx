@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Pencil, Plus, MapPin, Repeat, Trash2, CheckCircle, X } from 'lucide-react'
+import { Pencil, Plus, MapPin, Repeat, Trash2, CheckCircle, X, GripVertical } from 'lucide-react'
 import { priority as priorityMap } from '../data/priority'
 import useTaskStore from '../data/useTaskStore'
 import useToastStore from '../data/useToastStore'
@@ -8,6 +8,7 @@ import Header from '../components/Header'
 import CircleCheck from '../components/CircleCheck'
 import ProgressBar from '../components/ProgressBar'
 import ConfirmDialog from '../components/ConfirmDialog'
+import useDragSort from '../hooks/useDragSort'
 
 function TaskDetail() {
     const navigate    = useNavigate()
@@ -48,9 +49,15 @@ function TaskDetail() {
 
     // ─── derived state ────────────────────────────────────────────────────────
     const p              = priorityMap[task.priority]
-    const subtasks       = task.subtasks ?? []
-    const completedCount = subtasks.filter(s => s.done).length
+    const rawSubtasks    = task.subtasks ?? []
+    const completedCount = rawSubtasks.filter(s => s.done).length
     const isComplete     = task.status === 'completed'
+
+    // Drag-to-reorder — persists order to store on drop
+    function setSubtasksOrdered(ordered) {
+        updateTask(task.id, { subtasks: ordered })
+    }
+    const { items: subtasks, getDragProps, dragOverIndex } = useDragSort(rawSubtasks, setSubtasksOrdered)
 
     // ─── helpers ──────────────────────────────────────────────────────────────
     function formatDate(dateStr) {
@@ -221,11 +228,16 @@ function TaskDetail() {
                         {subtasks.map((subtask, i) => (
                             <div
                                 key={subtask.id}
+                                {...getDragProps(i)}
                                 style={{
                                     display: 'flex', alignItems: 'center', gap: '12px', padding: '13px 14px',
                                     borderBottom: i < subtasks.length - 1 ? '1px solid var(--color-surface-alt)' : 'none',
+                                    opacity: dragOverIndex === i ? 0.4 : 1,
+                                    transition: 'opacity 0.15s',
+                                    cursor: 'grab',
                                 }}
                             >
+                                <GripVertical size={14} color="var(--color-text-muted)" style={{ flexShrink: 0, opacity: 0.5 }} />
                                 <CircleCheck
                                     checked={subtask.done}
                                     onChange={() => toggleSubtask(task.id, subtask.id)}

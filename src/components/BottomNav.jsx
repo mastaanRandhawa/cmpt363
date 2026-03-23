@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Home, CheckSquare, Cpu, Calendar, MoreHorizontal, Settings, ChevronRight, HelpCircle, CircleAlert } from 'lucide-react'
 import useBottomTrayStore from '../data/useBottomTrayStore'
+import useNavGuardStore from '../data/useNavGuardStore'
 import { BottomTrayItem } from './BottomTray'
 
 // TODO: Update Robo icon
@@ -66,6 +67,12 @@ function BottomNav() {
     const navigate = useNavigate()
     const location = useLocation()
     const bottomTrayStore = useBottomTrayStore()
+    const guardFn = useNavGuardStore(s => s.guardFn)
+
+    function guardedNav(path) {
+        if (guardFn) { guardFn(path, () => navigate(path)); return }
+        navigate(path)
+    }
 
     return (
         <div style={{
@@ -84,15 +91,10 @@ function BottomNav() {
                     <button
                         key={path ?? label}
                         onClick={() => {
-                            // If the tab is an action instead of a path, run the action.
                             if (action != null) {
-                                return action({
-                                    bottomTrayStore,
-                                    navigate
-                                })
+                                return action({ bottomTrayStore, navigate: guardedNav })
                             }
-
-                            navigate(path)
+                            guardedNav(path)
                         }}
                         style={{
                             display: 'flex',

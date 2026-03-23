@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
-import { Command, X, Pencil, Check, Plus, CheckCircle, MapPin, AlertTriangle } from 'lucide-react'
+import { Command, X, Pencil, Check, Plus, CheckCircle, MapPin, AlertTriangle, GripVertical } from 'lucide-react'
 import useTaskStore from '../data/useTaskStore'
 import useDebugStore from '../data/useDebugStore'
+import useNavGuardStore from '../data/useNavGuardStore'
+import useDragSort from '../hooks/useDragSort'
 import Header from '../components/Header'
 import Input from '../components/Input'
 import Toggle from '../components/Toggle'
@@ -129,6 +131,25 @@ function TaskCreate() {
     })()
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
     const [pendingNav, setPendingNav]             = useState(null)
+    const [pendingProceed, setPendingProceed]     = useState(null)
+
+    const setGuard   = useNavGuardStore(s => s.setGuard)
+    const clearGuard = useNavGuardStore(s => s.clearGuard)
+
+    // Register/clear BottomNav guard whenever isDirty changes
+    useEffect(() => {
+        if (isDirty) {
+            setGuard((to, proceed) => {
+                setPendingNav(to)
+                setShowLeaveConfirm(true)
+                // Store proceed so the confirm dialog can call it
+                setPendingProceed(() => proceed)
+            })
+        } else {
+            clearGuard()
+        }
+        return () => clearGuard()
+    }, [isDirty, setGuard, clearGuard])
 
     // Warn on browser refresh / tab close
     useEffect(() => {
@@ -321,12 +342,12 @@ function TaskCreate() {
     )
 
     if (step === 'subtasks') return (
-        <div className="flex flex-col pb-24" style={{ color: 'var(--color-text)', minHeight: '100%' }}>
+        <div style={{ color: 'var(--color-text)', minHeight: '100%', display: 'flex', flexDirection: 'column', paddingBottom: '96px' }}>
             <Header title="Add A New Task" onBack={() => setStep('form')} />
-            <div className="flex flex-col gap-5 p-5">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '8px 20px 20px' }}>
 
                 {/* heading */}
-                <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', paddingTop: '4px' }}>
                     <div style={{
                         background: 'color-mix(in srgb, var(--color-primary) 15%, transparent)',
                         borderRadius: '18px', width: '56px', height: '56px',
@@ -337,7 +358,7 @@ function TaskCreate() {
                     <p style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: 'var(--color-primary)' }}>
                         Task Breakdown
                     </p>
-                    <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-muted)' }}>
+                    <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: 1.5, maxWidth: '280px' }}>
                         {aiSuggest
                             ? 'Here is my suggested breakdown of the required steps to complete the task!'
                             : 'Add steps to break this task into manageable pieces.'
@@ -364,84 +385,22 @@ function TaskCreate() {
                 )}
 
                 {/* subtask list */}
-                <div style={{ background: 'var(--color-surface)', borderRadius: '14px', overflow: 'hidden' }}>
-                    {subtasks.map((subtask, i) => (
-                        <div key={subtask.id} style={{
-                            display: 'flex', alignItems: 'center', gap: '10px',
-                            padding: '12px 14px',
-                            borderBottom: i < subtasks.length - 1 ? '1px solid var(--color-surface-alt)' : 'none',
-                        }}>
-                            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-text-muted)', width: '16px', flexShrink: 0, textAlign: 'right' }}>
-                                {i + 1}
-                            </span>
-
-                            {editingId === subtask.id ? (
-                                <input
-                                    autoFocus
-                                    value={editLabel}
-                                    onChange={e => setEditLabel(e.target.value)}
-                                    onKeyDown={e => { if (e.key === 'Enter') commitEdit(subtask.id); if (e.key === 'Escape') cancelEdit() }}
-                                    style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--color-text)', fontSize: '14px' }}
-                                />
-                            ) : (
-                                <span style={{ flex: 1, fontSize: '14px', color: 'var(--color-text)' }}>{subtask.label}</span>
-                            )}
-
-                            {subtask.ai && editingId !== subtask.id && (
-                                <span style={{
-                                    fontSize: '9px', fontWeight: 700, letterSpacing: '0.06em',
-                                    color: 'var(--color-primary-soft)',
-                                    background: 'color-mix(in srgb, var(--color-primary) 12%, transparent)',
-                                    padding: '2px 6px', borderRadius: '999px', flexShrink: 0,
-                                }}>AI</span>
-                            )}
-
-                            <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-                                {editingId === subtask.id ? (
-                                    <>
-                                        <ActionBtn onClick={() => commitEdit(subtask.id)} color="var(--color-success)"><Check size={13} /></ActionBtn>
-                                        <ActionBtn onClick={cancelEdit} color="var(--color-text-muted)"><X size={13} /></ActionBtn>
-                                    </>
-                                ) : (
-                                    <>
-                                        <ActionBtn onClick={() => startEdit(subtask)} color="var(--color-primary)"><Pencil size={13} /></ActionBtn>
-                                        <ActionBtn onClick={() => removeSubtask(subtask.id)} color="var(--color-danger)"><X size={13} /></ActionBtn>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-
-                    {addingNew ? (
-                        <div style={{
-                            display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px',
-                            borderTop: subtasks.length > 0 ? '1px solid var(--color-surface-alt)' : 'none',
-                        }}>
-                            <input
-                                autoFocus
-                                value={newSubtask}
-                                onChange={e => setNewSubtask(e.target.value)}
-                                onKeyDown={e => { if (e.key === 'Enter') addNewSubtask(); if (e.key === 'Escape') setAddingNew(false) }}
-                                placeholder="New subtask..."
-                                style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--color-text)', fontSize: '14px' }}
-                            />
-                            <button onClick={addNewSubtask} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', fontWeight: 700, fontSize: '13px' }}>Add</button>
-                            <button onClick={() => setAddingNew(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}><X size={14} /></button>
-                        </div>
-                    ) : (
-                        <button
-                            onClick={() => setAddingNew(true)}
-                            style={{
-                                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                                padding: '12px', background: 'none', border: 'none',
-                                borderTop: subtasks.length > 0 ? '1px solid var(--color-surface-alt)' : 'none',
-                                cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: '13px', fontWeight: 600,
-                            }}
-                        >
-                            <Plus size={14} /> ADD SUBTASK
-                        </button>
-                    )}
-                </div>
+                <SubtaskDragList
+                    subtasks={subtasks}
+                    setSubtasks={setSubtasks}
+                    editingId={editingId}
+                    editLabel={editLabel}
+                    setEditLabel={setEditLabel}
+                    commitEdit={commitEdit}
+                    cancelEdit={cancelEdit}
+                    startEdit={startEdit}
+                    removeSubtask={removeSubtask}
+                    addingNew={addingNew}
+                    setAddingNew={setAddingNew}
+                    newSubtask={newSubtask}
+                    setNewSubtask={setNewSubtask}
+                    addNewSubtask={addNewSubtask}
+                />
 
                 <button
                     onClick={handleConfirmSteps}
@@ -449,6 +408,7 @@ function TaskCreate() {
                         width: '100%', padding: '16px', background: 'var(--color-accent)',
                         border: 'none', borderRadius: '14px', color: 'white',
                         fontWeight: 700, fontSize: '15px', cursor: 'pointer', boxSizing: 'border-box',
+                        marginTop: '4px',
                     }}
                 >
                     Confirm Steps
@@ -460,21 +420,21 @@ function TaskCreate() {
     if (step === 'confirm') {
         const p = priorityMap[priority] ?? { label: priority?.toUpperCase(), color: 'var(--color-text-muted)' }
         return (
-            <div className="flex flex-col pb-24" style={{ color: 'var(--color-text)', minHeight: '100%' }}>
+            <div style={{ color: 'var(--color-text)', minHeight: '100%', display: 'flex', flexDirection: 'column', paddingBottom: '96px' }}>
                 <Header title="Add A New Task" onBack={() => navigate('/tasks')} />
-                <div className="flex flex-col gap-5 p-5" style={{ alignItems: 'center', textAlign: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '24px', padding: '32px 20px 20px' }}>
 
                     <div style={{
-                        width: '64px', height: '64px', borderRadius: '50%',
+                        width: '72px', height: '72px', borderRadius: '50%',
                         background: 'color-mix(in srgb, var(--color-success) 20%, transparent)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '16px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
-                        <CheckCircle size={32} color="var(--color-success)" />
+                        <CheckCircle size={36} color="var(--color-success)" />
                     </div>
 
-                    <p style={{ margin: 0, fontSize: '24px', fontWeight: 800 }}>Task Created!</p>
+                    <p style={{ margin: 0, fontSize: '26px', fontWeight: 800 }}>Task Created!</p>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
                         <p style={{ margin: 0, fontSize: '16px', fontWeight: 800, letterSpacing: '0.06em' }}>
                             {name.toUpperCase()}
                         </p>
@@ -551,11 +511,14 @@ function TaskCreate() {
                     cancelLabel="Keep Editing"
                     onConfirm={() => {
                         setShowLeaveConfirm(false)
-                        navigate(pendingNav ?? (isEdit ? `/tasks/${editId}` : '/tasks'), { replace: isEdit })
+                        clearGuard()
+                        if (pendingProceed) { pendingProceed(); setPendingProceed(null) }
+                        else navigate(pendingNav ?? (isEdit ? `/tasks/${editId}` : '/tasks'), { replace: isEdit })
                     }}
                     onCancel={() => {
                         setShowLeaveConfirm(false)
                         setPendingNav(null)
+                        setPendingProceed(null)
                     }}
                 />
             )}
@@ -918,6 +881,105 @@ function ActionBtn({ onClick, color, children }) {
         }}>
             {children}
         </button>
+    )
+}
+
+function SubtaskDragList({
+                             subtasks, setSubtasks,
+                             editingId, editLabel, setEditLabel,
+                             commitEdit, cancelEdit, startEdit, removeSubtask,
+                             addingNew, setAddingNew, newSubtask, setNewSubtask, addNewSubtask,
+                         }) {
+    const { items, getDragProps, dragOverIndex } = useDragSort(subtasks, setSubtasks)
+
+    return (
+        <div style={{ background: 'var(--color-surface)', borderRadius: '14px', overflow: 'hidden' }}>
+            {items.map((subtask, i) => (
+                <div
+                    key={subtask.id}
+                    {...getDragProps(i)}
+                    style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '12px 14px',
+                        borderBottom: i < items.length - 1 ? '1px solid var(--color-surface-alt)' : 'none',
+                        opacity: dragOverIndex === i ? 0.4 : 1,
+                        transition: 'opacity 0.15s',
+                        cursor: 'grab',
+                    }}
+                >
+                    <GripVertical size={13} color="var(--color-text-muted)" style={{ flexShrink: 0, opacity: 0.5 }} />
+
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-text-muted)', width: '14px', flexShrink: 0, textAlign: 'right' }}>
+                        {i + 1}
+                    </span>
+
+                    {editingId === subtask.id ? (
+                        <input
+                            autoFocus
+                            value={editLabel}
+                            onChange={e => setEditLabel(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') commitEdit(subtask.id); if (e.key === 'Escape') cancelEdit() }}
+                            style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--color-text)', fontSize: '14px' }}
+                        />
+                    ) : (
+                        <span style={{ flex: 1, fontSize: '14px', color: 'var(--color-text)' }}>{subtask.label}</span>
+                    )}
+
+                    {subtask.ai && editingId !== subtask.id && (
+                        <span style={{
+                            fontSize: '9px', fontWeight: 700, letterSpacing: '0.06em',
+                            color: 'var(--color-primary-soft)',
+                            background: 'color-mix(in srgb, var(--color-primary) 12%, transparent)',
+                            padding: '2px 6px', borderRadius: '999px', flexShrink: 0,
+                        }}>AI</span>
+                    )}
+
+                    <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                        {editingId === subtask.id ? (
+                            <>
+                                <ActionBtn onClick={() => commitEdit(subtask.id)} color="var(--color-success)"><Check size={13} /></ActionBtn>
+                                <ActionBtn onClick={cancelEdit} color="var(--color-text-muted)"><X size={13} /></ActionBtn>
+                            </>
+                        ) : (
+                            <>
+                                <ActionBtn onClick={() => startEdit(subtask)} color="var(--color-primary)"><Pencil size={13} /></ActionBtn>
+                                <ActionBtn onClick={() => removeSubtask(subtask.id)} color="var(--color-danger)"><X size={13} /></ActionBtn>
+                            </>
+                        )}
+                    </div>
+                </div>
+            ))}
+
+            {addingNew ? (
+                <div style={{
+                    display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px',
+                    borderTop: items.length > 0 ? '1px solid var(--color-surface-alt)' : 'none',
+                }}>
+                    <input
+                        autoFocus
+                        value={newSubtask}
+                        onChange={e => setNewSubtask(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') addNewSubtask(); if (e.key === 'Escape') setAddingNew(false) }}
+                        placeholder="New subtask..."
+                        style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--color-text)', fontSize: '14px' }}
+                    />
+                    <button onClick={addNewSubtask} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', fontWeight: 700, fontSize: '13px' }}>Add</button>
+                    <button onClick={() => setAddingNew(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}><X size={14} /></button>
+                </div>
+            ) : (
+                <button
+                    onClick={() => setAddingNew(true)}
+                    style={{
+                        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                        padding: '12px', background: 'none', border: 'none',
+                        borderTop: items.length > 0 ? '1px solid var(--color-surface-alt)' : 'none',
+                        cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: '13px', fontWeight: 600,
+                    }}
+                >
+                    <Plus size={14} /> ADD SUBTASK
+                </button>
+            )}
+        </div>
     )
 }
 
