@@ -30,6 +30,7 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import useRoboStore from './useRoboStore'
 
 const SEED_TASKS = [
     {
@@ -169,7 +170,6 @@ const useTaskStore = create(
     persist(
         (set) => ({
             tasks: SEED_TASKS,
-            pendingDeleteIds: [],
 
             // Add a new task — id is generated here so callers don't have to
             addTask: (task) => set((s) => ({
@@ -187,45 +187,37 @@ const useTaskStore = create(
             // Remove a task entirely
             deleteTask: (id) => set((s) => ({
                 tasks: s.tasks.filter((t) => t.id !== id),
-                pendingDeleteIds: s.pendingDeleteIds.filter(i => i !== id),
-            })),
-
-            // Hide task immediately (shows toast, deletes on expire)
-            softDeleteTask: (id) => set((s) => ({
-                pendingDeleteIds: [...s.pendingDeleteIds, id],
-            })),
-
-            // Cancel soft delete (undo)
-            cancelSoftDelete: (id) => set((s) => ({
-                pendingDeleteIds: s.pendingDeleteIds.filter(i => i !== id),
             })),
 
             // Toggle between 'todo' and 'completed'
             // 'in-progress' tasks are treated as 'todo' for the toggle
-            toggleComplete: (id) => set((s) => ({
+            toggleComplete: (id) => set((s) => {
+                const task       = s.tasks.find(t => t.id === id)
+                const completing = task && task.status !== 'completed'
+                if (completing) {
+                    useRoboStore.getState().completeTask(task)
+                }
+                return {
+                    tasks: s.tasks.map((t) =>
+                        t.id === id
+                            ? { ...t, status: t.status === 'completed' ? 'todo' : 'completed' }
+                            : t
+                    ),
+                }
+            }),
+
+            // Flip a single subtask's done flag
+            toggleSubtask: (taskId, subtaskId) => set((s) => ({
                 tasks: s.tasks.map((t) =>
-                    t.id === id
-                        ? { ...t, status: t.status === 'completed' ? 'todo' : 'completed' }
+                    t.id === taskId
+                        ? {
+                            ...t,
+                            subtasks: t.subtasks.map((sub) =>
+                                sub.id === subtaskId ? { ...sub, done: !sub.done } : sub
+                            ),
+                        }
                         : t
                 ),
-            })),
-
-            // Flip a single subtask's done flag, then auto-derive task status
-            toggleSubtask: (taskId, subtaskId) => set((s) => ({
-                tasks: s.tasks.map((t) => {
-                    if (t.id !== taskId) return t
-                    const updatedSubtasks = t.subtasks.map((sub) =>
-                        sub.id === subtaskId ? { ...sub, done: !sub.done } : sub
-                    )
-                    const total     = updatedSubtasks.length
-                    const doneCount = updatedSubtasks.filter(s => s.done).length
-                    const status =
-                        total === 0        ? t.status            // no subtasks — leave as-is
-                            : doneCount === 0  ? 'todo'
-                                : doneCount < total ? 'in-progress'
-                                    : 'completed'
-                    return { ...t, subtasks: updatedSubtasks, status }
-                }),
             })),
 
             // Add a new subtask to a task

@@ -6,11 +6,13 @@
 import useTaskStore from '../data/useTaskStore'
 import useToastStore from '../data/useToastStore'
 import useDebugStore from '../data/useDebugStore'
+import useAIStore from '../data/useAIStore'
+import useTaskTemplateStore from '../data/useTaskTemplateStore'
 import { useState } from 'react'
 
 const s = {
     panel: {
-        width: '280px',
+        width: '450px',
         background: '#111',
         border: '1px solid #2a2a2a',
         borderRadius: '12px',
@@ -76,8 +78,14 @@ function DebugPanel() {
     const tasks      = useTaskStore(state => state.tasks)
     const toast      = useToastStore(state => state.toast)
     const debugPages = useDebugStore(state => state.pages)
+    const ai         = useAIStore()
+    const templates  = useTaskTemplateStore(state => state.templates)
+    const clearTemplates = useTaskTemplateStore(state => state.clearTemplates)
     const [collapsed, setCollapsed] = useState(false)
     const [expandedId, setExpandedId] = useState(null)
+    const [aiExpanded, setAiExpanded] = useState(true)
+    const [templatesExpanded, setTemplatesExpanded] = useState(true)
+    const [expandedTemplateKey, setExpandedTemplateKey] = useState(null)
 
     const total     = tasks.length
     const completed = tasks.filter(t => t.status === 'completed').length
@@ -159,6 +167,172 @@ function DebugPanel() {
                             </>
                         ) : (
                             <span style={{ color: '#333' }}>—</span>
+                        )}
+                    </div>
+
+                    {/* AI state */}
+                    <div style={s.section}>
+                        <div
+                            style={{ ...s.sectionTitle, color: '#5a7a9a', cursor: 'pointer', display: 'flex', justifyContent: 'space-between' }}
+                            onClick={() => setAiExpanded(v => !v)}
+                        >
+                            <span>AI BREAKDOWN</span>
+                            <span style={{ color: '#333' }}>{aiExpanded ? '▼' : '▶'}</span>
+                        </div>
+
+                        {/* status badge */}
+                        <div style={s.row}>
+                            <span style={s.key}>status</span>
+                            <span style={s.badge(
+                                ai.status === 'success' ? '#7BAE8F'
+                                    : ai.status === 'loading' ? '#E8C97E'
+                                        : ai.status === 'error'   ? '#E07070'
+                                            : '#444'
+                            )}>
+                                {ai.status}
+                            </span>
+                        </div>
+
+                        {aiExpanded && (
+                            <>
+                                {/* prompt */}
+                                {ai.lastPrompt && (
+                                    <div style={{ marginBottom: '8px' }}>
+                                        <div style={{ ...s.sectionTitle, color: '#444', marginBottom: '4px' }}>PROMPT SENT</div>
+                                        <pre style={{
+                                            margin: 0, color: '#666', fontSize: '10px',
+                                            whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                                            background: '#0a0a0a', borderRadius: '6px',
+                                            padding: '8px', maxHeight: '120px', overflowY: 'auto',
+                                            scrollbarWidth: 'none',
+                                        }}>
+                                            {ai.lastPrompt}
+                                        </pre>
+                                    </div>
+                                )}
+
+                                {/* raw response */}
+                                {ai.lastResponse && (
+                                    <div style={{ marginBottom: '8px' }}>
+                                        <div style={{ ...s.sectionTitle, color: '#444', marginBottom: '4px' }}>RAW RESPONSE</div>
+                                        <pre style={{
+                                            margin: 0, color: '#7BAE8F', fontSize: '10px',
+                                            whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                                            background: '#0a0a0a', borderRadius: '6px',
+                                            padding: '8px', maxHeight: '120px', overflowY: 'auto',
+                                            scrollbarWidth: 'none',
+                                        }}>
+                                            {ai.lastResponse}
+                                        </pre>
+                                    </div>
+                                )}
+
+                                {/* parsed subtasks */}
+                                {ai.lastParsed && (
+                                    <div>
+                                        <div style={{ ...s.sectionTitle, color: '#444', marginBottom: '4px' }}>
+                                            PARSED ({ai.lastParsed.length} subtasks)
+                                        </div>
+                                        {ai.lastParsed.map((s, i) => (
+                                            <div key={i} style={{ marginBottom: '3px', display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
+                                                <span style={{ color: '#444', flexShrink: 0 }}>{i + 1}.</span>
+                                                <span style={{ color: '#777', fontSize: '10px', lineHeight: 1.4 }}>
+                                                    {s.label}
+                                                    {s.estimatedMinutes && (
+                                                        <span style={{ color: '#555' }}> · {s.estimatedMinutes}m</span>
+                                                    )}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* error */}
+                                {ai.error && (
+                                    <div style={{ color: '#E07070', fontSize: '10px', marginTop: '4px' }}>
+                                        ✕ {ai.error}
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+
+                    {/* learned templates */}
+                    <div style={s.section}>
+                        <div
+                            style={{ ...s.sectionTitle, color: '#7a6a9a', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                            onClick={() => setTemplatesExpanded(v => !v)}
+                        >
+                            <span>LEARNED TEMPLATES ({Object.keys(templates).length})</span>
+                            <span style={{ color: '#333' }}>{templatesExpanded ? '▼' : '▶'}</span>
+                        </div>
+
+                        {templatesExpanded && (
+                            <>
+                                {Object.keys(templates).length === 0 ? (
+                                    <span style={{ color: '#333', fontSize: '10px' }}>No templates yet — save a task with AI subtasks to learn</span>
+                                ) : (
+                                    Object.values(templates).map(template => (
+                                        <div key={template.key} style={{ marginBottom: '8px' }}>
+                                            <div
+                                                onClick={() => setExpandedTemplateKey(k => k === template.key ? null : template.key)}
+                                                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}
+                                            >
+                                                <span style={{ color: '#333', fontSize: '9px' }}>
+                                                    {expandedTemplateKey === template.key ? '▼' : '▶'}
+                                                </span>
+                                                <span style={{ color: '#777', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '10px' }}>
+                                                    {template.taskName}
+                                                </span>
+                                                <span style={s.badge('#7a6a9a')}>×{template.timesUsed}</span>
+                                            </div>
+
+                                            {expandedTemplateKey === template.key && (
+                                                <div style={{ paddingLeft: '14px' }}>
+                                                    {template.diff.kept.length > 0 && (
+                                                        <div style={{ marginBottom: '4px' }}>
+                                                            <div style={{ color: '#7BAE8F', fontSize: '9px', fontWeight: 700, marginBottom: '2px' }}>KEPT FROM AI</div>
+                                                            {template.diff.kept.map((sub, i) => (
+                                                                <div key={i} style={{ color: '#666', fontSize: '10px', lineHeight: 1.4 }}>
+                                                                    · {sub.label}{sub.estimatedMinutes ? ` (${sub.estimatedMinutes}m)` : ''}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                    {template.diff.removed.length > 0 && (
+                                                        <div style={{ marginBottom: '4px' }}>
+                                                            <div style={{ color: '#E07070', fontSize: '9px', fontWeight: 700, marginBottom: '2px' }}>REMOVED</div>
+                                                            {template.diff.removed.map((sub, i) => (
+                                                                <div key={i} style={{ color: '#666', fontSize: '10px', lineHeight: 1.4 }}>
+                                                                    · {sub.label}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                    {template.diff.userAdded.length > 0 && (
+                                                        <div style={{ marginBottom: '4px' }}>
+                                                            <div style={{ color: '#E8C97E', fontSize: '9px', fontWeight: 700, marginBottom: '2px' }}>USER ADDED</div>
+                                                            {template.diff.userAdded.map((sub, i) => (
+                                                                <div key={i} style={{ color: '#666', fontSize: '10px', lineHeight: 1.4 }}>
+                                                                    · {sub.label}{sub.estimatedMinutes ? ` (${sub.estimatedMinutes}m)` : ''}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))
+                                )}
+                                {Object.keys(templates).length > 0 && (
+                                    <button
+                                        onClick={clearTemplates}
+                                        style={{ marginTop: '6px', background: 'none', border: '1px solid #333', borderRadius: '4px', color: '#555', fontSize: '9px', padding: '2px 8px', cursor: 'pointer' }}
+                                    >
+                                        Clear Templates
+                                    </button>
+                                )}
+                            </>
                         )}
                     </div>
 

@@ -4,7 +4,10 @@ import { Command, X, Pencil, Check, Plus, CheckCircle, MapPin, AlertTriangle, Gr
 import useTaskStore from '../data/useTaskStore'
 import useDebugStore from '../data/useDebugStore'
 import useNavGuardStore from '../data/useNavGuardStore'
+import useRoboStore, { levelFromXp } from '../data/useRoboStore'
 import useDragSort from '../hooks/useDragSort'
+import { generateSubtasks } from '../data/taskBreakdown'
+import useTaskTemplateStore from '../data/useTaskTemplateStore'
 import Header from '../components/Header'
 import Input from '../components/Input'
 import Toggle from '../components/Toggle'
@@ -95,9 +98,10 @@ function TaskCreate() {
     const [errors, setErrors]       = useState({})
 
     // steps: 'form' | 'thinking' | 'subtasks' | 'confirm'
-    const [step, setStep]           = useState('form')
-    const [subtasks, setSubtasks]   = useState([])
-    const [createdId, setCreatedId] = useState(null)
+    const [step, setStep]                     = useState('form')
+    const [subtasks, setSubtasks]             = useState([])
+    const [aiOriginalSubtasks, setAiOriginal] = useState([])  // snapshot of raw AI output
+    const [createdId, setCreatedId]           = useState(null)
 
     // thinking animation
     const [visibleThinkingSteps, setVisibleThinkingSteps] = useState(0)
@@ -203,22 +207,33 @@ function TaskCreate() {
     // Clear debug state when unmounting
     useEffect(() => () => setDebug('TaskCreate', null), [])
 
-    // ─── thinking animation ───────────────────────────────────────────────────
+    // ─── thinking animation + AI call ────────────────────────────────────────
     useEffect(() => {
         if (step !== 'thinking') return
         setVisibleThinkingSteps(0)
 
+        // Animate thinking steps
         const timers = THINKING_STEPS.map((_, i) =>
             setTimeout(() => setVisibleThinkingSteps(i + 1), 400 + i * 500)
         )
-        const done = setTimeout(() => {
-            setSubtasks(FAKE_AI_SUBTASKS.map((label, i) => ({
-                id: `ai-${i}`, label, done: false, ai: true,
-            })))
-            setStep('subtasks')
-        }, 400 + THINKING_STEPS.length * 500 + 600)
 
-        return () => { timers.forEach(clearTimeout); clearTimeout(done) }
+        // Fire AI call in parallel
+        const task = { name, due: date, time: addTime ? time : null, priority, effort, description: notes, location }
+        generateSubtasks(task)
+            .then(subtasks => {
+                setSubtasks(subtasks)
+                setAiOriginal(subtasks)   // snapshot before user edits
+                setStep('subtasks')
+            })
+            .catch(() => {
+                // Fallback to defaults on error
+                setSubtasks(FAKE_AI_SUBTASKS.map((label, i) => ({
+                    id: `ai-${i}`, label, done: false, ai: true,
+                })))
+                setStep('subtasks')
+            })
+
+        return () => { timers.forEach(clearTimeout) }
     }, [step])
 
     // ─── validation ───────────────────────────────────────────────────────────
@@ -256,6 +271,16 @@ function TaskCreate() {
 
     function handleConfirmSteps() {
         const id = crypto.randomUUID()
+
+        // Learn from user's edits — save the diff for next time
+        if (aiSuggest && aiOriginalSubtasks.length > 0) {
+            useTaskTemplateStore.getState().saveTemplate({
+                taskName:      name.trim(),
+                aiSuggested:   aiOriginalSubtasks,
+                finalSubtasks: subtasks,
+            })
+        }
+
         addTask({
             id,
             name:        name.trim(),
@@ -418,7 +443,9 @@ function TaskCreate() {
     )
 
     if (step === 'confirm') {
-        const p = priorityMap[priority] ?? { label: priority?.toUpperCase(), color: 'var(--color-text-muted)' }
+        const p     = priorityMap[priority] ?? { label: priority?.toUpperCase(), color: 'var(--color-text-muted)' }
+        const curXp = useRoboStore.getState().xp
+        const lvl   = levelFromXp(curXp)
         return (
             <div style={{ color: 'var(--color-text)', minHeight: '100%', display: 'flex', flexDirection: 'column', paddingBottom: '96px' }}>
                 <Header title="Add A New Task" onBack={() => navigate('/tasks')} />
@@ -465,8 +492,9 @@ function TaskCreate() {
                             Great! I've added this to your plan. Let's tackle it together!
                         </p>
                         <div style={{ display: 'flex', gap: '16px' }}>
-                            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-accent)' }}>🔥 Streak +1</span>
-                            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-success)' }}>✦ +15 XP</span>
+                            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-accent)' }}>🔥 Streak kept</span>
+                            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-success)' }}>✦ Level {lvl}</span>
+                            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-primary)' }}>{curXp} XP</span>
                         </div>
                     </div>
 
