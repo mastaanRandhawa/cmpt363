@@ -22,7 +22,7 @@ export function BottomTrayModal(props) {
             }}
             style={{
                 position: 'absolute',
-                zIndex: 100,
+                zIndex: (props.style?.zIndex ?? 100),
                 bottom: 0,
                 width: '100%',
                 height: '100%',
@@ -33,7 +33,7 @@ export function BottomTrayModal(props) {
     )
 }
 
-export function BottomTray({ children, _parentRef, onDismiss }) {
+export function BottomTray({ children, style, _parentRef, onDismiss }) {
     const bottomTrayStore = useBottomTrayStore()
 
     const [ dismissing, setDismissing ] = useState(false);
@@ -124,7 +124,10 @@ export function BottomTray({ children, _parentRef, onDismiss }) {
                 maxHeight: '75%',
 
                 // Slide the tray around when dragging
-                transform: 'translateY(var(--tray-offset-y))'
+                transform: 'translateY(var(--tray-offset-y))',
+
+                // Merge styles.
+                ...(style ?? {})
             }}
         >
             <BottomTrayHandle/>

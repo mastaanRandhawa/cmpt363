@@ -20,9 +20,10 @@ const useBottomTrayStore = create((set, get) => ({
     contents: null,
 
     // Show the bottom tray.
-    show: ({ contents, onDismiss }) => {
+    show: ({ contents, aboveNav, onDismiss }) => {
         set({
             _onDismiss: onDismiss,
+            aboveNav: aboveNav ?? false,
             contents,
         })
     },
@@ -32,6 +33,7 @@ const useBottomTrayStore = create((set, get) => ({
         get()._onDismiss?.()
         set({ 
             _onDismiss: null,
+            aboveNav: false,
             contents: null, 
         })
     },

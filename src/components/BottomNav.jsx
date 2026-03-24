@@ -43,6 +43,7 @@ const trayItems = [
 function showMoreTray({ bottomTrayStore, navigate }) {
     const { show, dismiss } = bottomTrayStore;
     show({
+        aboveNav: true,
         contents: (
             <>
                 {trayItems.map(item => {
@@ -69,9 +70,14 @@ function BottomNav() {
     const bottomTrayStore = useBottomTrayStore()
     const guardFn = useNavGuardStore(s => s.guardFn)
 
+    function navigateAndDismissMore(...args) {
+        bottomTrayStore.dismiss();
+        navigate(...args)
+    }
+
     function guardedNav(path) {
-        if (guardFn) { guardFn(path, () => navigate(path)); return }
-        navigate(path)
+        if (guardFn) { guardFn(path, () => navigateAndDismissMore(path)); return }
+        navigateAndDismissMore(path)
     }
 
     return (
@@ -84,6 +90,7 @@ function BottomNav() {
             justifyContent: 'space-around',
             alignItems: 'center',
             padding: '12px 0 28px',
+            zIndex: 50,
         }}>
             {tabs.map(({ label, icon: Icon, path, action }) => {
                 const active = location.pathname === path

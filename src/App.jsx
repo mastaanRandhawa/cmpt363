@@ -127,6 +127,7 @@ function App() {
         document.documentElement.setAttribute('data-theme', 'lavender')
         return 'lavender'
     })
+    const bottomTrayAboveNav = useBottomTrayStore(s => s.aboveNav)
     const bottomTray  = useBottomTrayStore(s => s.contents)
     const toast       = useToastStore(s => s.toast)
     const resetToSeed = useTaskStore(s => s.resetToSeed)
@@ -134,6 +135,12 @@ function App() {
     function handleTheme(value) {
         setTheme(value)
         document.documentElement.setAttribute('data-theme', value)
+    }
+
+    const bottomTrayStyle = {}
+    if (bottomTrayAboveNav) {
+        bottomTrayStyle.zIndex = 49, // 1 below BottomNav
+        bottomTrayStyle.marginBottom = 80 // Approx. height of BottomNav
     }
 
     return (
@@ -237,7 +244,7 @@ function App() {
                         
                         {/* Bottom tray — rendered above BottomNav so it persists across routes */}
                         {bottomTray && (
-                            <BottomTray>
+                            <BottomTray style={bottomTrayStyle}>
                                 {bottomTray}
                             </BottomTray>
                         )}
