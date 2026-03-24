@@ -16,13 +16,16 @@ import { create } from 'zustand'
 
 const useBottomTrayStore = create((set, get) => ({
     _onDismiss: null,
+    id: null,
     dismissing: false,
     contents: null,
 
     // Show the bottom tray.
-    show: ({ contents, onDismiss }) => {
+    show: ({ contents, id, aboveNav, onDismiss }) => {
         set({
             _onDismiss: onDismiss,
+            id,
+            aboveNav: aboveNav ?? false,
             contents,
         })
     },
@@ -32,6 +35,8 @@ const useBottomTrayStore = create((set, get) => ({
         get()._onDismiss?.()
         set({ 
             _onDismiss: null,
+            id: null,
+            aboveNav: false,
             contents: null, 
         })
     },
