@@ -31,7 +31,7 @@ function isSoon(dateStr) {
 function Home() {
     const navigate = useNavigate()
     const tasks                              = useTaskStore(s => s.tasks)
-    const pendingDeleteIds                   = useTaskStore(s => s.pendingDeleteIds ?? [])
+    const pendingDeleteIds                   = useTaskStore(s => s.pendingDeleteIds) ?? []
     const { toggleComplete, updateTask }     = useTaskStore()
     const { show: showToast, dismiss: dismissToast } = useToastStore()
 

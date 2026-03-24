@@ -39,7 +39,7 @@ function isUpcoming(dateStr) {
 function Tasks() {
     const navigate                                   = useNavigate()
     const tasks                                      = useTaskStore(s => s.tasks)
-    const pendingDeleteIds                           = useTaskStore(s => s.pendingDeleteIds)
+    const pendingDeleteIds                           = useTaskStore(s => s.pendingDeleteIds) ?? []
     const { toggleComplete, deleteTask }             = useTaskStore()
     const { show: showToast, dismiss: dismissToast } = useToastStore()
     const [search, setSearch]                        = useState('')
