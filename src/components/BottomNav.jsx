@@ -43,6 +43,7 @@ const trayItems = [
 function showMoreTray({ bottomTrayStore, navigate }) {
     const { show, dismiss } = bottomTrayStore;
     show({
+        id: "moreNav",
         aboveNav: true,
         contents: (
             <>
@@ -68,10 +69,13 @@ function BottomNav() {
     const navigate = useNavigate()
     const location = useLocation()
     const bottomTrayStore = useBottomTrayStore()
+    const bottomTrayID = useBottomTrayStore(s => s.id)
     const guardFn = useNavGuardStore(s => s.guardFn)
 
     function navigateAndDismissMore(...args) {
-        bottomTrayStore.dismiss();
+        if (bottomTrayID == "moreNav") {
+            bottomTrayStore.dismiss();
+        }
         navigate(...args)
     }
 

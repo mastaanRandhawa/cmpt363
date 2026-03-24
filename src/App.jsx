@@ -128,6 +128,7 @@ function App() {
         return 'lavender'
     })
     const bottomTrayAboveNav = useBottomTrayStore(s => s.aboveNav)
+    const bottomTrayID = useBottomTrayStore(s => s.id)
     const bottomTray  = useBottomTrayStore(s => s.contents)
     const toast       = useToastStore(s => s.toast)
     const resetToSeed = useTaskStore(s => s.resetToSeed)
@@ -244,7 +245,7 @@ function App() {
                         
                         {/* Bottom tray — rendered above BottomNav so it persists across routes */}
                         {bottomTray && (
-                            <BottomTray style={bottomTrayStyle}>
+                            <BottomTray id={bottomTrayID} style={bottomTrayStyle}>
                                 {bottomTray}
                             </BottomTray>
                         )}

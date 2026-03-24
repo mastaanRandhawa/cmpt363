@@ -33,7 +33,7 @@ export function BottomTrayModal(props) {
     )
 }
 
-export function BottomTray({ children, style, _parentRef, onDismiss }) {
+export function BottomTray({ children, id, style, _parentRef, onDismiss }) {
     const bottomTrayStore = useBottomTrayStore()
 
     const [ dismissing, setDismissing ] = useState(false);
@@ -107,6 +107,7 @@ export function BottomTray({ children, style, _parentRef, onDismiss }) {
             onTouchEnd={onTouchEnd}
             onClick={e => e.stopPropagation()}
             ref={trayRef}
+            id={id}
             className='bottom-tray'
             style={{
                 position: 'absolute',
