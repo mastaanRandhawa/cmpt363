@@ -18,8 +18,6 @@ function TaskDetail() {
         toggleComplete,
         updateTask,
         deleteTask,
-        softDeleteTask,
-        cancelSoftDelete,
         toggleSubtask,
         addSubtask,
         removeSubtask,
@@ -104,20 +102,14 @@ function TaskDetail() {
         const taskId   = task.id
         const taskName = task.name
 
-        softDeleteTask(taskId)   // hide immediately
-        navigate('/tasks')       // navigate immediately
+        navigate('/tasks')
 
         showToast({
             message:     `"${taskName}" deleted`,
             icon:        <Trash2 size={16} color="var(--color-danger)" />,
             barColor:    'var(--color-danger)',
-            actionLabel: 'Undo',
-            onAction:    () => {
-                cancelSoftDelete(taskId)
-                dismissToast()
-            },
             onExpire: () => deleteTask(taskId),
-            duration: 5000,
+            duration: 3000,
         })
     }
 

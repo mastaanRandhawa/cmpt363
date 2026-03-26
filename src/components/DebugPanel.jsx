@@ -272,14 +272,16 @@ function DebugPanel() {
                                 {Object.keys(templates).length === 0 ? (
                                     <span style={{ color: '#333', fontSize: '10px' }}>No templates yet — save a task with AI subtasks to learn</span>
                                 ) : (
-                                    Object.values(templates).map(template => (
-                                        <div key={template.key} style={{ marginBottom: '8px' }}>
+                                    Object.values(templates).map(template => {
+                                    const tKey = template.normalizedKey ?? template.key
+                                    return (
+                                        <div key={tKey} style={{ marginBottom: '8px' }}>
                                             <div
-                                                onClick={() => setExpandedTemplateKey(k => k === template.key ? null : template.key)}
+                                                onClick={() => setExpandedTemplateKey(k => k === tKey ? null : tKey)}
                                                 style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}
                                             >
                                                 <span style={{ color: '#333', fontSize: '9px' }}>
-                                                    {expandedTemplateKey === template.key ? '▼' : '▶'}
+                                                    {expandedTemplateKey === tKey ? '▼' : '▶'}
                                                 </span>
                                                 <span style={{ color: '#777', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '10px' }}>
                                                     {template.taskName}
@@ -287,7 +289,7 @@ function DebugPanel() {
                                                 <span style={s.badge('#7a6a9a')}>×{template.timesUsed}</span>
                                             </div>
 
-                                            {expandedTemplateKey === template.key && (
+                                            {expandedTemplateKey === tKey && (
                                                 <div style={{ paddingLeft: '14px' }}>
                                                     {template.diff.kept.length > 0 && (
                                                         <div style={{ marginBottom: '4px' }}>
@@ -322,7 +324,7 @@ function DebugPanel() {
                                                 </div>
                                             )}
                                         </div>
-                                    ))
+                                    )})
                                 )}
                                 {Object.keys(templates).length > 0 && (
                                     <button

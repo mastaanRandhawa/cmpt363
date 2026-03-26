@@ -31,7 +31,6 @@ function isSoon(dateStr) {
 function Home() {
     const navigate = useNavigate()
     const tasks                              = useTaskStore(s => s.tasks)
-    const pendingDeleteIds                   = useTaskStore(s => s.pendingDeleteIds) ?? []
     const { toggleComplete, updateTask }     = useTaskStore()
     const { show: showToast, dismiss: dismissToast } = useToastStore()
 
@@ -73,9 +72,7 @@ function Home() {
     const [recDismissed, setRecDismissed]     = useState(false)
     const [recOpen, setRecOpen]               = useState(true)
 
-    const incompleteTasks = tasks.filter(t =>
-        t.status !== 'completed' && !pendingDeleteIds.includes(t.id)
-    )
+    const incompleteTasks = tasks.filter(t => t.status !== 'completed')
 
     const fetchRecommendation = useCallback(async () => {
         if (incompleteTasks.length === 0) return

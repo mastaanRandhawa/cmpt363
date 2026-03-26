@@ -13,6 +13,8 @@ import Timer from './pages/Timer'
 import Toast from './components/Toast'
 import useToastStore from './data/useToastStore'
 import useTaskStore from './data/useTaskStore'
+import useNotificationStore from './data/useNotificationStore'
+import useRoboStore from './data/useRoboStore'
 import useBottomTrayStore from './data/useBottomTrayStore'
 import DebugPanel from './components/DebugPanel'
 
@@ -131,7 +133,16 @@ function App() {
     const bottomTrayID = useBottomTrayStore(s => s.id)
     const bottomTray  = useBottomTrayStore(s => s.contents)
     const toast       = useToastStore(s => s.toast)
-    const resetToSeed = useTaskStore(s => s.resetToSeed)
+    const fetchTasks         = useTaskStore(s => s.fetchTasks)
+    const fetchNotifications = useNotificationStore(s => s.fetchNotifications)
+    const fetchRobo          = useRoboStore(s => s.fetchRobo)
+    const checkStreak        = useRoboStore(s => s.checkStreak)
+
+    useEffect(() => {
+        fetchTasks()
+        fetchNotifications()
+        fetchRobo().then(() => checkStreak())
+    }, []) // eslint-disable-line
 
     function handleTheme(value) {
         setTheme(value)
@@ -167,8 +178,8 @@ function App() {
                     ))}
                 </select>
 
-                <button onClick={resetToSeed} style={devControlStyle}>
-                    ↺ Reset Tasks
+                <button onClick={fetchTasks} style={devControlStyle}>
+                    ↺ Refresh Tasks
                 </button>
             </div>
 
