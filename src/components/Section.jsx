@@ -5,6 +5,7 @@
 // Props:
 //   header         – string, small caps label displayed to the left of the divider
 //   headerColor    – string, CSS 'color' property for the label
+//   headerStyle    – object, CSS passed to the header
 //   dividerColor   – string, CSS 'background-color' property for the divider
 //
 //   collapsible    – boolean, if true allows the section to be collapsed
@@ -53,6 +54,7 @@ import { ChevronUp, ChevronDown } from 'lucide-react'
 export function Section({
     header,
     headerColor,
+    headerStyle,
     dividerColor,
 
     collapsible = false,
@@ -60,6 +62,8 @@ export function Section({
 
     rightAction,
     children,
+
+    style,
 
     // Only if externally managing collapsed state
     collapsed: externCollapsed,
@@ -77,7 +81,7 @@ export function Section({
     const shouldRemoveContents = collapsed && (collapseMode === 'remove');
 
     return (
-        <div>
+        <div style={style}>
             <SectionHeading
                 text={header}
                 collapsible={collapsible}
@@ -86,6 +90,7 @@ export function Section({
                 rightAction={rightAction}
                 color={headerColor}
                 dividerColor={dividerColor}
+                style={headerStyle}
             />
             {(!shouldRemoveContents) &&
                 <div style={shouldHideContents ? {display: "none"} : {}}>

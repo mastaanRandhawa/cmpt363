@@ -7,12 +7,21 @@ import Chip from "../components/Chip"
 import Input from "../components/Input"
 
 function Settings() {
+    const sectionProps = {
+        headerStyle: {
+            paddingBottom: 0,
+        },
+        style: {
+            marginBottom: 12,
+        },
+    }
+
     return (
         <>
             <Header title="Settings" onBack={true} />
             <div className="page flex flex-col gap-4 p-6 min-h-screen">
 
-                <Section header="GENERAL">
+                <Section header="GENERAL" {...sectionProps}>
                     <ListRow
                         label="Energy Level Check-in"
                         description="Daily prompt asking you to update your energy level."
@@ -31,7 +40,7 @@ function Settings() {
                     </ListRow>
                 </Section>
                 
-                <Section header="TASKS">
+                <Section header="TASKS" {...sectionProps}>
                     <ListRow
                         label="Location-Based Tasks"
                         description="Use your current location to suggest tasks."
@@ -39,7 +48,7 @@ function Settings() {
                     />
                 </Section>
 
-                <Section header="AI ASSISTANCE">
+                <Section header="AI ASSISTANCE" {...sectionProps}>
                     <ListRow
                         label="Involvement Level"
                         description="How the AI will help you with your task management."
@@ -71,7 +80,7 @@ function Settings() {
                     </ListRow>
                 </Section>
 
-                <Section header="NOTIFICATIONS">
+                <Section header="NOTIFICATIONS" {...sectionProps}>
                     <ListRow
                         label="Push Notifications"
                         description="Remind you of tasks while outside the app."
