@@ -27,23 +27,44 @@
 //   // Combo badge on Robo screen
 //   <Chip label="x1.5 COMBO" color="accent" />
 
-function Chip({ label, color = 'primary' }) {
+const chipColors = {
+    primary: { background: 'color-mix(in srgb, var(--color-primary) 20%, transparent)',     color: 'var(--color-primary-soft)' },
+    accent:  { background: 'color-mix(in srgb, var(--color-accent) 20%, transparent)',       color: 'var(--color-accent)' },
+    success: { background: 'color-mix(in srgb, var(--color-success) 20%, transparent)',      color: 'var(--color-success)' },
+    danger:  { background: 'color-mix(in srgb, var(--color-danger) 20%, transparent)',       color: 'var(--color-danger)' },
+    muted:   { background: 'color-mix(in srgb, var(--color-text-muted) 20%, transparent)',   color: 'var(--color-text-muted)' },
+}
+
+function Chip({
+    label,
+    color = 'primary',
+    style: customStyles = {},
+    className = null,
+    onClick = null,
+}) {
+    const colorStyles = chipColors[color] ?? chipColors.primary;
     const styles = {
-        primary: { background: 'color-mix(in srgb, var(--color-primary) 20%, transparent)',     color: 'var(--color-primary-soft)' },
-        accent:  { background: 'color-mix(in srgb, var(--color-accent) 20%, transparent)',       color: 'var(--color-accent)' },
-        success: { background: 'color-mix(in srgb, var(--color-success) 20%, transparent)',      color: 'var(--color-success)' },
-        danger:  { background: 'color-mix(in srgb, var(--color-danger) 20%, transparent)',       color: 'var(--color-danger)' },
-        muted:   { background: 'color-mix(in srgb, var(--color-text-muted) 20%, transparent)',   color: 'var(--color-text-muted)' },
+        border: 'none',
+        borderRadius: '20px',
+        padding: '6px 14px',
+        fontSize: '11px',
+        fontWeight: 600,
+        letterSpacing: '0.06em',
+        whiteSpace: 'nowrap',
+        flexShrink: 0,
+        cursor: (onClick == null ? null : 'pointer'),
+        ...colorStyles,
+        ...customStyles,
     }
 
-    return (
-        <span
-            style={styles[color] ?? styles.primary}
-            className="px-2 py-0.5 rounded-md text-xs font-semibold"
-        >
-            {label}
-        </span>
-    )
+    const props = {
+        style: styles,
+        className: className,
+    }
+
+    return (onClick != null)
+        ? <button {...props} onClick={onClick}>{label}</button>
+        : <span {...props}>{label}</span>
 }
 
 export default Chip
