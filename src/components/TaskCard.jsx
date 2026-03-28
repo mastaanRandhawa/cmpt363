@@ -36,31 +36,32 @@ import { priority as priorityMap } from '../data/priority'
 import { Pencil, Trash2 } from 'lucide-react'
 import CircleCheck from './CircleCheck'
 
-function TaskCard({ title, due, time, priority = 'med', subtasks = [], completed = false, onComplete, onClick, onDelete, onEdit, swipeX, onSwipeChange }) {
+function TaskCard({ title, due, time, priority = 'med', subtasks = [], completed = false, onComplete, onClick, onDelete, onEdit, swipeX = 0, onSwipeChange }) {
     const done                  = completed
     const [swiping, setSwiping] = useState(false)
-    const startX = useRef(null)
-    const p = priorityMap[priority]
-    const firstSubtask = subtasks[0]
-    const remaining = subtasks.length - 1
-    const THRESHOLD = 60
+    const startX                = useRef(null)
+    const startSwipeX           = useRef(0)
+    const p                     = priorityMap[priority]
+    const firstSubtask          = subtasks[0]
+    const remaining             = subtasks.length - 1
+    const THRESHOLD             = 60
 
     function onTouchStart(e) {
-        startX.current = e.touches[0].clientX
+        startX.current      = e.touches[0].clientX
+        startSwipeX.current = swipeX   // remember where this card started
         setSwiping(true)
-        // Notify parent immediately so any other open card snaps closed
-        onSwipeChange(0)
     }
 
     function onTouchMove(e) {
         if (startX.current === null) return
         const diff = e.touches[0].clientX - startX.current
-        onSwipeChange(Math.max(-THRESHOLD, Math.min(THRESHOLD, diff)))
+        const next = startSwipeX.current + diff
+        onSwipeChange?.(Math.max(-THRESHOLD, Math.min(THRESHOLD, next)))
     }
 
     function onTouchEnd() {
         if (Math.abs(swipeX) < THRESHOLD / 2) {
-            onSwipeChange(0)
+            onSwipeChange?.(0)
         }
         setSwiping(false)
         startX.current = null
@@ -82,7 +83,7 @@ function TaskCard({ title, due, time, priority = 'med', subtasks = [], completed
                 borderRadius: '16px',
             }}>
                 <div
-                    onClick={() => { onEdit && onEdit(); onSwipeChange(0) }}
+                    onClick={() => { onEdit?.(); onSwipeChange?.(0) }}
                     style={{
                         background: 'var(--color-primary)',
                         width: '64px',
@@ -98,7 +99,7 @@ function TaskCard({ title, due, time, priority = 'med', subtasks = [], completed
                     <Pencil size={18} color="white" />
                 </div>
                 <div
-                    onClick={() => { onDelete && onDelete(); onSwipeChange(0) }}
+                    onClick={() => { onDelete?.(); onSwipeChange?.(0) }}
                     style={{
                         background: 'var(--color-danger)',
                         width: '64px',
@@ -121,8 +122,8 @@ function TaskCard({ title, due, time, priority = 'med', subtasks = [], completed
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
                 onClick={() => {
-                    if (Math.abs(swipeX) > 5) { onSwipeChange(0); return }
-                    onClick && onClick()
+                    if (Math.abs(swipeX) > 5) { onSwipeChange?.(0); return }
+                    onClick?.()
                 }}
                 style={{
                     background: 'var(--color-surface)',
