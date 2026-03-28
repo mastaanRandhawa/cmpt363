@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
-import { Command, X, Pencil, Check, Plus, CheckCircle, MapPin, AlertTriangle, GripVertical } from 'lucide-react'
+import { Command, X, Pencil, Check, Plus, CheckCircle, MapPin, AlertTriangle, GripVertical, Lock, ChevronRight, Timer as TimerIcon } from 'lucide-react'
 import useTaskStore from '../data/useTaskStore'
 import useDebugStore from '../data/useDebugStore'
 import useNavGuardStore from '../data/useNavGuardStore'
@@ -10,7 +10,6 @@ import { generateSubtasks } from '../data/taskBreakdown'
 import useTaskTemplateStore from '../data/useTaskTemplateStore'
 import Header from '../components/Header'
 import Input from '../components/Input'
-import Toggle from '../components/Toggle'
 import Button from '../components/Button'
 import RepeatPicker from '../components/RepeatPicker'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -32,6 +31,15 @@ const effortColors = {
     4: 'var(--color-accent)',
     5: 'var(--color-danger)',
 }
+
+// Fake AI subtasks — replace with real API call when ready
+const FAKE_AI_SUBTASKS = [
+    'Research Topic',
+    'Create Outline',
+    'Write First Draft',
+    'Review and Edit',
+    'Final Submission',
+]
 
 const THINKING_STEPS = [
     'Analyzing Task',
@@ -62,6 +70,8 @@ function TaskCreate() {
     const updateTask = useTaskStore(s => s.updateTask)
     const tasks      = useTaskStore(s => s.tasks)
     const setDebug   = useDebugStore(s => s.set)
+    const xp         = useRoboStore(s => s.xp)
+    const level      = levelFromXp(xp)
 
     // edit mode — driven by either route param (/tasks/:id/edit) or location state
     const editId   = routeId || routerLocation.state?.editId || null
@@ -86,6 +96,7 @@ function TaskCreate() {
     const [locLoading, setLocLoading] = useState(false)
     const [showLocDrop, setShowLocDrop] = useState(false)
     const [aiSuggest, setAiSuggest] = useState(true)
+    const [timed, setTimed]         = useState(editTask?.timed ?? false)
     const [errors, setErrors]       = useState({})
 
     // steps: 'form' | 'thinking' | 'subtasks' | 'confirm'
@@ -115,7 +126,8 @@ function TaskCreate() {
                 effort         !== (editTask.effort      ?? null) ||
                 notes.trim()   !== (editTask.description ?? '') ||
                 (location||'') !== (typeof editTask.location === 'string' ? editTask.location : editTask.location?.label ?? '') ||
-                JSON.stringify(repeat) !== JSON.stringify(editTask.repeat ?? null)
+                JSON.stringify(repeat) !== JSON.stringify(editTask.repeat ?? null) ||
+                timed              !== (editTask.timed        ?? false)
             )
         }
         return (
@@ -213,11 +225,14 @@ function TaskCreate() {
         generateSubtasks(task)
             .then(subtasks => {
                 setSubtasks(subtasks)
-                setAiOriginal(subtasks)
+                setAiOriginal(subtasks)   // snapshot before user edits
                 setStep('subtasks')
             })
             .catch(() => {
-                setSubtasks([])
+                // Fallback to defaults on error
+                setSubtasks(FAKE_AI_SUBTASKS.map((label, i) => ({
+                    id: `ai-${i}`, label, done: false, ai: true,
+                })))
                 setStep('subtasks')
             })
 
@@ -238,13 +253,14 @@ function TaskCreate() {
     function handleFormSubmit() {
         if (!validate()) return
         if (isEdit) { handleSaveEdit(); return }
-        if (aiSuggest) { setStep('thinking') }
+        // AI suggestions gated behind Level 3 (Big Task Destroyer)
+        if (aiSuggest && level >= 3) { setStep('thinking') }
         else { setSubtasks([]); setStep('subtasks') }
     }
 
-    async function handleSaveEdit() {
+    function handleSaveEdit() {
         if (!validate()) return
-        await updateTask(editId, {
+        updateTask(editId, {
             name:        name.trim(),
             due:         date,
             time:        addTime ? time : null,
@@ -253,11 +269,14 @@ function TaskCreate() {
             description: notes.trim(),
             location:    location || null,
             repeat,
+            timed,
         })
         navigate(`/tasks/${editId}`, { replace: true })
     }
 
-    async function handleConfirmSteps() {
+    function handleConfirmSteps() {
+        const id = crypto.randomUUID()
+
         // Learn from user's edits — save the diff for next time
         if (aiSuggest && aiOriginalSubtasks.length > 0) {
             useTaskTemplateStore.getState().saveTemplate({
@@ -267,7 +286,8 @@ function TaskCreate() {
             })
         }
 
-        const created = await addTask({
+        addTask({
+            id,
             name:        name.trim(),
             due:         date,
             time:        addTime ? time : null,
@@ -277,9 +297,10 @@ function TaskCreate() {
             status:      'todo',
             location:    location || null,
             repeat,
+            timed,
             subtasks,
         })
-        setCreatedId(created.id)
+        setCreatedId(id)
         setStep('confirm')
     }
 
@@ -310,7 +331,7 @@ function TaskCreate() {
     // ─── step renders ─────────────────────────────────────────────────────────
 
     if (step === 'thinking') return (
-        <div className="flex flex-col pb-24" style={{ color: 'var(--color-text)', minHeight: '100%' }}>
+        <div style={{ color: 'var(--color-text)', minHeight: '100%', display: 'flex', flexDirection: 'column', paddingBottom: '96px' }}>
             <Header title="Add A New Task" onBack={() => navigate('/tasks')} />
             <div style={{
                 flex: 1, display: 'flex', flexDirection: 'column',
@@ -369,28 +390,44 @@ function TaskCreate() {
                         Task Breakdown
                     </p>
                     <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: 1.5, maxWidth: '280px' }}>
-                        {aiSuggest
+                        {aiSuggest && level >= 3
                             ? 'Here is my suggested breakdown of the required steps to complete the task!'
                             : 'Add steps to break this task into manageable pieces.'
                         }
                     </p>
                 </div>
 
-                {/* AI suggestions indicator */}
-                {aiSuggest && (
+                {/* AI suggestions indicator / locked teaser */}
+                {level >= 3 ? (
+                    aiSuggest && (
+                        <div style={{
+                            background: 'var(--color-surface)', borderRadius: '12px',
+                            padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px',
+                        }}>
+                            <Command size={16} color="var(--color-primary)" />
+                            <div style={{ flex: 1 }}>
+                                <p style={{ margin: 0, fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em' }}>AI SUGGESTIONS</p>
+                                <p style={{ margin: 0, fontSize: '11px', color: 'var(--color-text-muted)' }}>Breakdown and Time Estimate</p>
+                            </div>
+                            {/* static "on" indicator */}
+                            <div style={{ width: '36px', height: '20px', borderRadius: '999px', background: 'var(--color-primary)', position: 'relative' }}>
+                                <span style={{ position: 'absolute', top: '3px', left: '19px', width: '14px', height: '14px', borderRadius: '50%', background: 'white' }} />
+                            </div>
+                        </div>
+                    )
+                ) : (
                     <div style={{
                         background: 'var(--color-surface)', borderRadius: '12px',
-                        padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '10px 14px',
+                        border: '1px dashed color-mix(in srgb, var(--color-text-muted) 25%, transparent)',
+                        display: 'flex', alignItems: 'center', gap: '10px', opacity: 0.8,
                     }}>
-                        <Command size={16} color="var(--color-primary)" />
+                        <Lock size={16} color="var(--color-text-muted)" />
                         <div style={{ flex: 1 }}>
-                            <p style={{ margin: 0, fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em' }}>AI SUGGESTIONS</p>
-                            <p style={{ margin: 0, fontSize: '11px', color: 'var(--color-text-muted)' }}>Breakdown and Time Estimate</p>
+                            <p style={{ margin: 0, fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', color: 'var(--color-text-muted)' }}>AI SUGGESTIONS</p>
+                            <p style={{ margin: 0, fontSize: '11px', color: 'var(--color-text-muted)' }}>Big Task Destroyer — unlock at Level 3</p>
                         </div>
-                        {/* static "on" indicator */}
-                        <div style={{ width: '36px', height: '20px', borderRadius: '999px', background: 'var(--color-primary)', position: 'relative' }}>
-                            <span style={{ position: 'absolute', top: '3px', left: '19px', width: '14px', height: '14px', borderRadius: '50%', background: 'white' }} />
-                        </div>
+                        <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--color-text-muted)', background: 'var(--color-surface-alt)', padding: '3px 8px', borderRadius: '20px' }}>LVL 3</span>
                     </div>
                 )}
 
@@ -433,7 +470,7 @@ function TaskCreate() {
         const lvl   = levelFromXp(curXp)
         return (
             <div style={{ color: 'var(--color-text)', minHeight: '100%', display: 'flex', flexDirection: 'column', paddingBottom: '96px' }}>
-                <Header title="Add A New Task" onBack={() => navigate('/tasks')} />
+                <Header title="Add A New Task" />
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '24px', padding: '32px 20px 20px' }}>
 
                     <div style={{
@@ -505,11 +542,11 @@ function TaskCreate() {
 
     // ─── form step ────────────────────────────────────────────────────────────
     return (
-        <div className="flex flex-col pb-24" style={{ color: 'var(--color-text)', position: 'relative' }}>
+        <div style={{ color: 'var(--color-text)', position: 'relative', display: 'flex', flexDirection: 'column', paddingBottom: '96px' }}>
             <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
             <Header
                 title={isEdit ? 'Edit Task' : 'Add A New Task'}
-                onBack={() => isEdit ? navigate(`/tasks/${editId}`, { replace: true }) : guardedNavigate('/tasks')}
+                onBack={() => guardedNavigate(isEdit ? `/tasks/${editId}` : '/tasks')}
             />
 
             <FadeOverlay visible={showLeaveConfirm} />
@@ -808,34 +845,82 @@ function TaskCreate() {
                     )}
                 </div>
 
-                {/* ai suggestions — create mode only */}
-                {!isEdit && (
-                    <div style={{ background: 'var(--color-surface)', borderRadius: '16px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                        <div style={{ background: 'var(--color-surface-alt)', borderRadius: '12px', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <Command size={20} color="var(--color-primary)" />
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <p style={{ margin: 0, fontWeight: 700, fontSize: '13px', letterSpacing: '0.04em' }}>AI SUGGESTIONS</p>
-                            <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-muted)' }}>Breakdown and Time Estimate</p>
-                        </div>
-                        <button
-                            onClick={() => setAiSuggest(v => !v)}
-                            style={{
-                                width: '48px', height: '28px', borderRadius: '999px',
-                                border: 'none', flexShrink: 0, cursor: 'pointer',
-                                background: aiSuggest ? 'var(--color-primary)' : 'var(--color-surface-alt)',
-                                position: 'relative', transition: 'background 0.2s',
-                            }}
-                        >
+                {/* use timer for task management */}
+                <div style={{ background: 'var(--color-surface)', borderRadius: '16px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ background: 'var(--color-surface-alt)', borderRadius: '12px', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <TimerIcon size={20} color="var(--color-primary)" />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        <p style={{ margin: 0, fontWeight: 700, fontSize: '13px', letterSpacing: '0.04em' }}>USE TIMER</p>
+                        <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-muted)' }}>Track time spent with Pomodoro</p>
+                    </div>
+                    <button
+                        onClick={() => setTimed(v => !v)}
+                        style={{
+                            width: '48px', height: '28px', borderRadius: '999px',
+                            border: 'none', flexShrink: 0, cursor: 'pointer',
+                            background: timed ? 'var(--color-primary)' : 'var(--color-surface-alt)',
+                            position: 'relative', transition: 'background 0.2s',
+                        }}
+                    >
                         <span style={{
                             position: 'absolute', top: '4px',
-                            left: aiSuggest ? '24px' : '4px',
+                            left: timed ? '24px' : '4px',
                             width: '20px', height: '20px',
                             borderRadius: '50%', background: 'white',
                             transition: 'left 0.2s',
                         }} />
-                        </button>
-                    </div>
+                    </button>
+                </div>
+
+                {/* AI suggestions — create mode only, Level 3+ */}
+                {!isEdit && (
+                    level >= 3 ? (
+                        <div style={{ background: 'var(--color-surface)', borderRadius: '16px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                            <div style={{ background: 'var(--color-surface-alt)', borderRadius: '12px', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <Command size={20} color="var(--color-primary)" />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <p style={{ margin: 0, fontWeight: 700, fontSize: '13px', letterSpacing: '0.04em' }}>AI SUGGESTIONS</p>
+                                <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-muted)' }}>Breakdown and Time Estimate</p>
+                            </div>
+                            <button
+                                onClick={() => setAiSuggest(v => !v)}
+                                style={{
+                                    width: '48px', height: '28px', borderRadius: '999px',
+                                    border: 'none', flexShrink: 0, cursor: 'pointer',
+                                    background: aiSuggest ? 'var(--color-primary)' : 'var(--color-surface-alt)',
+                                    position: 'relative', transition: 'background 0.2s',
+                                }}
+                            >
+                                <span style={{
+                                    position: 'absolute', top: '4px',
+                                    left: aiSuggest ? '24px' : '4px',
+                                    width: '20px', height: '20px',
+                                    borderRadius: '50%', background: 'white',
+                                    transition: 'left 0.2s',
+                                }} />
+                            </button>
+                        </div>
+                    ) : (
+                        /* Teaser: locked until Big Task Destroyer (Level 3) */
+                        <div style={{
+                            background: 'var(--color-surface)',
+                            borderRadius: '16px', padding: '14px 16px',
+                            display: 'flex', alignItems: 'center', gap: '14px',
+                            border: '1px dashed color-mix(in srgb, var(--color-text-muted) 25%, transparent)',
+                            opacity: 0.75,
+                        }}>
+                            <div style={{ background: 'var(--color-surface-alt)', borderRadius: '12px', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <Lock size={20} color="var(--color-text-muted)" />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <p style={{ margin: 0, fontWeight: 700, fontSize: '13px', letterSpacing: '0.04em', color: 'var(--color-text-muted)' }}>AI SUGGESTIONS</p>
+                                <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-muted)' }}>Big Task Destroyer — unlock at Level 3</p>
+                            </div>
+                            <ChevronRight size={16} color="var(--color-text-muted)" />
+                        </div>
+                    )
                 )}
 
                 {isEdit ? (

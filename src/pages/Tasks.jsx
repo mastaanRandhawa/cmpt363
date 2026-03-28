@@ -197,7 +197,7 @@ function Tasks() {
             )}
 
             {/* ── FAB ──────────────────────────────────────────────────── */}
-            <div style={{ position: 'sticky', bottom: '16px', display: 'flex', justifyContent: 'flex-end', paddingRight: '20px', marginTop: 'auto', pointerEvents: 'none' }}>
+            <div style={{ position: 'sticky', bottom: '16px', display: 'flex', justifyContent: 'flex-end', paddingRight: '20px', marginTop: 'auto', pointerEvents: 'none', zIndex: 99 }}>
                 <button
                     onClick={e => { e.stopPropagation(); navigate('/tasks/create') }}
                     style={{
