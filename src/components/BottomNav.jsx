@@ -117,6 +117,7 @@ function BottomNav() {
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
+                            width: '12%',
                             gap: '4px',
                             background: 'none',
                             border: 'none',
@@ -128,6 +129,13 @@ function BottomNav() {
                         <span style={{
                             fontSize: '10px',
                             fontWeight: active ? '600' : '400',
+
+                            // Hide text if too long
+                            width: '100%', // of parent button
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            wordBreak: 'break-all',
+                            overflow: 'clip',
                         }}>
               {label}
             </span>
