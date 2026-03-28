@@ -33,15 +33,6 @@ const effortColors = {
     5: 'var(--color-danger)',
 }
 
-// Fake AI subtasks — replace with real API call when ready
-const FAKE_AI_SUBTASKS = [
-    'Research Topic',
-    'Create Outline',
-    'Write First Draft',
-    'Review and Edit',
-    'Final Submission',
-]
-
 const THINKING_STEPS = [
     'Analyzing Task',
     'Planning Steps',
@@ -222,14 +213,11 @@ function TaskCreate() {
         generateSubtasks(task)
             .then(subtasks => {
                 setSubtasks(subtasks)
-                setAiOriginal(subtasks)   // snapshot before user edits
+                setAiOriginal(subtasks)
                 setStep('subtasks')
             })
             .catch(() => {
-                // Fallback to defaults on error
-                setSubtasks(FAKE_AI_SUBTASKS.map((label, i) => ({
-                    id: `ai-${i}`, label, done: false, ai: true,
-                })))
+                setSubtasks([])
                 setStep('subtasks')
             })
 
@@ -254,9 +242,9 @@ function TaskCreate() {
         else { setSubtasks([]); setStep('subtasks') }
     }
 
-    function handleSaveEdit() {
+    async function handleSaveEdit() {
         if (!validate()) return
-        updateTask(editId, {
+        await updateTask(editId, {
             name:        name.trim(),
             due:         date,
             time:        addTime ? time : null,
@@ -269,9 +257,7 @@ function TaskCreate() {
         navigate(`/tasks/${editId}`, { replace: true })
     }
 
-    function handleConfirmSteps() {
-        const id = crypto.randomUUID()
-
+    async function handleConfirmSteps() {
         // Learn from user's edits — save the diff for next time
         if (aiSuggest && aiOriginalSubtasks.length > 0) {
             useTaskTemplateStore.getState().saveTemplate({
@@ -281,8 +267,7 @@ function TaskCreate() {
             })
         }
 
-        addTask({
-            id,
+        const created = await addTask({
             name:        name.trim(),
             due:         date,
             time:        addTime ? time : null,
@@ -294,7 +279,7 @@ function TaskCreate() {
             repeat,
             subtasks,
         })
-        setCreatedId(id)
+        setCreatedId(created.id)
         setStep('confirm')
     }
 

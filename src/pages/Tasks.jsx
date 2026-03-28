@@ -39,7 +39,6 @@ function isUpcoming(dateStr) {
 function Tasks() {
     const navigate                                   = useNavigate()
     const tasks                                      = useTaskStore(s => s.tasks)
-    const pendingDeleteIds                           = useTaskStore(s => s.pendingDeleteIds) ?? []
     const { toggleComplete, deleteTask }             = useTaskStore()
     const { show: showToast, dismiss: dismissToast } = useToastStore()
     const [search, setSearch]                        = useState('')
@@ -52,7 +51,6 @@ function Tasks() {
         .toUpperCase()
 
     const filtered = tasks.filter(task => {
-        if (pendingDeleteIds.includes(task.id)) return false
         const matchesSearch = task.name.toLowerCase().includes(search.toLowerCase())
         if (!matchesSearch) return false
         switch (filter) {

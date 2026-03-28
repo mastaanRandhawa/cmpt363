@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tasks         Task[]
+  notifications Notification[]
+  roboState     RoboState?
+  xpLog         XpLogEntry[]
+  taskTemplates TaskTemplate[]
+}
+
+model Task {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name        String
+  due         String?
+  time        String?
+  priority    String
+  effort      Int
+  description String   @default("")
+  status      String
+
+  location Json?
+  repeat   Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subtasks Subtask[]
+}
+
+model Subtask {
+  id               String  @id @default(uuid())
+  taskId           String
+  task             Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  label            String
+  done             Boolean @default(false)
+  ai               Boolean @default(false)
+  estimatedMinutes Int?
+
+  sortOrder Int @default(0)
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model RoboState {
+  userId           String  @id
+  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  xp               Int     @default(0)
+  streak           Int     @default(0)
+  lastActivityDate String?
+  mood             Int?
+  moodDate         String?
+}
+
+model XpLogEntry {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  reason String
+  amount Int
+  date   String
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model TaskTemplate {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  normalizedKey String
+  taskName      String
+  timesUsed     Int      @default(0)
+  savedAt       DateTime
+
+  finalSubtasks Json
+  diff          Json
+
+  @@unique([userId, normalizedKey])
+}

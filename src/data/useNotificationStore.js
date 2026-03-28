@@ -1,46 +1,45 @@
-// useNotificationStore
-// Manages in-app notifications state.
-// TODO: Notification — wire up real notification sources when ready.
+// useNotificationStore — API-backed.
+// Same public API as before so all consumers are unchanged.
 
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { api } from './api'
 
-const useNotificationStore = create(
-    persist(
-        (set, get) => ({
-            notifications: [
-                {
-                    id: 1,
-                    title: "Notification Example",
-                    body: "This is an example, yay",
-                    createdAt: new Date(),
-                },
-            ],   // { id, title, body, read, createdAt }
+const useNotificationStore = create((set, get) => ({
+    notifications: [],
 
-            // TODO: Notification — add real notifications from task reminders, streaks, etc.
-            get hasUnread() {
-                return get().notifications.some(n => !n.read)
-            },
+    get hasUnread() {
+        return get().notifications.some(n => !n.read)
+    },
 
-            get unreadCount() {
-                return get().notifications.filter(n => !n.read).length
-            },
+    get unreadCount() {
+        return get().notifications.filter(n => !n.read).length
+    },
 
-            markAllRead: () => set(s => ({
-                notifications: s.notifications.map(n => ({ ...n, read: true }))
-            })),
+    // ── bootstrap ────────────────────────────────────────────────────────────
+    fetchNotifications: async () => {
+        try {
+            const notifications = await api.getNotifications()
+            set({ notifications })
+        } catch { /* silent — non-critical */ }
+    },
 
-            addNotification: (notification) => set(s => ({
-                notifications: [
-                    { id: crypto.randomUUID(), read: false, createdAt: new Date().toISOString(), ...notification },
-                    ...s.notifications,
-                ].slice(0, 50) // keep last 50
-            })),
+    // ── actions ──────────────────────────────────────────────────────────────
+    markAllRead: async () => {
+        const notifications = await api.markAllRead()
+        set({ notifications })
+    },
 
-            clearAll: () => set({ notifications: [] }),
-        }),
-        { name: 'robo-notifications' }
-    )
-)
+    addNotification: async (notification) => {
+        const n = await api.addNotification(notification)
+        set(s => ({
+            notifications: [n, ...s.notifications].slice(0, 50),
+        }))
+    },
+
+    clearAll: async () => {
+        await api.clearNotifications()
+        set({ notifications: [] })
+    },
+}))
 
 export default useNotificationStore
