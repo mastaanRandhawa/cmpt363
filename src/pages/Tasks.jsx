@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import useTaskStore from '../data/useTaskStore'
@@ -12,6 +12,7 @@ import useSwipeList from '../hooks/useSwipeList'
 // Note: these are scrollable pills, not a SegmentedControl — 7 options won't fit
 // in a fixed-width control. SegmentedControl is used in Settings instead.
 const filters = [
+    { label: 'TO-DO',     value: 'active' },
     { label: 'ALL',       value: 'all' },
     { label: 'TODAY',     value: 'today' },
     { label: 'UPCOMING',  value: 'upcoming' },
@@ -38,11 +39,13 @@ function isUpcoming(dateStr) {
 
 function Tasks() {
     const navigate                                   = useNavigate()
-    const tasks                                      = useTaskStore(s => s.tasks)
+    const allTasks                                   = useTaskStore(s => s.tasks)
+    const tasks                                      = useMemo(() => allTasks.filter(t => !t._softDeleted), [allTasks])
+    const pendingDeleteIds                           = useTaskStore(s => s.pendingDeleteIds) ?? []
     const { toggleComplete, deleteTask }             = useTaskStore()
     const { show: showToast, dismiss: dismissToast } = useToastStore()
     const [search, setSearch]                        = useState('')
-    const [filter, setFilter]                        = useState('all')
+    const [filter, setFilter]                        = useState('active')
     const { getSwipeProps, closeAll }                = useSwipeList()
     const [pendingDeleteTask, setPendingDeleteTask]   = useState(null)
 
@@ -51,9 +54,11 @@ function Tasks() {
         .toUpperCase()
 
     const filtered = tasks.filter(task => {
+        if (pendingDeleteIds.includes(task.id)) return false
         const matchesSearch = task.name.toLowerCase().includes(search.toLowerCase())
         if (!matchesSearch) return false
         switch (filter) {
+            case 'active':   return task.status !== 'completed'
             case 'today':    return isToday(task.due)
             case 'upcoming': return isUpcoming(task.due)
             case 'done':     return task.status === 'completed'
@@ -90,7 +95,6 @@ function Tasks() {
 
     return (
         <div
-            className="flex flex-col gap-4"
             style={{ color: 'var(--color-text)', position: 'relative', minHeight: '100%', display: 'flex', flexDirection: 'column', paddingBottom: '16px' }}
             onClick={closeAll}
         >
@@ -100,7 +104,7 @@ function Tasks() {
                 title="Tasks"
             />
 
-            <div className="flex flex-col gap-4 px-5">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '0 20px' }}>
 
                 {/* search */}
                 <div onClick={e => e.stopPropagation()} style={{ paddingBottom: '8px' }}>
