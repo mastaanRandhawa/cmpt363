@@ -5,8 +5,10 @@ import Header from "../components/Header"
 import Section from "../components/Section"
 import Chip from "../components/Chip"
 import Input from "../components/Input"
+import useSettingsStore from "../data/useSettingsStore"
 
 function Settings() {
+    const settings = useSettingsStore()
     const sectionProps = {
         headerStyle: {
             paddingBottom: 0,
@@ -25,7 +27,7 @@ function Settings() {
                     <ListRow
                         label="Energy Level Check-in"
                         description="Daily prompt asking you to update your energy level."
-                        right={<Toggle label="?" checked={true} />} // TODO
+                        right={<Toggle checked={settings.enableEnergyLevelCheckIn} onChange={settings.setEnableEnergyLevelCheckIn} />}
                     />
                     <ListRow
                         label="AI Assitant Name"
@@ -33,9 +35,11 @@ function Settings() {
                     >
                         <Input
                             placeholder="Robo"
-                            value="Robo"
+                            value={settings.aiAssistantName}
                             type="text"
-                            onChange={value => {}} // TODO
+                            onChange={evt => {
+                                settings.setAiAssistantName(evt.target.value)
+                            }}
                         />
                     </ListRow>
                 </Section>
@@ -44,7 +48,7 @@ function Settings() {
                     <ListRow
                         label="Location-Based Tasks"
                         description="Use your current location to suggest tasks."
-                        right={<Toggle label="?" checked={true} />} // TODO
+                        right={<Toggle checked={settings.enableLocationBasedTasks} onChange={settings.setEnableLocationBasedTasks} />}
                     />
                 </Section>
 
@@ -59,8 +63,8 @@ function Settings() {
                                 { value: 'suggestive', label: 'Suggestive' },
                                 { value: 'collaborative', label: 'Collaborative' },
                             ]}
-                            value={'suggestive'} // TODO
-                            onChange={value => {}} // TODO
+                            value={settings.aiInvolvementLevel}
+                            onChange={settings.setAiInvolvementLevel}
                             fullWidth
                         />
                     </ListRow>
@@ -73,8 +77,8 @@ function Settings() {
                                 { value: 'mentee', label: 'Mentee' },
                                 { value: 'mentor', label: 'Mentor' },
                             ]}
-                            value={'mentor'} // TODO
-                            onChange={value => {}} // TODO
+                            value={settings.aiBehaviour}
+                            onChange={settings.setAiBehaviour}
                             fullWidth
                         />
                     </ListRow>
@@ -84,22 +88,22 @@ function Settings() {
                     <ListRow
                         label="Push Notifications"
                         description="Remind you of tasks while outside the app."
-                        right={<Toggle label="?" checked={true} />} // TODO
+                        right={<Toggle checked={settings.enablePushNotifications} onChange={settings.setEnablePushNotifications} />}
                     />
                     <ListRow
                         label="Due Soon Reminders"
                         description="Get notified before a task is about to be due."
-                        right={<Toggle label="?" checked={true} />} // TODO
+                        right={<Toggle checked={settings.enableDueSoonReminders} onChange={settings.setEnableDueSoonReminders} />}
                     />
                     <ListRow
-                        label="Daily Reminder Time"
-                        description="Choose a preferred time to receive your daily task summary."
-                        right={<Toggle label="?" checked={true} />} // TODO
+                        label="Daily Reminders"
+                        description="Receive a daily summary of your upcoming tasks."
+                        right={<Toggle checked={settings.enableDailyReminders} onChange={settings.setEnableDailyReminders} />}
                     />
                     <ListRow
                         label="Smart Notifications"
                         description="Tailored notifications based on context."
-                        right={<Chip label="COMING SOON" color="muted" />} // TODO
+                        right={<Chip label="COMING SOON" color="muted" />}
                     />
                     <ListRow
                         label="Frequency"
@@ -110,8 +114,8 @@ function Settings() {
                                 { value: 'everything', label: 'Everything' },
                                 { value: 'high-priority', label: 'High Priority Only' },
                             ]}
-                            value={'high-priority'} // TODO
-                            onChange={value => {}} // TODO
+                            value={settings.notificationFrequency}
+                            onChange={settings.setNotificationFrequency}
                             fullWidth
                         />
                     </ListRow>
