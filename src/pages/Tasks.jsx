@@ -90,32 +90,14 @@ function Tasks() {
 
     return (
         <div
-            className="flex flex-col gap-4 pb-24"
-            style={{ color: 'var(--color-text)', position: 'relative' }}
+            className="flex flex-col gap-4"
+            style={{ color: 'var(--color-text)', position: 'relative', minHeight: '100%', display: 'flex', flexDirection: 'column', paddingBottom: '16px' }}
             onClick={closeAll}
         >
             {/* header */}
             <Header
                 subtitle={`TODAY · ${today}`}
                 title="Tasks"
-                rightAction={
-                    <button
-                        onClick={e => { e.stopPropagation(); navigate('/tasks/create') }}
-                        style={{
-                            background: 'var(--color-primary)',
-                            border: 'none',
-                            borderRadius: '14px',
-                            width: '44px',
-                            height: '44px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                        }}
-                    >
-                        <Plus size={22} color="white" strokeWidth={2.5} />
-                    </button>
-                }
             />
 
             <div className="flex flex-col gap-4 px-5">
@@ -209,6 +191,28 @@ function Tasks() {
                     onCancel={() => setPendingDeleteTask(null)}
                 />
             )}
+
+            {/* ── FAB ──────────────────────────────────────────────────── */}
+            <div style={{ position: 'sticky', bottom: '16px', display: 'flex', justifyContent: 'flex-end', paddingRight: '20px', marginTop: 'auto', pointerEvents: 'none' }}>
+                <button
+                    onClick={e => { e.stopPropagation(); navigate('/tasks/create') }}
+                    style={{
+                        pointerEvents: 'auto',
+                        background: 'var(--color-primary)',
+                        border: 'none',
+                        borderRadius: '14px',
+                        width: '52px',
+                        height: '52px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 16px color-mix(in srgb, var(--color-primary) 40%, transparent)',
+                    }}
+                >
+                    <Plus size={24} color="white" strokeWidth={2.5} />
+                </button>
+            </div>
 
         </div>
     )
