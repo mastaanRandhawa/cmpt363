@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, HelpCircle, Plus, RefreshCw } from 'lucide-react'
+import {Bell, HelpCircle, Plus, RefreshCw, Trash2} from 'lucide-react'
 import Header from '../components/Header'
 import { Section } from '../components/Section'
 import TaskCard from '../components/TaskCard'
@@ -9,6 +9,8 @@ import useRoboStore from '../data/useRoboStore'
 import useToastStore from '../data/useToastStore'
 import useNotificationStore from '../data/useNotificationStore'
 import { getRecommendedTask } from '../data/taskRecommendation'
+import useSwipeList from "../hooks/useSwipeList.js";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
 
 function isToday(dateStr) {
     if (!dateStr) return false
@@ -34,6 +36,8 @@ function Home() {
     const tasks                              = useTaskStore(s => s.tasks)
     const { toggleComplete, updateTask }     = useTaskStore()
     const { show: showToast, dismiss: dismissToast } = useToastStore()
+    const { getSwipeProps, closeAll }                = useSwipeList()
+    const [pendingDeleteTask, setPendingDeleteTask]   = useState(null)
 
     const streak   = useRoboStore(s => s.streak)
     const mood     = useRoboStore(s => s.mood)
@@ -117,6 +121,26 @@ function Home() {
             actionLabel: 'Undo',
             onAction: () => { toggleComplete(task.id); updateTask(task.id, { subtasks: orig }); dismissToast() },
             onExpire: () => {},
+            duration: 5000,
+        })
+    }
+
+    function handleSwipeDelete(task) {
+        closeAll()
+        setPendingDeleteTask(task)
+    }
+
+    function confirmSwipeDelete() {
+        const task = pendingDeleteTask
+        setPendingDeleteTask(null)
+
+        showToast({
+            message:     `"${task.name}" deleted`,
+            icon:        <Trash2 size={16} color="var(--color-danger)" />,
+            barColor:    'var(--color-danger)',
+            actionLabel: 'Undo',
+            onAction: () => dismissToast(),
+            onExpire: () => deleteTask(task.id),
             duration: 5000,
         })
     }
@@ -262,10 +286,26 @@ function Home() {
                                     subtasks={task.subtasks}
                                     completed={task.status === 'completed'}
                                     onComplete={() => handleComplete(task)}
+                                    {...getSwipeProps(task.id)}
+                                    onDelete={() => handleSwipeDelete(task)}
+                                    onEdit={() => navigate('/tasks/create', { state: { editId: task.id } })}
                                     onClick={() => navigate(`/tasks/${task.id}`)}
                                 />
                             ))}
                         </div>
+                    )}
+
+                    {/* swipe-delete confirm */}
+                    {pendingDeleteTask && (
+                        <ConfirmDialog
+                            icon={<Trash2 size={24} color="var(--color-danger)" />}
+                            title="DELETE TASK?"
+                            message={`"${pendingDeleteTask.name}" will be permanently removed.`}
+                            confirmLabel="Delete Task"
+                            confirmVariant="danger"
+                            onConfirm={confirmSwipeDelete}
+                            onCancel={() => setPendingDeleteTask(null)}
+                        />
                     )}
 
                     {incompleteTasks.length > upNext.length + (recTask ? 1 : 0) && (
