@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {Bell, HelpCircle, Plus, RefreshCw, Trash2} from 'lucide-react'
+import {Bell, HelpCircle, Plus, RefreshCw, Command, Trash2} from 'lucide-react'
 import Header from '../components/Header'
 import { Section } from '../components/Section'
 import TaskCard from '../components/TaskCard'
@@ -258,7 +258,7 @@ function Home() {
                             }}
                         >
                             <Command size={13} color="var(--color-primary)" />
-                            <span>Get a task suggestion</span>
+                            <span>Not sure what to tackle? I can help with a suggestion!</span>
                             <RefreshCw size={12} style={{ marginLeft: 'auto' }} />
                         </button>
                     )}

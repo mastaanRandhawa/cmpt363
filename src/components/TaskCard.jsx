@@ -60,9 +60,10 @@ function TaskCard({ title, due, time, priority = 'med', subtasks = [], completed
     }
 
     function onTouchEnd() {
-        if (Math.abs(swipeX) < THRESHOLD / 2) {
-            onSwipeChange?.(0)
-        }
+        const snapTo = swipeX < -(THRESHOLD / 2) ? -THRESHOLD
+            : swipeX >  (THRESHOLD / 2) ?  THRESHOLD
+                : 0
+        onSwipeChange?.(snapTo)
         setSwiping(false)
         startX.current = null
     }

@@ -21,9 +21,10 @@ import { api } from './api'
 import useRoboStore from './useRoboStore'
 
 const useTaskStore = create((set, get) => ({
-    tasks:   [],
-    loading: false,
-    error:   null,
+    tasks:            [],
+    loading:          false,
+    error:            null,
+    pendingDeleteIds: [],
 
     // ── bootstrap — call once on app mount ─────────────────────────────────
     fetchTasks: async () => {
@@ -50,7 +51,21 @@ const useTaskStore = create((set, get) => ({
 
     deleteTask: async (id) => {
         await api.deleteTask(id)
-        set(s => ({ tasks: s.tasks.filter(t => t.id !== id) }))
+        set(s => ({
+            tasks:            s.tasks.filter(t => t.id !== id),
+            pendingDeleteIds: s.pendingDeleteIds.filter(i => i !== id),
+        }))
+    },
+
+    // ── soft delete ──────────────────────────────────────────────────────────
+    // Hides a task immediately in the UI without hitting the API.
+    // Call deleteTask(id) on toast expire to commit, or cancelSoftDelete(id) to undo.
+    softDeleteTask: (id) => {
+        set(s => ({ pendingDeleteIds: [...s.pendingDeleteIds, id] }))
+    },
+
+    cancelSoftDelete: (id) => {
+        set(s => ({ pendingDeleteIds: s.pendingDeleteIds.filter(i => i !== id) }))
     },
 
     // ── status ──────────────────────────────────────────────────────────────
