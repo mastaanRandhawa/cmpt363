@@ -7,6 +7,7 @@ import TaskCreate from './pages/TaskCreate'
 import Robo from './pages/Robo'
 import Calendar from './pages/Calendar'
 import More from './pages/More'
+import Settings from './pages/Settings'
 import BottomNav from './components/BottomNav'
 import BottomTray from './components/BottomTray'
 import Timer from './pages/Timer'
@@ -237,6 +238,7 @@ function App() {
                                 <Route path="/robo" element={<Robo />} />
                                 <Route path="/calendar" element={<Calendar />} />
                                 <Route path="/more" element={<More />} />
+                                <Route path="/settings" element={<Settings />} />
                                 <Route path="/timer" element={<Timer />} />
                                 <Route path="/tasks/:id/edit" element={<TaskCreate />} />
                             </Routes>

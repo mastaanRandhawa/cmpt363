@@ -17,7 +17,21 @@
 
 import { useState } from 'react'
 
-function Toggle({ label, checked, defaultOn = false, onChange }) {
+function Toggle({
+    label,
+    checked,
+    defaultOn = false,
+
+    onChange,
+
+    thumbWidthEm = 0.9,
+    thumbHeightEm = 0.9,
+    trackWidthEm = 2, // 200% of the font size
+    hPaddingEm = 0.15,
+    vPaddingEm = 0.2,
+    transitionTime = '0.2s',
+    transitionFormula = 'ease-out',
+}) {
     const isControlled        = checked !== undefined
     const [on, setOn]         = useState(defaultOn)
     const isOn                = isControlled ? checked : on
@@ -28,25 +42,54 @@ function Toggle({ label, checked, defaultOn = false, onChange }) {
         if (onChange) onChange(next)
     }
 
+    const labelStyle = {
+        color: 'var(--color-text-muted)',
+        fontSize: '0.75em',
+    };
+
+    const trackStyle = {
+        position: 'relative',
+        width: `${trackWidthEm}em`,
+        height: `calc(1em + ${vPaddingEm}em)`,
+        borderRadius: `calc(1em + ${vPaddingEm}em)`,
+        transition: `background ${transitionTime} ${transitionFormula}`,
+        backgroundColor: 'var(--color-surface)',
+        cursor: 'pointer',
+    }
+            
+    const thumbStyle = {
+        position: 'absolute',
+        top: `calc(${vPaddingEm/2}em + ${(1-thumbHeightEm)/2}em)`,
+        left: `${hPaddingEm}em`,
+        width: `${thumbWidthEm}em`,
+        height: `${thumbHeightEm}em`,
+        borderRadius: `calc(1em - ${vPaddingEm}em)`,
+        transition: `background ${transitionTime} ${transitionFormula}, left ${transitionTime} ${transitionFormula}`,
+        backgroundColor: 'var(--color-primary)',
+    }
+
+    if (isOn) {
+        trackStyle.backgroundColor = 'var(--color-surface-alt)'
+        thumbStyle.backgroundColor = 'var(--color-primary-soft)'
+        thumbStyle.left = `${trackWidthEm - thumbWidthEm - hPaddingEm}em`
+    }
+
     return (
-        <div className="flex items-center justify-between gap-4">
+        <div 
+            style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'between',
+                gap: 4,
+            }}
+        >
             {label && (
-                <span style={{ color: 'var(--color-text-muted)' }} className="text-sm">
+                <span style={labelStyle}>
                     {label}
                 </span>
             )}
-            <button
-                onClick={handleToggle}
-                style={{
-                    background: isOn ? 'var(--color-primary)' : 'var(--color-surface-alt)',
-                }}
-                className="relative w-12 h-6 rounded-full transition-colors duration-200"
-            >
-                <span
-                    className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-200 ${
-                        isOn ? 'left-7' : 'left-1'
-                    }`}
-                />
+            <button onClick={handleToggle} style={trackStyle}>
+                <span style={thumbStyle} />
             </button>
         </div>
     )

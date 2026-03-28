@@ -3,6 +3,7 @@ import { Home, CheckSquare, Cpu, Calendar, MoreHorizontal, Settings, ChevronRigh
 import useBottomTrayStore from '../data/useBottomTrayStore'
 import useNavGuardStore from '../data/useNavGuardStore'
 import { BottomTrayItem } from './BottomTray'
+import useSettingsStore from '../data/useSettingsStore'
 
 // TODO: Update Robo icon
 
@@ -68,6 +69,7 @@ function showMoreTray({ bottomTrayStore, navigate }) {
 function BottomNav() {
     const navigate = useNavigate()
     const location = useLocation()
+    const settings = useSettingsStore()
     const bottomTrayStore = useBottomTrayStore()
     const bottomTrayID = useBottomTrayStore(s => s.id)
     const guardFn = useNavGuardStore(s => s.guardFn)
@@ -97,6 +99,10 @@ function BottomNav() {
             zIndex: 50,
         }}>
             {tabs.map(({ label, icon: Icon, path, action }) => {
+                if (label === "Robo" && settings.aiAssistantName.trim() !== '') {
+                    label = settings.aiAssistantName.trim()
+                }
+
                 const active = location.pathname === path
                 return (
                     <button
@@ -111,6 +117,7 @@ function BottomNav() {
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
+                            width: '12%',
                             gap: '4px',
                             background: 'none',
                             border: 'none',
@@ -122,6 +129,13 @@ function BottomNav() {
                         <span style={{
                             fontSize: '10px',
                             fontWeight: active ? '600' : '400',
+
+                            // Hide text if too long
+                            width: '100%', // of parent button
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            wordBreak: 'break-all',
+                            overflow: 'clip',
                         }}>
               {label}
             </span>
