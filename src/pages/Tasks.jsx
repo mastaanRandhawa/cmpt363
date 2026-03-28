@@ -1,13 +1,12 @@
 import { useState, useMemo } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import useTaskStore from '../data/useTaskStore'
-import useToastStore from '../data/useToastStore'
 import TaskCard from '../components/TaskCard'
 import Header from '../components/Header'
 import SearchBar from '../components/SearchBar'
-import ConfirmDialog from '../components/ConfirmDialog'
 import useSwipeList from '../hooks/useSwipeList'
+import useSwipeDelete from '../hooks/useSwipeDelete'
 
 // Note: these are scrollable pills, not a SegmentedControl — 7 options won't fit
 // in a fixed-width control. SegmentedControl is used in Settings instead.
@@ -42,12 +41,11 @@ function Tasks() {
     const allTasks                                   = useTaskStore(s => s.tasks)
     const tasks                                      = useMemo(() => allTasks.filter(t => !t._softDeleted), [allTasks])
     const pendingDeleteIds                           = useTaskStore(s => s.pendingDeleteIds) ?? []
-    const { toggleComplete, deleteTask }             = useTaskStore()
-    const { show: showToast, dismiss: dismissToast } = useToastStore()
+    const { toggleComplete }                         = useTaskStore()
     const [search, setSearch]                        = useState('')
     const [filter, setFilter]                        = useState('active')
     const { getSwipeProps, closeAll }                = useSwipeList()
-    const [pendingDeleteTask, setPendingDeleteTask]   = useState(null)
+    const { handleSwipeDelete, confirmDialog }       = useSwipeDelete({ closeAll })
 
     const today = new Date()
         .toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
@@ -72,26 +70,6 @@ function Tasks() {
         const bComplete = b.status === 'completed' ? 1 : 0
         return aComplete - bComplete
     })
-
-    function handleSwipeDelete(task) {
-        closeAll()
-        setPendingDeleteTask(task)
-    }
-
-    function confirmSwipeDelete() {
-        const task = pendingDeleteTask
-        setPendingDeleteTask(null)
-
-        showToast({
-            message:     `"${task.name}" deleted`,
-            icon:        <Trash2 size={16} color="var(--color-danger)" />,
-            barColor:    'var(--color-danger)',
-            actionLabel: 'Undo',
-            onAction: () => dismissToast(),
-            onExpire: () => deleteTask(task.id),
-            duration: 5000,
-        })
-    }
 
     return (
         <div
@@ -183,18 +161,7 @@ function Tasks() {
 
             </div>
 
-            {/* swipe-delete confirm */}
-            {pendingDeleteTask && (
-                <ConfirmDialog
-                    icon={<Trash2 size={24} color="var(--color-danger)" />}
-                    title="DELETE TASK?"
-                    message={`"${pendingDeleteTask.name}" will be permanently removed.`}
-                    confirmLabel="Delete Task"
-                    confirmVariant="danger"
-                    onConfirm={confirmSwipeDelete}
-                    onCancel={() => setPendingDeleteTask(null)}
-                />
-            )}
+            {confirmDialog}
 
             {/* ── FAB ──────────────────────────────────────────────────── */}
             <div style={{ position: 'sticky', bottom: '16px', display: 'flex', justifyContent: 'flex-end', paddingRight: '20px', marginTop: 'auto', pointerEvents: 'none', zIndex: 99 }}>
