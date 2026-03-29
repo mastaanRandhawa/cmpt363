@@ -8,6 +8,7 @@ import Robo from './pages/Robo'
 import Calendar from './pages/Calendar'
 import More from './pages/More'
 import Settings from './pages/Settings'
+import LockScreen from './pages/LockScreen'
 import BottomNav from './components/BottomNav'
 import BottomTray from './components/BottomTray'
 import Timer from './pages/Timer'
@@ -130,6 +131,7 @@ function App() {
         document.documentElement.setAttribute('data-theme', 'lavender')
         return 'lavender'
     })
+    const [locked, setLocked] = useState(true)
     const bottomTrayAboveNav = useBottomTrayStore(s => s.aboveNav)
     const bottomTrayID = useBottomTrayStore(s => s.id)
     const bottomTray  = useBottomTrayStore(s => s.contents)
@@ -153,7 +155,7 @@ function App() {
     const bottomTrayStyle = {}
     if (bottomTrayAboveNav) {
         bottomTrayStyle.zIndex = 49, // 1 below BottomNav
-        bottomTrayStyle.marginBottom = 80 // Approx. height of BottomNav
+            bottomTrayStyle.marginBottom = 80 // Approx. height of BottomNav
     }
 
     return (
@@ -244,7 +246,7 @@ function App() {
                             </Routes>
                         </div>
 
-                        {/* Global toast — rendered above BottomNav so it persists across routes */}
+                        {/* Global toast */}
                         {toast && (
                             <Toast
                                 message={toast.message}
@@ -255,8 +257,8 @@ function App() {
                                 onAction={toast.onAction}
                             />
                         )}
-                        
-                        {/* Bottom tray — rendered above BottomNav so it persists across routes */}
+
+                        {/* Bottom tray */}
                         {bottomTray && (
                             <BottomTray id={bottomTrayID} style={bottomTrayStyle}>
                                 {bottomTray}
@@ -265,6 +267,9 @@ function App() {
 
                         <BottomNav />
                     </BrowserRouter>
+
+                    {/* Lock screen — sits above everything inside the phone frame */}
+                    {locked && <LockScreen onUnlock={() => setLocked(false)} />}
 
                 </div>
 
