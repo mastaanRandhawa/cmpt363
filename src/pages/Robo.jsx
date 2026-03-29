@@ -110,60 +110,63 @@ function Robo() {
 
                 {/* robo card */}
                 <div style={{
-                    background: 'linear-gradient(135deg, #7C6FCD 0%, #5B4FAA 100%)',
+                    background: 'linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 70%, black) 0%, color-mix(in srgb, var(--color-primary-soft) 70%, black) 100%)',
                     borderRadius: '20px',
-                    padding: '20px',
-                    display: 'flex', flexDirection: 'column', gap: '16px',
+                    padding: '18px 20px 20px',
+                    display: 'flex', flexDirection: 'column', gap: '14px',
                 }}>
+                    {/* top row: icon+name | level+xp badge */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <div style={{
-                                background: 'rgba(255,255,255,0.15)', borderRadius: '14px',
-                                width: '52px', height: '52px',
+                                background: 'rgba(255,255,255,0.1)', borderRadius: '14px',
+                                width: '48px', height: '48px',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                border: '1px solid rgba(255,255,255,0.08)',
                             }}>
-                                <Command size={28} color="white" />
+                                <Command size={26} color="white" />
                             </div>
-                            <span style={{ color: 'white', fontWeight: 700, fontSize: '20px' }}>ROBO</span>
+                            <span style={{ color: 'white', fontWeight: 700, fontSize: '18px', letterSpacing: '0.04em' }}>ROBO</span>
                         </div>
-                        <div style={{ textAlign: 'right' }}>
-                            <p style={{ margin: 0, color: 'white', fontWeight: 800, fontSize: '20px', lineHeight: 1 }}>
-                                Level {level}
-                            </p>
-                            <p style={{ margin: 0, color: 'rgba(255,255,255,0.6)', fontSize: '11px', fontWeight: 600 }}>
-                                {xp} XP TOTAL
-                            </p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ color: 'white', fontWeight: 700, fontSize: '17px' }}>Level {level}</span>
                         </div>
                     </div>
 
-                    {/* stats */}
+                    {/* stats: streak + combo */}
                     <div style={{ display: 'flex', gap: '10px' }}>
-                        {[
-                            { value: streak > 0 ? `${streak} ${streak === 1 ? 'Day' : 'Days'}` : '—', label: 'STREAK' },
-                            { value: level < 10 ? `${progress.current} / ${progress.max}` : 'MAX', label: 'XP THIS LEVEL' },
-                        ].map(stat => (
-                            <div key={stat.label} style={{
-                                flex: 1, background: 'rgba(255,255,255,0.15)', borderRadius: '12px',
-                                padding: '10px', textAlign: 'center',
-                            }}>
-                                <p style={{ color: 'white', fontWeight: 700, fontSize: '16px', margin: 0 }}>{stat.value}</p>
-                                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '10px', fontWeight: 600, letterSpacing: '0.08em', margin: 0 }}>{stat.label}</p>
-                            </div>
-                        ))}
+                        <div style={{
+                            flex: 1, background: 'rgba(255,255,255,0.08)', borderRadius: '14px',
+                            padding: '12px 14px', textAlign: 'center',
+                            border: '1px solid rgba(255,255,255,0.06)',
+                        }}>
+                            <p style={{ color: 'white', fontWeight: 700, fontSize: '17px', margin: 0 }}>
+                                {streak > 0 ? `${streak} ${streak === 1 ? 'Day' : 'Days'}` : '—'}
+                            </p>
+                            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', margin: '3px 0 0' }}>STREAK</p>
+                        </div>
+                        <div style={{
+                            flex: 1, background: 'rgba(255,255,255,0.08)', borderRadius: '14px',
+                            padding: '12px 14px', textAlign: 'center',
+                            border: '1px solid rgba(255,255,255,0.06)',
+                        }}>
+                            <p style={{ color: 'white', fontWeight: 700, fontSize: '17px', margin: 0 }}>
+                                x{(1 + streak * 0.1).toFixed(1)}
+                            </p>
+                            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', margin: '3px 0 0' }}>COMBO</p>
+                        </div>
                     </div>
 
                     {/* xp bar */}
                     {level < 10 && (
                         <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                                <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', fontWeight: 600 }}>
-                                    LEVEL {level + 1} PROGRESS
-                                </span>
-                                <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px' }}>
-                                    {progress.percent}%
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.06em' }}>XP</span>
+                                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', fontWeight: 600 }}>
+                                    {progress.current} / {progress.max}
                                 </span>
                             </div>
-                            <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: '999px', height: '8px' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: '999px', height: '7px' }}>
                                 <div style={{
                                     width: `${progress.percent}%`,
                                     height: '100%',
