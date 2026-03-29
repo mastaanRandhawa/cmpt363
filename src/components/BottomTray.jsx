@@ -1,13 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import useBottomTrayStore from '../data/useBottomTrayStore'
 
-// BottomTrayModal
-// Persistent bottom tray. Renders whatever contents are set using the
-// bottomTrayStore hook and can be swiped away to dismiss.
-// Sticks to the bottom of the phone frame via position: sticky and sits above
-// the tab bar.
-
-// Bottom tray as blocking modal.
 export function BottomTrayModal(props) {
     const { dismiss } = useBottomTrayStore()
     const _modalRef = useRef(null)
@@ -16,7 +9,7 @@ export function BottomTrayModal(props) {
             ref={_modalRef}
             className='modal-backdrop'
             onClick={(e) => {
-                e.stopPropagation() // Don't allow clicking anything underneath
+                e.stopPropagation()
                 props.onDismiss?.()
                 dismiss()
             }}
@@ -72,22 +65,18 @@ export function BottomTray({ children, id, style, _parentRef, onDismiss }) {
         const trayHeight = trayRef.current?.clientHeight
         const dismissActivation = trayHeight * 0.6
 
-        // If tray swiped down by 60%, dismiss it.
         if (lastDiff.current > dismissActivation) {
             trayRef.current?.setAttribute('data-swipe-mode', 'dismiss');
             trayRef.current?.style.setProperty('--tray-offset-y', `${trayHeight + 20}px`);
             setDismissing(true)
-            setTimeout(dismiss, 150 /* should be same as in index.css */)
+            setTimeout(dismiss, 150)
             return
         }
 
-        // Otherwise, reset it to original position.
         trayRef.current?.setAttribute('data-swipe-mode', 'reset');
         trayRef.current?.style.setProperty('--tray-offset-y', `0`);
     }
 
-    // Listen for touch events on the parent element so swiping down on the blocking modal
-    // is treated the same as swiping down on the tray itself.
     useEffect(() => {
         const parent = _parentRef?.current;
         parent?.addEventListener('touchstart', onTouchStart)
@@ -101,7 +90,7 @@ export function BottomTray({ children, id, style, _parentRef, onDismiss }) {
     }, [_parentRef])
 
     return (
-        <div 
+        <div
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
@@ -114,8 +103,8 @@ export function BottomTray({ children, id, style, _parentRef, onDismiss }) {
                 zIndex: 100,
                 bottom: 0,
                 width: '100%',
-                background: 'var(--color-surface)',
-                borderTop: '1px solid var(--color-surface-alt)',
+                background: 'var(--color-card)',
+                borderTop: '1px solid var(--color-divider)',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'start',
@@ -123,11 +112,7 @@ export function BottomTray({ children, id, style, _parentRef, onDismiss }) {
                 padding: '12px 0 28px',
                 minHeight: 200,
                 maxHeight: '75%',
-
-                // Slide the tray around when dragging
                 transform: 'translateY(var(--tray-offset-y))',
-
-                // Merge styles.
                 ...(style ?? {})
             }}
         >
@@ -140,7 +125,7 @@ export function BottomTray({ children, id, style, _parentRef, onDismiss }) {
 function BottomTrayHandle() {
     return (
         <div style={{
-            height: 8,
+            height: 6,
             width: '10%',
             borderRadius: 8,
             margin: '8px 0 20px 0',
@@ -152,7 +137,7 @@ function BottomTrayHandle() {
 export function BottomTrayItem({ label, icon, rightIcon, onClick }) {
     const Icon = icon;
     const RightIcon = rightIcon;
-    const iconSize = 18;
+    const iconSize = 20;
     return (
         <button
             onClick={onClick}
@@ -161,7 +146,7 @@ export function BottomTrayItem({ label, icon, rightIcon, onClick }) {
                 width: '100%',
                 background: 'none',
                 cursor: 'pointer',
-                color: 'var(--color-text)',
+                color: 'var(--color-text-main)',
                 padding: '0px 24px',
                 border: 'none',
             }}
@@ -171,42 +156,41 @@ export function BottomTrayItem({ label, icon, rightIcon, onClick }) {
                     display: 'flex',
                     flexDirection: 'row',
                     alignItems: 'center',
-                    gap: '8px',
-                    padding: '14px',
-                    borderBottom: 'var(--color-separator) 2px solid',
+                    gap: '12px',
+                    padding: '14px 0',
+                    borderBottom: '1px solid var(--color-divider)',
                 }}
             >
                 <Icon
                     size={iconSize}
-                    strokeWidth={1.8}
+                    strokeWidth={2}
                     style={{
                         flex: '0 0 auto',
                         width: iconSize,
+                        color: 'var(--color-text-mid)'
                     }}
                 />
                 <div
+                    className="label-bold"
                     style={{
-                        fontSize: '16px',
-                        fontWeight: '600',
-                        textTransform: 'uppercase',
                         flex: '1 1',
+                        textAlign: 'left'
                     }}
                 >
                     {label}
                 </div>
 
-                { /* The right icon or an empty space in its place. */ }
                 { RightIcon && <RightIcon
-                            size={iconSize}
-                            strokeWidth={1.8}
-                            style={{
-                                flex: '0 0 auto',
-                                width: iconSize,
-                                opacity: '0.6',
-                            }}
-                        />
+                    size={16}
+                    strokeWidth={2}
+                    style={{
+                        flex: '0 0 auto',
+                        width: 16,
+                        color: 'var(--color-text-secondary-muted)',
+                    }}
+                />
                 }
-                { !RightIcon && <div style={{ width: iconSize }} /> }
+                { !RightIcon && <div style={{ width: 16 }} /> }
             </div>
         </button>
     )
