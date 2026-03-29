@@ -1,38 +1,41 @@
-// Button
-// Standard tap target for primary actions, secondary actions, destructive actions, and outlines.
-//
-// Props:
-//   label     – string, button text
-//   variant   – 'primary' | 'secondary' | 'destructive' | 'outline' (default 'primary')
-//   onClick   – () => void
-//   fullWidth – boolean, stretches to fill parent (default false)
-//
-// Usage examples:
-//   // Main CTA (e.g. Create Task, Start Task)
-//   <Button label="Create Task" onClick={handleCreate} fullWidth />
-//
-//   // Dangerous action (e.g. Delete Task)
-//   <Button label="Delete Task" variant="destructive" onClick={handleDelete} fullWidth />
-//
-//   // Paired action row (e.g. Dismiss / Breakdown / Start on Home)
-//   <Button label="Dismiss"   variant="outline"    onClick={handleDismiss} />
-//   <Button label="Breakdown" variant="secondary"  onClick={handleBreakdown} />
-//   <Button label="Start"     variant="primary"    onClick={handleStart} />
-
 function Button({ label, variant = 'primary', onClick, fullWidth = false }) {
-    const styles = {
-        primary:     { background: 'var(--color-primary)',  color: 'var(--color-text)' },
-        secondary:   { background: 'var(--color-surface)',  color: 'var(--color-text)' },
-        destructive: { background: 'var(--color-danger)',   color: 'var(--color-text)' },
-        outline:     { background: 'transparent', color: 'var(--color-text-muted)',
-            border: '1px solid var(--color-text-muted)' },
+    // Mapping variants to your specific theme tokens
+    const variantStyles = {
+        primary: {
+            background: 'var(--color-primary)',
+            color: '#FFFFFF', // High contrast for primary action
+            border: 'none'
+        },
+        secondary: {
+            background: 'var(--color-primary-soft)',
+            color: 'var(--color-text-main)',
+            border: 'none'
+        },
+        destructive: {
+            background: 'var(--color-error)',
+            color: '#FFFFFF',
+            border: 'none'
+        },
+        outline: {
+            background: 'transparent',
+            color: 'var(--color-text-mid)',
+            border: '1px solid var(--color-divider)'
+        },
     }
 
     return (
         <button
             onClick={onClick}
-            style={{ ...styles[variant], width: fullWidth ? '100%' : 'auto', padding: '16px' }}
-            className="px-4 py-3 rounded-xl font-semibold text-sm transition-opacity active:opacity-70"
+            style={{
+                ...variantStyles[variant],
+                width: fullWidth ? '100%' : 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                userSelect: 'none'
+            }}
+            className="label-bold px-5 py-4 rounded-2xl transition-all active:scale-[0.97] active:opacity-80"
         >
             {label}
         </button>
