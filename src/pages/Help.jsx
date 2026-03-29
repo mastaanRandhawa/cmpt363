@@ -1,9 +1,42 @@
 import { Command } from "lucide-react"
+import { useState } from "react";
 
 import Button from "../components/Button"
 import Header from "../components/Header"
 
+const resetButtonStates = [
+    { variant: 'destructive', label: 'Reset Demo' },
+    { variant: 'destructive-outline', label: 'Are you sure?' },
+    { variant: 'destructive', label: 'Are you REALLY sure?' },
+    { variant: 'secondary', label: 'Reset Completed!' },
+];
+
 function Settings() {
+    const [resetButtonStateIndex, setResetButtonStateIndex] = useState(0)
+    const resetButtonCurrentState = resetButtonStates[resetButtonStateIndex]
+
+    function doReset() {
+        // Run the reset code here
+        console.error("Unimplemented")
+    }
+
+    function onResetClick() {
+        const stateNumLastChance = resetButtonStates.length - 2
+        const stateNumAfterReset = resetButtonStates.length - 1
+
+        if (resetButtonStateIndex >= stateNumAfterReset) {
+            return
+        }
+
+        if (resetButtonStateIndex === stateNumLastChance) {
+            doReset()
+            setResetButtonStateIndex(stateNumAfterReset)
+            return
+        }
+
+        setResetButtonStateIndex(resetButtonStateIndex+1)
+    }
+
     const buttonStyles = {
         minWidth: '30%',
         padding: '12px 22px',
@@ -18,6 +51,7 @@ function Settings() {
         justifyContent: 'center',
         gap: '8px',
     }
+
     return (
         <>
             <Header onBack={true} />
@@ -60,9 +94,8 @@ function Settings() {
                     <p>tasks and data. Would you like to</p>
                     <p>restore the original demo data?</p>
                 </div>
-                <Button
-                    label="Reset Demo"
-                    variant="destructive"
+                <Button {...resetButtonCurrentState}
+                    onClick={onResetClick}
                     style={{
                         minWidth: '30%',
                         padding: '12px 22px',
