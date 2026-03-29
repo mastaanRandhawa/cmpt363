@@ -158,6 +158,8 @@ html, body {
   --color-text-mid: #8E84C5;
   --color-text-secondary: #746B9E;
   --color-text-secondary-muted: #5A527A;
+
+  --color-modal: rgba(15, 13, 23, 0.85); /* Deep midnight purple */
 }
 [data-theme="ocean"] {
   --color-important: #E8735A;
@@ -182,6 +184,8 @@ html, body {
   --color-text-mid: #3E9FA8;
   --color-text-secondary: #2E757C;
   --color-text-secondary-muted: #1E4B50;
+
+  --color-modal: rgba(10, 9, 8, 0.85); /* Deep obsidian */
 }
 [data-theme="arctic"] {
   --color-important: #E05555;
@@ -206,7 +210,10 @@ html, body {
   --color-text-mid: #6189B8;
   --color-text-secondary: #486689;
   --color-text-secondary-muted: #304459;
+
+  --color-modal: rgba(10, 14, 20, 0.85); /* Deep arctic blue-black */
 }
+
 [data-theme="matcha"] {
   --color-important: #B03030;
   --color-accent: #C49A4A;
@@ -230,6 +237,8 @@ html, body {
   --color-text-mid: #5E5649;
   --color-text-secondary: #7A7265;
   --color-text-secondary-muted: #9B9386;
+
+  --color-modal: rgba(45, 42, 38, 0.4); /* A warm, dark brown tint */
 }
 [data-theme="original"] {
   --color-important:  #fd6f42;
@@ -254,4 +263,6 @@ html, body {
   --color-text-mid: rgb(73, 93, 113);
   --color-text-secondary: rgb(106, 121, 140);
   --color-text-secondary-muted: rgb(153, 164, 179);
+
+  --color-modal: rgba(30, 42, 58, 0.5); /* Steel blue-grey wash */
 }
