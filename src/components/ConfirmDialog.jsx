@@ -36,10 +36,19 @@
 //     onCancel={() => setShowCompleteConfirm(false)}
 //   />
 
+import React from 'react';
+
+// Using your specific theme variables: important = Red, success = Green, primary = Blue
 const confirmColors = {
-    danger:  'var(--color-danger)',
+    danger:  'var(--color-important)',
     success: 'var(--color-success)',
     primary: 'var(--color-primary)',
+}
+
+const confirmSoftColors = {
+    danger:  'var(--color-important-soft)',
+    success: 'var(--color-success-soft)',
+    primary: 'var(--color-primary-soft)',
 }
 
 function ConfirmDialog({
@@ -52,63 +61,102 @@ function ConfirmDialog({
                            onConfirm,
                            onCancel,
                        }) {
+    const activeConfirmColor = confirmColors[confirmVariant] || confirmColors.danger;
+    const activeSoftColor = confirmSoftColors[confirmVariant] || confirmSoftColors.danger;
+
     return (
         <div
             onClick={onCancel}
             style={{
-                position: 'absolute', inset: 0,
-                background: 'rgba(0,0,0,0.6)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                zIndex: 100, padding: '32px',
+                position: 'absolute',
+                inset: 0,
+                background: 'var(--color-modal-shade)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1000,
+                padding: '32px',
+                backdropFilter: 'blur(4px)',
             }}
         >
             <div
                 onClick={e => e.stopPropagation()}
                 style={{
-                    background: 'var(--color-surface)',
-                    borderRadius: '24px',
-                    padding: '28px 24px',
+                    background: 'var(--color-card)',
+                    borderRadius: '28px',
+                    padding: '32px 24px 24px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: '12px',
                     width: '100%',
                     maxWidth: '320px',
-                    color: 'var(--color-text)',
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
                 }}
             >
-                {/* icon bubble */}
+                {/* Icon Bubble */}
                 {icon && (
                     <div style={{
-                        background: `color-mix(in srgb, ${confirmColors[confirmVariant]} 12%, transparent)`,
-                        borderRadius: '16px',
-                        width: '52px',
-                        height: '52px',
+                        background: activeSoftColor,
+                        borderRadius: '20px',
+                        width: '64px',
+                        height: '64px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
+                        marginBottom: '20px',
                     }}>
-                        {icon}
+                        {/* Injecting the color into the icon itself
+                           to ensure Lucide icons pick up the theme color
+                        */}
+                        {React.cloneElement(icon, { color: activeConfirmColor })}
                     </div>
                 )}
 
-                <p style={{ margin: 0, fontWeight: 800, fontSize: '18px', letterSpacing: '0.04em', textAlign: 'center' }}>
+                <h2 className="h3" style={{
+                    margin: '0 0 8px 0',
+                    textAlign: 'center',
+                    color: 'var(--color-text-main)',
+                }}>
                     {title}
-                </p>
-                <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-muted)', textAlign: 'center', lineHeight: 1.6 }}>
+                </h2>
+
+                <p className="label-medium" style={{
+                    margin: '0 0 28px 0',
+                    color: 'var(--color-text-mid)',
+                    textAlign: 'center',
+                    lineHeight: 1.5,
+                }}>
                     {message}
                 </p>
 
-                <div style={{ display: 'flex', gap: '10px', width: '100%', marginTop: '8px' }}>
+                <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
                     <button
                         onClick={onCancel}
-                        style={{ flex: 1, padding: '14px', background: 'var(--color-surface-alt)', border: 'none', borderRadius: '14px', color: 'var(--color-text)', fontWeight: 600, fontSize: '14px', cursor: 'pointer' }}
+                        className="label-bold"
+                        style={{
+                            flex: 1,
+                            padding: '16px',
+                            background: 'var(--color-divider)',
+                            border: 'none',
+                            borderRadius: '16px',
+                            color: 'var(--color-text-main)',
+                            cursor: 'pointer'
+                        }}
                     >
                         {cancelLabel}
                     </button>
                     <button
                         onClick={onConfirm}
-                        style={{ flex: 1, padding: '14px', background: confirmColors[confirmVariant], border: 'none', borderRadius: '14px', color: 'white', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}
+                        className="label-bold"
+                        style={{
+                            flex: 1,
+                            padding: '16px',
+                            background: activeConfirmColor,
+                            border: 'none',
+                            borderRadius: '16px',
+                            color: '#FFFFFF',
+                            cursor: 'pointer'
+                        }}
                     >
                         {confirmLabel}
                     </button>
