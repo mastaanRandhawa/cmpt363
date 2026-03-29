@@ -47,41 +47,39 @@
 //       }
 //   > ... </Section>
 //
-
 import { useState } from 'react';
 import { ChevronUp, ChevronDown } from 'lucide-react'
 
 export function Section({
-    header,
-    headerColor,
-    headerStyle,
-    dividerColor,
+                            header,
+                            headerColor,
+                            headerStyle,
+                            dividerColor = 'var(--color-divider)', // Defaulting to theme divider
 
-    collapsible = false,
-    collapseMode = 'hide', // 'hide' or 'remove'
+                            collapsible = false,
+                            collapseMode = 'hide',
 
-    rightAction,
-    children,
+                            rightAction,
+                            children,
 
-    style,
+                            style,
 
-    // Only if externally managing collapsed state
-    collapsed: externCollapsed,
-    onSetCollapsed: externSetCollapsed,
-}) {
-    // Set up self-managed collapse state or refer to external collapsed state.
-    let [collapsed, setCollapsed] = useState(false);
-    if (externCollapsed != null && externSetCollapsed != null) {
-        collapsed = externCollapsed
-        setCollapsed = externSetCollapsed
-    }
+                            collapsed: externCollapsed,
+                            onSetCollapsed: externSetCollapsed,
+                        }) {
+    // Internal state for self-managed collapse
+    const [internalCollapsed, setInternalCollapsed] = useState(false);
 
-    // Determine how to handle collapsing.
+    // Check if parent is controlling state
+    const isControlled = externCollapsed !== undefined && externSetCollapsed !== undefined;
+    const collapsed = isControlled ? externCollapsed : internalCollapsed;
+    const setCollapsed = isControlled ? externSetCollapsed : setInternalCollapsed;
+
     const shouldHideContents = collapsed && (collapseMode === 'hide');
     const shouldRemoveContents = collapsed && (collapseMode === 'remove');
 
     return (
-        <div style={style}>
+        <div style={{ marginBottom: '16px', ...style }}>
             <SectionHeading
                 text={header}
                 collapsible={collapsible}
@@ -93,7 +91,7 @@ export function Section({
                 style={headerStyle}
             />
             {(!shouldRemoveContents) &&
-                <div style={shouldHideContents ? {display: "none"} : {}}>
+                <div style={shouldHideContents ? { display: "none" } : {}}>
                     {children}
                 </div>
             }
@@ -102,17 +100,18 @@ export function Section({
 }
 
 export function SectionHeading({
-    text,
-    collapsible,
-    collapsed,
-    onSetCollapsed,
-    rightAction,
+                                   text,
+                                   collapsible,
+                                   collapsed,
+                                   onSetCollapsed,
+                                   rightAction,
 
-    color = 'var(--color-primary)',
-    dividerColor = 'var(--color-surface-alt)',
+                                   // Defaulting to a softer secondary color for better hierarchy
+                                   color = 'var(--color-text-secondary)',
+                                   dividerColor = 'var(--color-divider)',
 
-    style,
-}) {
+                                   style,
+                               }) {
     const containerStyle = {
         display: 'flex',
         alignItems: 'center',
@@ -120,40 +119,57 @@ export function SectionHeading({
         width: '100%',
         background: 'none',
         border: 'none',
-        padding: '0 0 12px',
-
-        // Add user-specified styles.
+        padding: '12px 0',
         color,
         ...style,
     }
 
     const contents = (
         <>
-            {/* Chevron to indicate collapsed state */}
-            {collapsible && (collapsed
-                ? <ChevronUp size={14} color={color} />
-                : <ChevronDown size={14} color={color} />
-            )}
-
-            {/* Text for the section heading */}
+            {/* Text for the section heading - Using label-caps for consistency */}
             {text != null &&
-                <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em' }}>
+                <span className="label-caps" style={{ whiteSpace: 'nowrap' }}>
                     {text}
                 </span>
             }
 
             {/* Horizontal divider */}
-            <div style={{ flex: 1, height: '1px', background: dividerColor, marginLeft: '4px' }} />
+            <div style={{
+                flex: 1,
+                height: '1px',
+                background: dividerColor,
+                opacity: 0.6 // Keeping the line subtle
+            }} />
 
-            {rightAction}
+            {/* Right Side Logic: Chevron or RightAction */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {rightAction}
+
+                {collapsible && (
+                    <div style={{ display: 'flex', alignItems: 'center', paddingLeft: '4px' }}>
+                        {collapsed
+                            ? <ChevronDown size={16} color="var(--color-text-secondary-muted)" />
+                            : <ChevronUp size={16} color="var(--color-text-secondary-muted)" />
+                        }
+                    </div>
+                )}
+            </div>
         </>
     )
 
-    return collapsible
-        ? <button
-            onClick={() => onSetCollapsed(!collapsed)}
-            style={{...containerStyle, cursor: "pointer"}}>{contents}</button>
-        : <div style={containerStyle}>{contents}</div>
+    if (collapsible) {
+        return (
+            <button
+                onClick={() => onSetCollapsed(!collapsed)}
+                style={{ ...containerStyle, cursor: "pointer" }}
+                className="active:opacity-70 transition-opacity"
+            >
+                {contents}
+            </button>
+        )
+    }
+
+    return <div style={containerStyle}>{contents}</div>
 }
 
 export default Section
