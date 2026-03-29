@@ -59,9 +59,9 @@ function Settings() {
                     >
                         <SegmentedControl
                             options={[
-                                { value: 'off', label: 'Off' },
+                                { value: 'off', label: 'Off', disabled: true },
                                 { value: 'suggestive', label: 'Suggestive' },
-                                { value: 'collaborative', label: 'Collaborative' },
+                                { value: 'collaborative', label: 'Collaborative', disabled: true },
                             ]}
                             value={settings.aiInvolvementLevel}
                             onChange={settings.setAiInvolvementLevel}
