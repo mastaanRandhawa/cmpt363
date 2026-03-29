@@ -21,35 +21,43 @@
 //
 //   // Custom color (e.g. accent for a streak bar)
 //   <ProgressBar value={3} max={7} color="var(--color-accent)" label="STREAK" showMax />
+function ProgressBar({
+                         value,
+                         max,
+                         color = 'var(--color-primary)',
+                         size = 'md',
+                         label,
+                         showMax = false
+                     }) {
+    const percent = max > 0 ? Math.min(100, (value / max) * 100) : 0;
 
-function ProgressBar({ value, max, color = 'var(--color-primary)', size = 'md', label, showMax = false }) {
-    const percent = max > 0 ? Math.min(100, (value / max) * 100) : 0
-    const height  = size === 'sm' ? '4px' : '8px'
+    // Adjusted sizes for a more modern mobile feel
+    const height = size === 'sm' ? '6px' : '10px';
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
 
-            {/* label row — only rendered when label or showMax is present */}
+            {/* label row */}
             {(label || showMax) && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'baseline'
+                }}>
                     {label && (
-                        <span style={{
-                            fontSize: '11px',
-                            fontWeight: 700,
-                            letterSpacing: '0.08em',
-                            color: 'var(--color-text-muted)',
+                        <span className="label-caps" style={{
+                            color: 'var(--color-text-secondary)',
                         }}>
                             {label}
                         </span>
                     )}
                     {showMax && (
-                        <span style={{
-                            fontSize: '11px',
-                            fontWeight: 600,
-                            color: 'var(--color-text-muted)',
+                        <span className="label-medium" style={{
+                            fontSize: '12px',
+                            color: 'var(--color-text-mid)',
                             marginLeft: 'auto',
                         }}>
-                            {value} / {max}
+                            {value} <span style={{ opacity: 0.5 }}>/</span> {max}
                         </span>
                     )}
                 </div>
@@ -59,17 +67,21 @@ function ProgressBar({ value, max, color = 'var(--color-primary)', size = 'md', 
             <div style={{
                 width: '100%',
                 height,
-                background: 'var(--color-surface-alt)',
-                borderRadius: '999px',
+                background: 'var(--color-divider)', // Using divider for the empty track
+                borderRadius: '100px',
                 overflow: 'hidden',
+                // Optional: add a tiny bit of depth in dark themes
+                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)'
             }}>
                 {/* fill */}
                 <div style={{
                     width: `${percent}%`,
                     height: '100%',
                     background: color,
-                    borderRadius: '999px',
-                    transition: 'width 0.4s ease',
+                    borderRadius: '100px',
+                    transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)', // Smoother easing
+                    // Using a subtle gradient for a premium "glow" effect
+                    backgroundImage: 'linear-gradient(90deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%)'
                 }} />
             </div>
 
