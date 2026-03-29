@@ -12,7 +12,7 @@ function Button({ label, variant = 'primary', onClick, fullWidth = false }) {
             border: 'none'
         },
         destructive: {
-            background: 'var(--color-error)',
+            background: 'var(--color-important)',
             color: '#FFFFFF',
             border: 'none'
         },
