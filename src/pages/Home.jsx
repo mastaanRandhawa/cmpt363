@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {Bell, HelpCircle, Plus, RefreshCw, Command, Trash2} from 'lucide-react'
+import { Bell, HelpCircle, Plus, RefreshCw, Command } from 'lucide-react'
 import Header from '../components/Header'
 import { Section } from '../components/Section'
 import TaskCard from '../components/TaskCard'
@@ -9,8 +9,9 @@ import useRoboStore from '../data/useRoboStore'
 import useToastStore from '../data/useToastStore'
 import useNotificationStore from '../data/useNotificationStore'
 import { getRecommendedTask } from '../data/taskRecommendation'
-import useSwipeList from "../hooks/useSwipeList.js";
-import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import useSessionStore from '../data/useSessionStore'
+import useSwipeList from '../hooks/useSwipeList.js'
+import useSwipeDelete from '../hooks/useSwipeDelete.jsx'
 
 function isToday(dateStr) {
     if (!dateStr) return false
@@ -36,14 +37,16 @@ function Home() {
     const tasks                              = useTaskStore(s => s.tasks)
     const { toggleComplete, updateTask }     = useTaskStore()
     const { show: showToast, dismiss: dismissToast } = useToastStore()
-    const { getSwipeProps, closeAll }                = useSwipeList()
-    const [pendingDeleteTask, setPendingDeleteTask]   = useState(null)
+    const { getSwipeProps, closeAll }        = useSwipeList()
+    const { handleSwipeDelete }              = useSwipeDelete({ closeAll })
 
     const streak   = useRoboStore(s => s.streak)
     const mood     = useRoboStore(s => s.mood)
     const moodDate = useRoboStore(s => s.moodDate)
+    const unlocked           = useSessionStore(s => s.unlocked)
+    const streakToastShown   = useSessionStore(s => s.streakToastShown)
+    const setStreakToastShown = useSessionStore(s => s.setStreakToastShown)
 
-    // TODO: Notification — wire up real notifications when system is built
     const notifications = useNotificationStore(s => s.notifications)
     const hasUnread     = notifications.some(n => !n.read)
     const hasAny        = notifications.length > 0
@@ -54,8 +57,9 @@ function Home() {
     const today    = new Date().toISOString().slice(0, 10)
     const moodToday = moodDate === today ? mood : null
 
-    // ── streak toast on mount ──────────────────────────────────────────────────
+    // ── streak toast — only after unlock, only once per session ───────────────
     useEffect(() => {
+        if (!unlocked || streakToastShown) return
         if (streak < 2) return
         const msgs = {
             2: `2 day streak! Keep the momentum going 🔥`,
@@ -66,14 +70,17 @@ function Home() {
             30: `30 days! Legend status achieved 🌟`,
         }
         const msg = msgs[streak] ?? (streak % 10 === 0 ? `${streak} day streak! Incredible 🔥` : null)
-        if (msg) setTimeout(() => showToast({ message: msg, barColor: 'var(--color-accent)', duration: 4000 }), 800)
-    }, []) // eslint-disable-line
+        if (msg) {
+            setStreakToastShown()
+            setTimeout(() => showToast({ message: msg, barColor: 'var(--color-accent)', duration: 4000 }), 800)
+        }
+    }, [unlocked]) // eslint-disable-line
 
     // ── recommendation ────────────────────────────────────────────────────────
-    const [rec, setRec]                       = useState(null)
-    const [recLoading, setRecLoading]         = useState(false)
-    const [recDismissed, setRecDismissed]     = useState(false)
-    const [recOpen, setRecOpen]               = useState(true)
+    const [rec, setRec]               = useState(null)
+    const [recLoading, setRecLoading] = useState(false)
+    const [recDismissed, setRecDismissed] = useState(false)
+    const [recOpen, setRecOpen]       = useState(true)
 
     const incompleteTasks = tasks.filter(t => t.status !== 'completed')
 
@@ -125,26 +132,6 @@ function Home() {
         })
     }
 
-    function handleSwipeDelete(task) {
-        closeAll()
-        setPendingDeleteTask(task)
-    }
-
-    function confirmSwipeDelete() {
-        const task = pendingDeleteTask
-        setPendingDeleteTask(null)
-
-        showToast({
-            message:     `"${task.name}" deleted`,
-            icon:        <Trash2 size={16} color="var(--color-danger)" />,
-            barColor:    'var(--color-danger)',
-            actionLabel: 'Undo',
-            onAction: () => dismissToast(),
-            onExpire: () => deleteTask(task.id),
-            duration: 5000,
-        })
-    }
-
     return (
         <div style={{ color: 'var(--color-text)', paddingBottom: '16px', position: 'relative', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
 
@@ -153,7 +140,6 @@ function Home() {
                 title={`${greeting}, Bob!`}
                 rightAction={
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        {/* TODO: Notification — bell hidden until notifications exist */}
                         {hasAny && (
                             <button
                                 onClick={() => navigate('/notifications')}
@@ -210,8 +196,8 @@ function Home() {
                                         }}>
                                             <HelpCircle size={13} style={{ flexShrink: 0, marginTop: '1px' }} color="var(--color-text-muted)" />
                                             <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.4 }}>
-                                                    {rec.reason}
-                                                </span>
+                                                {rec.reason}
+                                            </span>
                                         </div>
                                         <div style={{ display: 'flex', gap: '8px' }}>
                                             <button
@@ -245,7 +231,6 @@ function Home() {
                             </div>
                         </Section>
                     ) : (
-                        /* dismissed — compact re-suggest button */
                         <button
                             onClick={() => { setRecDismissed(false); fetchRecommendation() }}
                             style={{
@@ -269,7 +254,6 @@ function Home() {
                     header="UP NEXT"
                     headerColor="var(--color-text-muted)"
                 >
-
                     {upNext.length === 0 ? (
                         <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', textAlign: 'center', margin: '24px 0' }}>
                             You're all caught up 🎉
@@ -293,19 +277,6 @@ function Home() {
                                 />
                             ))}
                         </div>
-                    )}
-
-                    {/* swipe-delete confirm */}
-                    {pendingDeleteTask && (
-                        <ConfirmDialog
-                            icon={<Trash2 size={24} color="var(--color-danger)" />}
-                            title="DELETE TASK?"
-                            message={`"${pendingDeleteTask.name}" will be permanently removed.`}
-                            confirmLabel="Delete Task"
-                            confirmVariant="danger"
-                            onConfirm={confirmSwipeDelete}
-                            onCancel={() => setPendingDeleteTask(null)}
-                        />
                     )}
 
                     {incompleteTasks.length > upNext.length + (recTask ? 1 : 0) && (

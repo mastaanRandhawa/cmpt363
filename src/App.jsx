@@ -8,6 +8,7 @@ import Robo from './pages/Robo'
 import Calendar from './pages/Calendar'
 import More from './pages/More'
 import Settings from './pages/Settings'
+import Notifications from './pages/Notifications'
 import LockScreen from './pages/LockScreen'
 import BottomNav from './components/BottomNav'
 import BottomTray from './components/BottomTray'
@@ -18,6 +19,7 @@ import useTaskStore from './data/useTaskStore'
 import useNotificationStore from './data/useNotificationStore'
 import useRoboStore from './data/useRoboStore'
 import useBottomTrayStore from './data/useBottomTrayStore'
+import useSessionStore from './data/useSessionStore'
 import DebugPanel from './components/DebugPanel'
 
 const themes = [
@@ -131,7 +133,13 @@ function App() {
         document.documentElement.setAttribute('data-theme', 'lavender')
         return 'lavender'
     })
-    const [locked, setLocked] = useState(true)
+    const [locked, setLocked]   = useState(true)
+    const setUnlocked           = useSessionStore(s => s.setUnlocked)
+
+    function handleUnlock() {
+        setLocked(false)
+        setUnlocked()
+    }
     const bottomTrayAboveNav = useBottomTrayStore(s => s.aboveNav)
     const bottomTrayID = useBottomTrayStore(s => s.id)
     const bottomTray  = useBottomTrayStore(s => s.contents)
@@ -241,6 +249,7 @@ function App() {
                                 <Route path="/calendar" element={<Calendar />} />
                                 <Route path="/more" element={<More />} />
                                 <Route path="/settings" element={<Settings />} />
+                                <Route path="/notifications" element={<Notifications />} />
                                 <Route path="/timer" element={<Timer />} />
                                 <Route path="/tasks/:id/edit" element={<TaskCreate />} />
                             </Routes>
@@ -269,7 +278,7 @@ function App() {
                     </BrowserRouter>
 
                     {/* Lock screen — sits above everything inside the phone frame */}
-                    {locked && <LockScreen onUnlock={() => setLocked(false)} />}
+                    {locked && <LockScreen onUnlock={handleUnlock} />}
 
                 </div>
 
