@@ -63,14 +63,14 @@ function buildMessage(tasks) {
     if (total === 0 && nextWeekTasks.length > 0) {
         const next = nextWeekTasks.length
         return {
-            title: `Your week is clear — ${next} coming up next week`,
+            title: `Mid-week check in: Your week is clear — ${next} coming up next week`,
             body:  `Getting a head start now is always a good feeling. Take a peek at what's ahead!`,
         }
     }
 
     if (total === 0) {
         return {
-            title: 'Your week is clear!',
+            title: 'Mid-week check in: Your week is clear!',
             body:  'Nothing scheduled — a great chance to get ahead or just recharge.',
         }
     }
