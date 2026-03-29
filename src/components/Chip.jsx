@@ -1,7 +1,7 @@
 // Updated chip color mapping to include full color spectrum
 
 /*
-Example useage
+Example usage
 <Chip label="Level 4" color="primary" />
 <Chip label="AI Active" color="blue" />
 
