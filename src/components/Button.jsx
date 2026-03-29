@@ -19,20 +19,44 @@
 //   <Button label="Breakdown" variant="secondary"  onClick={handleBreakdown} />
 //   <Button label="Start"     variant="primary"    onClick={handleStart} />
 
-function Button({ label, variant = 'primary', onClick, fullWidth = false }) {
+const buttonColors = {
+    primary:     { background: 'var(--color-primary)',  color: 'var(--color-text)' },
+    secondary:   { background: 'var(--color-surface)',  color: 'var(--color-text)' },
+    destructive: { background: 'var(--color-danger)',   color: 'var(--color-text)' },
+    outline:     { background: 'transparent', color: 'var(--color-text-muted)', borderColor: 'var(--color-text-muted)' },
+    "destructive-outline": { background: 'transparent', color: 'var(--color-danger)', borderColor: 'var(--color-danger)' },
+}
+
+function Button({
+    label,
+    variant = 'primary',
+    onClick,
+    fullWidth = false,
+    style: customStyles,
+}) {
+    const colorStyles = buttonColors[variant] ?? buttonColors.primary;
     const styles = {
-        primary:     { background: 'var(--color-primary)',  color: 'var(--color-text)' },
-        secondary:   { background: 'var(--color-surface)',  color: 'var(--color-text)' },
-        destructive: { background: 'var(--color-danger)',   color: 'var(--color-text)' },
-        outline:     { background: 'transparent', color: 'var(--color-text-muted)',
-            border: '1px solid var(--color-text-muted)' },
+        display: 'flex',
+        alignItems: 'center',
+        gap: '5px',
+        border: 'transparent 1px solid',
+        borderColor: 'transparent', // fixes error in console
+        borderRadius: '20px',
+        padding: '6px 11px',
+        fontWeight: 700,
+        fontSize: '12px',
+        cursor: 'pointer',
+        letterSpacing: '0.04em',
+        justifyContent: 'center',
+        width: fullWidth ? '100%' : 'auto',
+        ...colorStyles,
+        ...customStyles,
     }
 
     return (
         <button
             onClick={onClick}
-            style={{ ...styles[variant], width: fullWidth ? '100%' : 'auto', padding: '16px' }}
-            className="px-4 py-3 rounded-xl font-semibold text-sm transition-opacity active:opacity-70"
+            style={styles}
         >
             {label}
         </button>
