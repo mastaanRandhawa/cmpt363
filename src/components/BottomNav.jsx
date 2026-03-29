@@ -1,31 +1,12 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Home, CheckSquare, Cpu, Calendar, MoreHorizontal, Settings, ChevronRight, HelpCircle, CircleAlert } from 'lucide-react'
+import {
+    Home, CheckSquare, Cpu, Calendar, MoreHorizontal, Settings, ChevronRight, HelpCircle, CircleAlert,
+    MessageSquare, TimerIcon
+} from 'lucide-react'
 import useBottomTrayStore from '../data/useBottomTrayStore'
 import useNavGuardStore from '../data/useNavGuardStore'
 import { BottomTrayItem } from './BottomTray'
 import useSettingsStore from '../data/useSettingsStore'
-
-// TODO: Update Robo icon
-
-// BottomNav
-// Persistent bottom navigation bar. Renders the five primary tabs and highlights the active
-// route. Sticks to the bottom of the phone frame via position: sticky.
-//
-// No props — reads the current route from React Router's useLocation automatically.
-//
-// Tab routes:
-//   /          → Home
-//   /tasks     → Tasks
-//   /robo      → Robo  (AI companion)
-//   /calendar  → Calendar
-//   /more      → More  (Settings, Notifications, Help)
-//
-// Usage:
-//   Place once inside <BrowserRouter>, below the scrollable content area.
-//   <BrowserRouter>
-//     <div className="phone-scroll"> <Routes>...</Routes> </div>
-//     <BottomNav />
-//   </BrowserRouter>
 
 const tabs = [
     { label: 'Home',     icon: Home,           path: '/' },
@@ -36,8 +17,8 @@ const tabs = [
 ]
 
 const trayItems = [
-    { label: 'Chat', icon: Settings, path: '/robo/chat' },
-    { label: 'Timer', icon: Settings, path: '/timer' },
+    { label: 'Chat', icon: MessageSquare, path: '/robo/chat' },
+    { label: 'Timer', icon: TimerIcon, path: '/timer' },
     { label: 'Notifications', icon: CircleAlert, path: '/notifications' },
     { label: 'Settings', icon: Settings, path: '/settings' },
     { label: 'Help', icon: HelpCircle, path: '/help' },
@@ -67,7 +48,6 @@ function showMoreTray({ bottomTrayStore, navigate }) {
     })
 }
 
-// Bottom Navigation bar
 function BottomNav() {
     const navigate = useNavigate()
     const location = useLocation()
@@ -92,8 +72,9 @@ function BottomNav() {
         <div style={{
             position: 'sticky',
             bottom: 0,
-            background: 'var(--color-surface)',
-            borderTop: '1px solid var(--color-surface-alt)',
+            // Updated to use card/divider for a lifted bar feel
+            background: 'var(--color-card)',
+            borderTop: '1px solid var(--color-divider)',
             display: 'flex',
             justifyContent: 'space-around',
             alignItems: 'center',
@@ -101,11 +82,12 @@ function BottomNav() {
             zIndex: 50,
         }}>
             {tabs.map(({ label, icon: Icon, path, action }) => {
-                if (label === "Robo" && settings.aiAssistantName.trim() !== '') {
-                    label = settings.aiAssistantName.trim()
-                }
+                const effectiveLabel = (label === "Robo" && settings.aiAssistantName.trim() !== '')
+                    ? settings.aiAssistantName.trim()
+                    : label;
 
                 const active = location.pathname === path
+
                 return (
                     <button
                         key={path ?? label}
@@ -119,28 +101,29 @@ function BottomNav() {
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
-                            width: '12%',
+                            width: '18%', // Increased slightly for better tap targets
                             gap: '4px',
                             background: 'none',
                             border: 'none',
                             cursor: 'pointer',
-                            color: active ? 'var(--color-primary)' : 'var(--color-text-muted)',
+                            // Primary for active, muted for inactive
+                            color: active ? 'var(--color-primary)' : 'var(--color-text-secondary-muted)',
+                            transition: 'color 0.2s ease',
                         }}
                     >
-                        <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
-                        <span style={{
+                        <Icon size={24} strokeWidth={active ? 2.5 : 2} />
+                        <span className="label-caps" style={{
+                            // Override label-caps size for the tiny nav text
                             fontSize: '10px',
-                            fontWeight: active ? '600' : '400',
-
-                            // Hide text if too long
-                            width: '100%', // of parent button
+                            fontWeight: active ? '700' : '500',
+                            textAlign: 'center',
+                            width: '100%',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
-                            wordBreak: 'break-all',
-                            overflow: 'clip',
+                            overflow: 'hidden',
                         }}>
-              {label}
-            </span>
+                            {effectiveLabel}
+                        </span>
                     </button>
                 )
             })}
