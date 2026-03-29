@@ -31,16 +31,18 @@ function SegmentedControl({ options = [], value, onChange, size = 'md', fullWidt
         }}>
             {options.map(option => {
                 const active = option.value === value
+                const disabled = option.disabled ?? false
+                const onClick = disabled ? null : () => onChange?.(option.value)
                 return (
                     <button
                         key={option.value}
-                        onClick={() => onChange?.(option.value)}
+                        onClick={onClick}
                         style={{
                             flex: fullWidth ? 1 : undefined,
                             padding: isSmall ? '5px 10px' : '7px 14px',
                             borderRadius: '9px',
                             border: 'none',
-                            cursor: 'pointer',
+                            cursor: disabled ? 'not-allowed' : 'pointer',
                             fontSize: isSmall ? '11px' : '13px',
                             fontWeight: active ? 600 : 400,
                             color: active ? 'var(--color-text)' : 'var(--color-text-muted)',
@@ -48,6 +50,7 @@ function SegmentedControl({ options = [], value, onChange, size = 'md', fullWidt
                             boxShadow: active ? '0 1px 4px rgba(0,0,0,0.25)' : 'none',
                             transition: 'background 0.15s, color 0.15s, box-shadow 0.15s',
                             whiteSpace: 'nowrap',
+                            textDecoration: disabled ? 'line-through' : 'none',
                         }}
                     >
                         {option.label}
