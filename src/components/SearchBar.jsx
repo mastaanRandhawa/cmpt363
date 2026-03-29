@@ -19,7 +19,6 @@
 //   const visible = tasks.filter(t =>
 //     t.title.toLowerCase().includes(query.toLowerCase())
 //   )
-
 import { Search, X } from 'lucide-react'
 
 function SearchBar({ value, onChange, placeholder = 'Search tasks...' }) {
@@ -27,17 +26,26 @@ function SearchBar({ value, onChange, placeholder = 'Search tasks...' }) {
         <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            background: 'var(--color-surface)',
-            borderRadius: '999px',
-            padding: '10px 14px',
+            gap: '10px',
+            background: 'var(--color-card)',
+            border: '1px solid var(--color-divider)',
+            borderRadius: '100px', // True pill shape
+            padding: '12px 16px',
+            width: '100%',
+            transition: 'border-color 0.2s ease',
         }}>
-            {/* search icon */}
-            <Search size={16} color="var(--color-text-muted)" strokeWidth={2} style={{ flexShrink: 0 }} />
+            {/* Magnifying glass */}
+            <Search
+                size={18}
+                color="var(--color-text-secondary)"
+                strokeWidth={2.2}
+                style={{ flexShrink: 0 }}
+            />
 
-            {/* input */}
+            {/* Input field */}
             <input
                 type="text"
+                className="label-medium"
                 value={value}
                 onChange={e => onChange(e.target.value)}
                 placeholder={placeholder}
@@ -46,22 +54,25 @@ function SearchBar({ value, onChange, placeholder = 'Search tasks...' }) {
                     background: 'none',
                     border: 'none',
                     outline: 'none',
-                    color: 'var(--color-text)',
-                    fontSize: '14px',
+                    color: 'var(--color-text-main)',
+                    fontSize: '15px',
                     caretColor: 'var(--color-primary)',
+                    padding: 0,
+                    margin: 0,
                 }}
             />
 
-            {/* clear button — only shown when there is text */}
+            {/* Clear button */}
             {value.length > 0 && (
                 <button
                     onClick={() => onChange('')}
+                    className="active:scale-90 transition-transform"
                     style={{
-                        background: 'var(--color-surface-alt)',
+                        background: 'var(--color-divider)',
                         border: 'none',
                         borderRadius: '50%',
-                        width: '18px',
-                        height: '18px',
+                        width: '20px',
+                        height: '20px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -70,7 +81,7 @@ function SearchBar({ value, onChange, placeholder = 'Search tasks...' }) {
                         padding: 0,
                     }}
                 >
-                    <X size={11} color="var(--color-text-muted)" strokeWidth={2.5} />
+                    <X size={12} color="var(--color-text-secondary-muted)" strokeWidth={3} />
                 </button>
             )}
         </div>
