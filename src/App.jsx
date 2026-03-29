@@ -21,6 +21,7 @@ import useRoboStore from './data/useRoboStore'
 import useBottomTrayStore from './data/useBottomTrayStore'
 import useSessionStore from './data/useSessionStore'
 import DebugPanel from './components/DebugPanel'
+import Chat from "./pages/Chat.jsx";
 
 const themes = [
     { value: 'lavender', label: 'Lavender Mist' },
@@ -252,6 +253,7 @@ function App() {
                                 <Route path="/notifications" element={<Notifications />} />
                                 <Route path="/timer" element={<Timer />} />
                                 <Route path="/tasks/:id/edit" element={<TaskCreate />} />
+                                <Route path="/robo/chat" element={<Chat />} />
                             </Routes>
                         </div>
 
