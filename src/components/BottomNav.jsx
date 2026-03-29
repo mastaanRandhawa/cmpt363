@@ -37,6 +37,7 @@ const tabs = [
 
 const trayItems = [
     { label: 'Chat', icon: Settings, path: '/robo/chat' },
+    { label: 'Timer', icon: Settings, path: '/timer' },
     { label: 'Notifications', icon: CircleAlert, path: '/notifications' },
     { label: 'Settings', icon: Settings, path: '/settings' },
     { label: 'Help', icon: HelpCircle, path: '/help' },
