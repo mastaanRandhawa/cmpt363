@@ -4,33 +4,75 @@ import Button from "../components/Button"
 import Header from "../components/Header"
 
 function Settings() {
-    const cancelConfirmButtonStyles = {
+    const buttonStyles = {
         minWidth: '30%',
-        cursor: 'not-allowed',
+        padding: '12px 22px',
+    }
+
+    const sectionDivStyle = {
+        marginTop: '32px',
+        color: 'var(--color-text)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
     }
     return (
         <>
-            <Header title="Help" onBack={true} />
-
-            {/* Open Help in Browser */}
+            <Header onBack={true} />
             <div style={{
-                marginTop: '32px',
                 color: 'var(--color-text)',
                 display: 'flex',
-                flexDirection: 'column',
+                flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px',
+                fontSize: '48px',
             }}>
+                <Command size={48} />
+                &nbsp;<span>Help</span>
+            </div>
+
+            {/* Demo Onboarding Actions */}
+            <div style={sectionDivStyle}>
                 <div style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    fontSize: '48px',
+                    textAlign: 'center',
                 }}>
-                    <Command size={48} />
-                    &nbsp;<span>Help</span>
+                    <p>Would you like a step-by-step refresher</p>
+                    <p>on how to use the app?</p>
                 </div>
+                <Button
+                    label="Launch Onboarding"
+                    style={{
+                        minWidth: '30%',
+                        padding: '12px 22px',
+                    }}
+                />
+            </div>
+
+            {/* Demo Onboarding Actions */}
+            <Divider/>
+            <div style={sectionDivStyle}>
+                <div style={{
+                    textAlign: 'center',
+                }}>
+                    <p>This demo comes with pre-populated</p>
+                    <p>tasks and data. Would you like to</p>
+                    <p>restore the original demo data?</p>
+                </div>
+                <Button
+                    label="Reset Demo"
+                    variant="destructive"
+                    style={{
+                        minWidth: '30%',
+                        padding: '12px 22px',
+                    }}
+                />
+            </div>
+            
+            {/* Open Help in Browser */}
+            <Divider/>
+            <div style={sectionDivStyle}>
                 <div style={{
                     textAlign: 'center',
                 }}>
@@ -45,12 +87,26 @@ function Settings() {
                     marginTop: '16px',
                     gap: '8px',
                 }}>
-                    <Button label="Cancel" variant='outline' style={cancelConfirmButtonStyles} />
-                    <Button label="Confirm" style={cancelConfirmButtonStyles} />
+                    <Button
+                        label="View Documentation"
+                        variant="outline"
+                        style={{
+                            ...buttonStyles,
+                            cursor: 'not-allowed',
+                        }}
+                    />
                 </div>
             </div>
         </>
     )
+}
+
+function Divider() {
+    return <div style={{
+        flex: 1,
+        height: '1px',
+        background: 'var(--color-surface-alt)',
+        margin: '32px 0' }} />
 }
 
 export default Settings
