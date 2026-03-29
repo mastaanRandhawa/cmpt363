@@ -6,7 +6,7 @@ import TaskDetail from './pages/TaskDetail'
 import TaskCreate from './pages/TaskCreate'
 import Robo from './pages/Robo'
 import Calendar from './pages/Calendar'
-import More from './pages/More'
+import Help from './pages/help'
 import Settings from './pages/Settings'
 import Notifications from './pages/Notifications'
 import LockScreen from './pages/LockScreen'
@@ -248,7 +248,7 @@ function App() {
                                 <Route path="/tasks/:id" element={<TaskDetail />} />
                                 <Route path="/robo" element={<Robo />} />
                                 <Route path="/calendar" element={<Calendar />} />
-                                <Route path="/more" element={<More />} />
+                                <Route path="/help" element={<Help />} />
                                 <Route path="/settings" element={<Settings />} />
                                 <Route path="/notifications" element={<Notifications />} />
                                 <Route path="/timer" element={<Timer />} />

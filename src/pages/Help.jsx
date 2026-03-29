@@ -1,9 +1,9 @@
-function More() {
+function Help() {
     return (
         <div className="page flex flex-col gap-4 p-6 min-h-screen">
-            <h1 style={{ color: 'var(--color-text)' }}>More</h1>
+            <h1 style={{ color: 'var(--color-text)' }}>Help</h1>
         </div>
     )
 }
 
-export default More
+export default Help
