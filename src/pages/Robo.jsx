@@ -55,6 +55,7 @@ function Robo() {
             <Header
                 subtitle="YOUR COMPANION"
                 title="Robo"
+                onBack={() => navigate(-1)}
                 rightAction={
                     <button
                         onClick={() => navigate('/robo/chat')}

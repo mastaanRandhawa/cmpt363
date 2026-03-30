@@ -3,6 +3,7 @@ import { BellOff } from 'lucide-react'
 import Header from '../components/Header'
 import { Section } from '../components/Section'
 import useNotificationStore from '../data/useNotificationStore'
+import { useNavigate } from 'react-router-dom'
 
 const POLL_INTERVAL_MS = 15000
 
@@ -87,7 +88,7 @@ export default function Notifications() {
     const notifications      = useNotificationStore(s => s.notifications)
     const fetchNotifications = useNotificationStore(s => s.fetchNotifications)
     const markAllRead        = useNotificationStore(s => s.markAllRead)
-
+    const navigate   = useNavigate()
     useEffect(() => {
         fetchNotifications().then(() => {
             setTimeout(markAllRead, 1500)
@@ -101,7 +102,9 @@ export default function Notifications() {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <Header title="Notifications" />
+            <Header title="Notifications"
+                    onBack={() => navigate(-1)}
+            />
 
             <div style={{ flex: 1, overflowY: 'auto' }}>
                 {notifications.length === 0 ? (
