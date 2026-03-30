@@ -22,6 +22,7 @@ import useBottomTrayStore from './data/useBottomTrayStore'
 import useSessionStore from './data/useSessionStore'
 import DebugPanel from './components/DebugPanel'
 import Chat from "./pages/Chat.jsx";
+import useSettingsStore from './data/useSettingsStore'
 
 const themes = [
     { value: 'lavender', label: 'Lavender Mist' },
@@ -135,6 +136,7 @@ function App() {
         document.documentElement.setAttribute('data-theme', 'lavender')
         return 'lavender'
     })
+    const showDebugPanel = useSettingsStore(s => s.showDebugPanel)
     const [locked, setLocked]   = useState(true)
     const setUnlocked           = useSessionStore(s => s.setUnlocked)
 
@@ -178,7 +180,6 @@ function App() {
             justifyContent: 'center',
             padding: '40px 0',
         }}>
-
             {/* dev controls */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                 <select
@@ -285,7 +286,7 @@ function App() {
 
                 </div>
 
-                <DebugPanel />
+                {showDebugPanel && <DebugPanel />}
 
             </div>
         </div>
