@@ -28,6 +28,7 @@ const themes = [
     { value: 'ocean',    label: 'Midnight Ocean' },
     { value: 'arctic',   label: 'Arctic Dusk' },
     { value: 'matcha',   label: 'Matcha Latte' },
+    { value: 'original', label: 'Original' },
 ]
 
 const devControlStyle = {
@@ -199,7 +200,7 @@ function App() {
             <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
 
                 {/* iPhone frame */}
-                <div style={{
+                <div id="phone-frame" style={{
                     width: '440px',
                     height: '956px',
                     background: 'var(--color-bg)',

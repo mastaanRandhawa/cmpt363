@@ -12,33 +12,11 @@
 //   cancelLabel    – string, cancel button text (default 'Cancel')
 //   onConfirm      – () => void
 //   onCancel       – () => void
-//
-// Usage examples:
-//   // Delete confirm (TaskDetail / Tasks)
-//   <ConfirmDialog
-//     icon={<Trash2 size={24} color="var(--color-danger)" />}
-//     title="DELETE TASK?"
-//     message="This task will be permanently removed."
-//     confirmLabel="Delete Task"
-//     confirmVariant="danger"
-//     onConfirm={handleDelete}
-//     onCancel={() => setShowDeleteConfirm(false)}
-//   />
-//
-//   // Incomplete subtasks warning (TaskDetail)
-//   <ConfirmDialog
-//     icon={<CheckCircle size={24} color="var(--color-accent)" />}
-//     title="NOT QUITE DONE?"
-//     message={`${completedCount} of ${subtasks.length} subtasks complete. Mark everything done anyway?`}
-//     confirmLabel="Mark Done"
-//     confirmVariant="success"
-//     onConfirm={markComplete}
-//     onCancel={() => setShowCompleteConfirm(false)}
-//   />
 
 import React from 'react';
+import { createPortal } from 'react-dom';
+import FadeOverlay from './FadeOverlay';
 
-// Using your specific theme variables: important = Red, success = Green, primary = Blue
 const confirmColors = {
     danger:  'var(--color-important)',
     success: 'var(--color-success)',
@@ -62,107 +40,113 @@ function ConfirmDialog({
                            onCancel,
                        }) {
     const activeConfirmColor = confirmColors[confirmVariant] || confirmColors.danger;
-    const activeSoftColor = confirmSoftColors[confirmVariant] || confirmSoftColors.danger;
+    const activeSoftColor    = confirmSoftColors[confirmVariant] || confirmSoftColors.danger;
+    const phoneFrame         = document.getElementById('phone-frame') ?? document.body;
 
-    return (
-        <div
-            onClick={onCancel}
-            style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'var(--color-modal-shade)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 1000,
-                padding: '32px',
-                backdropFilter: 'blur(4px)',
-            }}
-        >
+    return createPortal(
+        <>
+            {/* Backdrop — FadeOverlay with position:absolute stays clipped to #phone-frame */}
+            <FadeOverlay visible={true} />
+
+            {/* Centering layer — sits above the backdrop, dismisses on outside click */}
             <div
-                onClick={e => e.stopPropagation()}
+                onClick={onCancel}
                 style={{
-                    background: 'var(--color-card)',
-                    borderRadius: '28px',
-                    padding: '32px 24px 24px',
+                    position: 'absolute',
+                    inset: 0,
                     display: 'flex',
-                    flexDirection: 'column',
                     alignItems: 'center',
-                    width: '100%',
-                    maxWidth: '320px',
-                    boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+                    justifyContent: 'center',
+                    zIndex: 9999,
+                    padding: '32px',
                 }}
             >
-                {/* Icon Bubble */}
-                {icon && (
-                    <div style={{
-                        background: activeSoftColor,
-                        borderRadius: '20px',
-                        width: '80px',
-                        height: '80px',
+                {/* Card — stopPropagation so clicks inside don't dismiss */}
+                <div
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                        background: 'var(--color-card)',
+                        borderRadius: '28px',
+                        padding: '32px 24px 24px',
                         display: 'flex',
+                        flexDirection: 'column',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        marginBottom: '20px',
+                        width: '100%',
+                        maxWidth: '320px',
+                        boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+                    }}
+                >
+                    {/* Icon Bubble */}
+                    {icon && (
+                        <div style={{
+                            background: activeSoftColor,
+                            borderRadius: '20px',
+                            width: '80px',
+                            height: '80px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginBottom: '20px',
+                        }}>
+                            {React.cloneElement(icon, { color: activeConfirmColor, size: '32px' })}
+                        </div>
+                    )}
+
+                    <h2 className="h3" style={{
+                        margin: '0 0 8px 0',
+                        textAlign: 'center',
+                        color: 'var(--color-text-main)',
                     }}>
-                        {React.cloneElement(icon, { color: activeConfirmColor, size: '32px' })}
+                        {title}
+                    </h2>
+
+                    <p className="body" style={{
+                        margin: '0 0 28px 0',
+                        paddingLeft: '10px',
+                        paddingRight: '10px',
+                        color: 'var(--color-text-mid)',
+                        textAlign: 'center',
+                        lineHeight: 1.5,
+                    }}>
+                        {message}
+                    </p>
+
+                    <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+                        <button
+                            onClick={onCancel}
+                            className="label-bold"
+                            style={{
+                                flex: 1,
+                                padding: '16px',
+                                background: 'var(--color-divider)',
+                                border: 'none',
+                                borderRadius: '16px',
+                                color: 'var(--color-text-main)',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            {cancelLabel}
+                        </button>
+                        <button
+                            onClick={onConfirm}
+                            className="label-bold"
+                            style={{
+                                flex: 1,
+                                padding: '16px',
+                                background: activeConfirmColor,
+                                border: 'none',
+                                borderRadius: '16px',
+                                color: '#FFFFFF',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            {confirmLabel}
+                        </button>
                     </div>
-                )}
-
-                <h2 className="h3" style={{
-                    margin: '0 0 8px 0',
-                    textAlign: 'center',
-                    color: 'var(--color-text-main)',
-                }}>
-                    {title}
-                </h2>
-
-                <p className="label-medium" style={{
-                    margin: '0 0 28px 0',
-                    paddingLeft: '10px',
-                    paddingRight: '10px',
-                    color: 'var(--color-text-mid)',
-                    textAlign: 'center',
-                    lineHeight: 1.5,
-                }}>
-                    {message}
-                </p>
-
-                <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
-                    <button
-                        onClick={onCancel}
-                        className="label-bold"
-                        style={{
-                            flex: 1,
-                            padding: '16px',
-                            background: 'var(--color-divider)',
-                            border: 'none',
-                            borderRadius: '16px',
-                            color: 'var(--color-text-main)',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        {cancelLabel}
-                    </button>
-                    <button
-                        onClick={onConfirm}
-                        className="label-bold"
-                        style={{
-                            flex: 1,
-                            padding: '16px',
-                            background: activeConfirmColor,
-                            border: 'none',
-                            borderRadius: '16px',
-                            color: '#FFFFFF',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        {confirmLabel}
-                    </button>
                 </div>
             </div>
-        </div>
-    )
+        </>
+        , phoneFrame)
 }
 
 export default ConfirmDialog
