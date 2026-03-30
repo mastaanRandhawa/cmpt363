@@ -23,13 +23,13 @@ import useSessionStore from './data/useSessionStore'
 import DebugPanel from './components/DebugPanel'
 import Chat from "./pages/Chat.jsx";
 import useSettingsStore from './data/useSettingsStore'
+import { useDeviceStore } from './hooks/useDeviceProfile'
 
 const themes = [
     { value: 'lavender', label: 'Lavender Mist' },
     { value: 'ocean',    label: 'Midnight Ocean' },
     { value: 'arctic',   label: 'Arctic Dusk' },
     { value: 'matcha',   label: 'Matcha Latte' },
-    { value: 'original', label: 'Original' },
 ]
 
 const devControlStyle = {
@@ -144,6 +144,7 @@ function App() {
         setLocked(false)
         setUnlocked()
     }
+    const { isRealDevice, match, sw, sh } = useDeviceProfile()
     const bottomTrayAboveNav = useBottomTrayStore(s => s.aboveNav)
     const bottomTrayID = useBottomTrayStore(s => s.id)
     const bottomTray  = useBottomTrayStore(s => s.contents)
@@ -157,7 +158,11 @@ function App() {
         fetchTasks()
         fetchNotifications()
         fetchRobo().then(() => checkStreak())
-    }, []) // eslint-disable-line
+        const mq = window.matchMedia('(max-width: 1024px)')
+        const handler = (e) => setIsMobile(e.matches)
+        mq.addEventListener('change', handler)
+        return () => mq.removeEventListener('change', handler)
+    }, [])
 
     function handleTheme(value) {
         setTheme(value)
@@ -166,10 +171,75 @@ function App() {
 
     const bottomTrayStyle = {}
     if (bottomTrayAboveNav) {
-        bottomTrayStyle.zIndex = 49, // 1 below BottomNav
-            bottomTrayStyle.marginBottom = 80 // Approx. height of BottomNav
+        bottomTrayStyle.zIndex = 49 // 1 below BottomNav
+        bottomTrayStyle.marginBottom = 80 // Approx. height of BottomNav
     }
 
+    const frameW = match ? match.w : 440
+    const frameH = match ? match.h : 956
+
+    // On mobile/tablet: render full-screen without phone frame
+    if (isMobile) {
+        return (
+            <div style={{
+                width: '100vw',
+                height: '100dvh',
+                background: 'var(--color-bg)',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+            }}>
+                <BrowserRouter>
+                    <div
+                        className="phone-scroll"
+                        style={{
+                            flex: 1,
+                            overflowY: 'auto',
+                            paddingTop: 'env(safe-area-inset-top, 0px)',
+                            msOverflowStyle: 'none',
+                            scrollbarWidth: 'none',
+                        }}
+                    >
+                        <Routes>
+                            <Route path="/" element={<Home />} />
+                            <Route path="/tasks" element={<Tasks />} />
+                            <Route path="/tasks/create" element={<TaskCreate />} />
+                            <Route path="/tasks/:id" element={<TaskDetail />} />
+                            <Route path="/robo" element={<Robo />} />
+                            <Route path="/calendar" element={<Calendar />} />
+                            <Route path="/help" element={<Help />} />
+                            <Route path="/settings" element={<Settings />} />
+                            <Route path="/notifications" element={<Notifications />} />
+                            <Route path="/timer" element={<Timer />} />
+                            <Route path="/tasks/:id/edit" element={<TaskCreate />} />
+                            <Route path="/robo/chat" element={<Chat />} />
+                        </Routes>
+                    </div>
+
+                    {toast && (
+                        <Toast
+                            message={toast.message}
+                            icon={toast.icon}
+                            progress={toast.progress}
+                            barColor={toast.barColor}
+                            actionLabel={toast.actionLabel}
+                            onAction={toast.onAction}
+                        />
+                    )}
+
+                    {bottomTray && (
+                        <BottomTray id={bottomTrayID} style={bottomTrayStyle}>
+                            {bottomTray}
+                        </BottomTray>
+                    )}
+
+                    <BottomNav />
+                </BrowserRouter>
+            </div>
+        )
+    }
+
+    // On desktop: render inside phone frame
     return (
         <div style={{
             minHeight: '100vh',
