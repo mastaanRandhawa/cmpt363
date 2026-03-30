@@ -20,11 +20,11 @@ function getWeekBounds() {
 function buildMessage(tasks) {
     const { start, end } = getWeekBounds()
 
-    const today    = new Date(); today.setHours(0, 0, 0, 0)
+    const today     = new Date(); today.setHours(0, 0, 0, 0)
     const nextStart = new Date(end); nextStart.setDate(nextStart.getDate() + 1)
     const nextEnd   = new Date(nextStart); nextEnd.setDate(nextStart.getDate() + 6)
 
-    const weekTasks   = tasks.filter(t => {
+    const weekTasks    = tasks.filter(t => {
         if (!t.due) return false
         const d = new Date(t.due + 'T00:00:00')
         return d >= start && d <= end
@@ -45,7 +45,6 @@ function buildMessage(tasks) {
     const overdue   = overdueTasks.length
     const dayName   = new Date().toLocaleDateString('en-US', { weekday: 'long' })
 
-    // Overdue takes priority
     if (overdue > 0 && remaining > 0) {
         return {
             title: `${overdue} overdue + ${remaining} left this week`,
@@ -180,23 +179,21 @@ function LockScreen({ onUnlock }) {
         }
     }, [dragging, slideX])
 
-    const slideRatio  = slideX / (trackWidth() || 1)
+    const slideRatio   = slideX / (trackWidth() || 1)
     const labelOpacity = Math.max(0, 1 - slideRatio * 2)
 
     return (
         <div style={{
-            position:   'absolute',
-            inset:       0,
-            zIndex:      200,
-            display:    'flex',
+            position:      'absolute',
+            inset:          0,
+            zIndex:         1001,
+            display:       'flex',
             flexDirection: 'column',
-            alignItems: 'center',
-            overflow:   'hidden',
-            borderRadius: '48px',
-            opacity:    fading ? 0 : 1,
-            transition: fading ? 'opacity 0.4s ease' : 'none',
-
-            /* iOS-style wallpaper — deep blue/purple space gradient */
+            alignItems:    'center',
+            overflow:      'hidden',
+            borderRadius:  '48px',
+            opacity:       fading ? 0 : 1,
+            transition:    fading ? 'opacity 0.4s ease' : 'none',
             background: `
                 radial-gradient(ellipse at 30% 20%, #3b2d6e 0%, transparent 60%),
                 radial-gradient(ellipse at 75% 60%, #1a3a5c 0%, transparent 55%),
@@ -221,39 +218,50 @@ function LockScreen({ onUnlock }) {
                 color: 'white',
                 zIndex: 1,
             }}>
+                {/*
+                    72px clock — intentional display numeral, no type-scale class covers this.
+                    fontWeight corrected from 200 → 400 (DM Sans only loads 400–700;
+                    200 was silently falling back to 400 anyway).
+                */}
                 <div style={{
-                    fontSize: '72px',
-                    fontWeight: 200,
+                    fontSize:      '72px',
+                    fontWeight:    400,
                     letterSpacing: '-2px',
-                    lineHeight: 1,
+                    lineHeight:    1,
                 }}>
                     {time.replace(/\s?(AM|PM)/, '')}
-                    <span style={{ fontSize: '28px', fontWeight: 300, marginLeft: '6px', opacity: 0.7 }}>
+                    {/*
+                        28px AM/PM — intentional, no class match.
+                        fontWeight corrected from 300 → 400 (same reason as above).
+                    */}
+                    <span style={{ fontSize: '28px', fontWeight: 400, marginLeft: '6px', opacity: 0.7 }}>
                         {time.match(/AM|PM/)?.[0]}
                     </span>
                 </div>
-                <div style={{
-                    marginTop: '8px',
-                    fontSize: '16px',
-                    fontWeight: 400,
-                    opacity: 0.75,
+                {/*
+                    Date string — .caption = 15px / 400, closest class to the old 16px / 400.
+                */}
+                <p className="caption" style={{
+                    margin:        '8px 0 0',
+                    opacity:       0.75,
                     letterSpacing: '0.02em',
+                    color:         'white',
                 }}>
                     {dateStr}
-                </div>
+                </p>
             </div>
 
             {/* ── Robo notification banner ─────────────────────────── */}
             <div style={{
-                marginTop:    '40px',
-                width:        'calc(100% - 32px)',
-                background:   'rgba(255, 255, 255, 0.12)',
-                backdropFilter: 'blur(20px)',
+                marginTop:          '40px',
+                width:              'calc(100% - 32px)',
+                background:         'rgba(255, 255, 255, 0.12)',
+                backdropFilter:     'blur(20px)',
                 WebkitBackdropFilter: 'blur(20px)',
-                borderRadius: '20px',
-                border:       '1px solid rgba(255,255,255,0.18)',
-                padding:      '14px 16px',
-                zIndex:        1,
+                borderRadius:       '20px',
+                border:             '1px solid rgba(255,255,255,0.18)',
+                padding:            '14px 16px',
+                zIndex:              1,
             }}>
                 {/* banner header */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
@@ -264,18 +272,52 @@ function LockScreen({ onUnlock }) {
                     }}>
                         <Command size={15} color="white" />
                     </div>
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.06em' }}>
-                        ROBO
+                    {/*
+                        "ROBO" — label-caps = 13px / 400 / uppercase + fontWeight 700.
+                        Replaces old 12px / 600 (12px not in scale, 600 is fine but
+                        label-caps with 700 is cleaner and consistent).
+                    */}
+                    <span className="label-caps" style={{
+                        fontWeight: 700,
+                        color: 'rgba(255,255,255,0.7)',
+                        letterSpacing: '0.06em',
+                    }}>
+                        Robo
                     </span>
-                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginLeft: 'auto' }}>
+                    {/*
+                        "now" timestamp — label-caps = 13px / 400.
+                        Replaces old 11px (not in scale).
+                    */}
+                    <span className="label-caps" style={{
+                        color: 'rgba(255,255,255,0.4)',
+                        marginLeft: 'auto',
+                    }}>
                         now
                     </span>
                 </div>
-                {/* banner body */}
-                <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'white', lineHeight: 1.3 }}>
+
+                {/*
+                    Message title — label-bold = 14px / 700 / uppercase.
+                    Replaces old 14px / 600 (weight corrected to 700, the max available).
+                */}
+                <p className="label-bold" style={{
+                    margin: 0,
+                    color: 'white',
+                    lineHeight: 1.3,
+                    textTransform: 'none', // override uppercase from class — sentence case reads better here
+                }}>
                     {message.title}
                 </p>
-                <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.4 }}>
+                {/*
+                    Message body — label-default = 13px / 400 / uppercase, textTransform overridden.
+                    Replaces old 13px with no class.
+                */}
+                <p className="label-default" style={{
+                    margin: '4px 0 0',
+                    color: 'rgba(255,255,255,0.65)',
+                    lineHeight: 1.4,
+                    textTransform: 'none',
+                }}>
                     {message.body}
                 </p>
             </div>
@@ -300,18 +342,22 @@ function LockScreen({ onUnlock }) {
                         userSelect:   'none',
                     }}
                 >
-                    {/* label */}
-                    <span style={{
-                        position:   'absolute',
+                    {/*
+                        Slider label — label-bold = 14px / 700.
+                        Replaces old 14px / 500 (weight corrected; 500 exists in DM Sans
+                        but label-bold is the right scale class for 14px text).
+                        textTransform overridden to sentence case.
+                    */}
+                    <span className="label-bold" style={{
+                        position:      'absolute',
                         left: 0, right: 0,
-                        textAlign:  'center',
-                        fontSize:   '14px',
-                        fontWeight: 500,
-                        color:      'rgba(255,255,255,0.6)',
+                        textAlign:     'center',
+                        color:         'rgba(255,255,255,0.6)',
                         letterSpacing: '0.04em',
                         pointerEvents: 'none',
-                        opacity:    labelOpacity,
-                        transition: dragging ? 'none' : 'opacity 0.2s',
+                        opacity:       labelOpacity,
+                        transition:    dragging ? 'none' : 'opacity 0.2s',
+                        textTransform: 'none',
                     }}>
                         slide to unlock
                     </span>
@@ -321,18 +367,18 @@ function LockScreen({ onUnlock }) {
                         onTouchStart={onTouchStart}
                         onMouseDown={onMouseDown}
                         style={{
-                            width:        `${THUMB_SIZE}px`,
-                            height:       `${THUMB_SIZE}px`,
-                            borderRadius: '50%',
-                            background:   'rgba(255,255,255,0.9)',
-                            display:      'flex',
-                            alignItems:   'center',
+                            width:          `${THUMB_SIZE}px`,
+                            height:         `${THUMB_SIZE}px`,
+                            borderRadius:   '50%',
+                            background:     'rgba(255,255,255,0.9)',
+                            display:        'flex',
+                            alignItems:     'center',
                             justifyContent: 'center',
-                            flexShrink:   0,
-                            transform:    `translateX(${slideX}px)`,
-                            transition:   dragging ? 'none' : 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                            cursor:       'grab',
-                            zIndex:       2,
+                            flexShrink:     0,
+                            transform:      `translateX(${slideX}px)`,
+                            transition:     dragging ? 'none' : 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                            cursor:         'grab',
+                            zIndex:         2,
                         }}
                     >
                         {slideRatio >= 0.75
