@@ -98,17 +98,14 @@ function ConfirmDialog({
                     <div style={{
                         background: activeSoftColor,
                         borderRadius: '20px',
-                        width: '64px',
-                        height: '64px',
+                        width: '80px',
+                        height: '80px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         marginBottom: '20px',
                     }}>
-                        {/* Injecting the color into the icon itself
-                           to ensure Lucide icons pick up the theme color
-                        */}
-                        {React.cloneElement(icon, { color: activeConfirmColor })}
+                        {React.cloneElement(icon, { color: activeConfirmColor, size: '32px' })}
                     </div>
                 )}
 
@@ -122,6 +119,8 @@ function ConfirmDialog({
 
                 <p className="label-medium" style={{
                     margin: '0 0 28px 0',
+                    paddingLeft: '10px',
+                    paddingRight: '10px',
                     color: 'var(--color-text-mid)',
                     textAlign: 'center',
                     lineHeight: 1.5,
