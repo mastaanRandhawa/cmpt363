@@ -55,7 +55,7 @@ function NotificationCard({ notification }) {
                     <span style={{
                         fontSize: 14,
                         fontWeight: read ? 400 : 600,
-                        color: 'var(--color-text)',
+                        color: 'var(--color-text-main)',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',

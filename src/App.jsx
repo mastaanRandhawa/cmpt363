@@ -76,7 +76,7 @@ function StatusBar() {
             <span style={{
                 fontSize: '13px',
                 fontWeight: 700,
-                color: 'var(--color-text)',
+                color: 'var(--color-text-main)',
                 letterSpacing: '0.01em',
                 lineHeight: 1,
             }}>
@@ -87,16 +87,16 @@ function StatusBar() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 {/* Signal bars */}
                 <svg width="17" height="12" viewBox="0 0 17 12" fill="none">
-                    <rect x="0"  y="8" width="3" height="4" rx="1" fill="var(--color-text)" />
-                    <rect x="4.5" y="5" width="3" height="7" rx="1" fill="var(--color-text)" />
-                    <rect x="9"  y="2.5" width="3" height="9.5" rx="1" fill="var(--color-text)" />
-                    <rect x="13.5" y="0" width="3" height="12" rx="1" fill="var(--color-text)" opacity="0.3" />
+                    <rect x="0"  y="8" width="3" height="4" rx="1" fill="var(--color-text-main)" />
+                    <rect x="4.5" y="5" width="3" height="7" rx="1" fill="var(--color-text-main)" />
+                    <rect x="9"  y="2.5" width="3" height="9.5" rx="1" fill="var(--color-text-main)" />
+                    <rect x="13.5" y="0" width="3" height="12" rx="1" fill="var(--color-text-main)" opacity="0.3" />
                 </svg>
                 {/* Wi-Fi */}
                 <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
-                    <path d="M8 9.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z" fill="var(--color-text)" />
-                    <path d="M3.5 6.5C4.9 5.1 6.4 4.4 8 4.4s3.1.7 4.5 2.1" stroke="var(--color-text)" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-                    <path d="M1 3.8C3.1 1.7 5.4.7 8 .7s4.9 1 7 3.1" stroke="var(--color-text)" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.4" />
+                    <path d="M8 9.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z" fill="var(--color-text-main)" />
+                    <path d="M3.5 6.5C4.9 5.1 6.4 4.4 8 4.4s3.1.7 4.5 2.1" stroke="var(--color-text-main)" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+                    <path d="M1 3.8C3.1 1.7 5.4.7 8 .7s4.9 1 7 3.1" stroke="var(--color-text-main)" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.4" />
                 </svg>
                 {/* Battery */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1px' }}>
@@ -104,7 +104,7 @@ function StatusBar() {
                         width: '25px',
                         height: '12px',
                         borderRadius: '3px',
-                        border: '1.5px solid var(--color-text)',
+                        border: '1.5px solid var(--color-text-main)',
                         padding: '2px',
                         display: 'flex',
                         alignItems: 'center',
@@ -112,14 +112,14 @@ function StatusBar() {
                         <div style={{
                             width: '75%',
                             height: '100%',
-                            background: 'var(--color-text)',
+                            background: 'var(--color-text-main)',
                             borderRadius: '1px',
                         }} />
                     </div>
                     <div style={{
                         width: '2px',
                         height: '5px',
-                        background: 'var(--color-text)',
+                        background: 'var(--color-text-main)',
                         borderRadius: '0 1px 1px 0',
                         opacity: 0.5,
                     }} />

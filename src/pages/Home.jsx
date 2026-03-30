@@ -133,7 +133,7 @@ function Home() {
     }
 
     return (
-        <div style={{ color: 'var(--color-text)', paddingBottom: '16px', position: 'relative', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ color: 'var(--color-text-main)', paddingBottom: '16px', position: 'relative', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
 
             <Header
                 subtitle={`TODAY · ${dateStr}`}

@@ -50,7 +50,7 @@ function Robo() {
     const lockedUpgrades   = upgrades.filter(u => u.level >  level)
 
     return (
-        <div style={{ color: 'var(--color-text)', paddingBottom: '96px' }}>
+        <div style={{ color: 'var(--color-text-main)', paddingBottom: '96px' }}>
 
             <Header
                 subtitle="YOUR COMPANION"
@@ -58,7 +58,7 @@ function Robo() {
                 rightAction={
                     <button
                         onClick={() => navigate('/robo/chat')}
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', border: '1.5px solid var(--color-text)', borderRadius: '20px', padding: '8px 16px', background: 'none', color: 'var(--color-text)', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', border: '1.5px solid var(--color-text-main)', borderRadius: '20px', padding: '8px 16px', background: 'none', color: 'var(--color-text-main)', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
                     >
                         <Command size={14} /> CHAT
                     </button>
@@ -190,7 +190,7 @@ function Robo() {
                                     padding: '10px 4px',
                                     borderBottom: '1px solid var(--color-surface-alt)',
                                 }}>
-                                    <span style={{ fontSize: '13px', color: 'var(--color-text)' }}>{entry.reason}</span>
+                                    <span style={{ fontSize: '13px', color: 'var(--color-text-main)' }}>{entry.reason}</span>
                                     <span style={{ color: 'var(--color-success)', fontWeight: 700, fontSize: '13px' }}>+{entry.amount}</span>
                                 </div>
                             ))}
