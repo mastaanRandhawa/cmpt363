@@ -80,6 +80,7 @@ function Tasks() {
             <Header
                 subtitle={`TODAY · ${today}`}
                 title="Tasks"
+                onBack={() => navigate(-1)}
             />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '0 20px' }}>
