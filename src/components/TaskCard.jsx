@@ -168,7 +168,7 @@ function TaskCard({
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
                         <span style={{
-                            color: done ? 'var(--color-text-muted)' : 'var(--colour-text-main)',
+                            color: done ? 'var(--color-text-muted)' : 'var(--color-text-main)',
                             fontWeight: 600,
                             fontSize: '14px',
                             flex: 1,

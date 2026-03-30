@@ -44,7 +44,7 @@ function Calendar() {
                 onBack={() => navigate(-1)}
             />
 
-            <div style={{ padding: '0 16px 16px' }}>
+            <div style={{ padding: '20px 16px 16px' }}>
 
                 {/* Coming Soon banner */}
                 <div style={{
@@ -64,7 +64,7 @@ function Calendar() {
                         color: 'var(--color-text-muted)',
                         letterSpacing: '0.02em',
                     }}>
-                        Placeholder - Coming Soon
+                        Coming Soon - Integrated Calendars!
                     </span>
                 </div>
 

@@ -106,6 +106,7 @@ export default function Notifications() {
                     onBack={() => navigate(-1)}
             />
 
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '20px 0' }}>
             <div style={{ flex: 1, overflowY: 'auto' }}>
                 {notifications.length === 0 ? (
                     <EmptyState />
@@ -118,7 +119,6 @@ export default function Notifications() {
                                 ))}
                             </Section>
                         )}
-
                         {read.length > 0 && (
                             <Section
                                 header="READ"
@@ -134,6 +134,7 @@ export default function Notifications() {
                 )}
             </div>
         </div>
+        </div>
     )
 }
 
@@ -147,6 +148,7 @@ function EmptyState() {
             gap: 12,
             height: '60%',
             color: 'var(--color-text-muted)',
+            paddingTop: '20px'
         }}>
             <BellOff size={36} strokeWidth={1.5} />
             <p style={{ margin: 0, fontSize: 14 }}>No notifications yet</p>
