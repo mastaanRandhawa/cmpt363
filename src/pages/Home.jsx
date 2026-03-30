@@ -145,12 +145,12 @@ function Home() {
                                 onClick={() => navigate('/notifications')}
                                 style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' }}
                             >
-                                <Bell size={20} color={hasUnread ? 'var(--color-danger)' : 'var(--color-text-muted)'} />
+                                <Bell size={20} color={hasUnread ? 'var(--color-important)' : 'var(--color-text-muted)'} />
                                 {hasUnread && (
                                     <span style={{
                                         position: 'absolute', top: '2px', right: '2px',
                                         width: '7px', height: '7px', borderRadius: '50%',
-                                        background: 'var(--color-danger)',
+                                        background: 'var(--color-important)',
                                         border: '1.5px solid var(--color-bg)',
                                     }} />
                                 )}
@@ -167,14 +167,14 @@ function Home() {
                     {!recDismissed ? (
                         <Section
                             header="RECOMMENDED NOW"
-                            headerColor="var(--color-primary)"
+                            headerColor="var(--color-text-muted)"
                             collapsible={true}
                             collapsed={!recOpen}
                             onSetCollapsed={v => setRecOpen(!v)}
                         >
                             <div style={{
-                                background: 'var(--color-surface)',
-                                border: '1px solid var(--color-surface-alt)',
+                                background: 'var(--color-card)',
+                                border: '1px solid var(--color-divider)',
                                 borderRadius: '16px', padding: '18px 18px 14px',
                             }}>
                                 {recLoading ? (
@@ -191,7 +191,7 @@ function Home() {
                                         </p>
                                         <div style={{
                                             display: 'flex', alignItems: 'flex-start', gap: '6px',
-                                            background: 'var(--color-surface-alt)', borderRadius: '20px',
+                                            background: 'var(--color-divider)', borderRadius: '20px',
                                             padding: '7px 12px', marginBottom: '16px',
                                         }}>
                                             <HelpCircle size={13} style={{ flexShrink: 0, marginTop: '1px' }} color="var(--color-text-muted)" />
@@ -204,7 +204,7 @@ function Home() {
                                                 onClick={() => setRecDismissed(true)}
                                                 style={{
                                                     flex: 1, padding: '10px', background: 'none',
-                                                    border: '1.5px solid var(--color-surface-alt)',
+                                                    border: '1.5px solid var(--color-divider)',
                                                     borderRadius: '12px', color: 'var(--color-text-muted)',
                                                     fontWeight: 600, fontSize: '13px', cursor: 'pointer',
                                                 }}
@@ -235,8 +235,8 @@ function Home() {
                             onClick={() => { setRecDismissed(false); fetchRecommendation() }}
                             style={{
                                 display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
-                                background: 'var(--color-surface)',
-                                border: '1px dashed var(--color-surface-alt)',
+                                background: 'var(--color-card)',
+                                border: '1px dashed var(--color-divider)',
                                 borderRadius: '12px', padding: '10px 16px',
                                 color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 600,
                                 cursor: 'pointer',
@@ -328,7 +328,7 @@ function SkeletonLoader() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <style>{`@keyframes pulse{0%,100%{opacity:.4}50%{opacity:.9}}`}</style>
             {[['70%','22px'], ['40%','14px'], ['90%','32px']].map(([w, h], i) => (
-                <div key={i} style={{ height: h, width: w, background: 'var(--color-surface-alt)', borderRadius: '6px', animation: `pulse 1.4s ease ${i * 0.15}s infinite` }} />
+                <div key={i} style={{ height: h, width: w, background: 'var(--color-divider)', borderRadius: '6px', animation: `pulse 1.4s ease ${i * 0.15}s infinite` }} />
             ))}
         </div>
     )
