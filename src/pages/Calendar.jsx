@@ -126,7 +126,7 @@ function Calendar() {
                                                     ? '#fff'
                                                     : isSun || isSat
                                                         ? 'var(--color-text-muted)'
-                                                        : 'var(--color-text)',
+                                                        : 'var(--color-text-main)',
                                                 userSelect: 'none',
                                                 lineHeight: 1,
                                             }}>

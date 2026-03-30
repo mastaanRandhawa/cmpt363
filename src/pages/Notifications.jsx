@@ -27,7 +27,7 @@ function NotificationCard({ notification }) {
     return (
         <div style={{
             padding: '14px 20px',
-            borderBottom: '1px solid var(--color-surface-alt)',
+            borderBottom: '1px solid var(--color-divider)',
             display: 'flex',
             gap: '12px',
             alignItems: 'flex-start',

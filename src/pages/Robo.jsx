@@ -70,11 +70,11 @@ function Robo() {
                 {/* mood selector */}
                 <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                        <div style={{ flex: 1, height: '1px', background: 'var(--color-surface-alt)' }} />
+                        <div style={{ flex: 1, height: '1px', background: 'var(--color-divider)' }} />
                         <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--color-text-muted)' }}>
                             TODAY'S MOOD
                         </span>
-                        <div style={{ flex: 1, height: '1px', background: 'var(--color-surface-alt)' }} />
+                        <div style={{ flex: 1, height: '1px', background: 'var(--color-divider)' }} />
                     </div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
                         {moods.map((m, i) => (
@@ -86,10 +86,10 @@ function Robo() {
                                     borderRadius: '20px',
                                     border: moodToday === i
                                         ? '1.5px solid var(--color-primary)'
-                                        : '1.5px solid var(--color-surface-alt)',
+                                        : '1.5px solid var(--color-divider)',
                                     background: moodToday === i
                                         ? 'color-mix(in srgb, var(--color-primary) 15%, transparent)'
-                                        : 'var(--color-surface)',
+                                        : 'var(--color-card',
                                     color: moodToday === i ? 'var(--color-primary)' : 'var(--color-text-muted)',
                                     fontWeight: 600,
                                     fontSize: '13px',
@@ -188,7 +188,7 @@ function Robo() {
                                 <div key={i} style={{
                                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                                     padding: '10px 4px',
-                                    borderBottom: '1px solid var(--color-surface-alt)',
+                                    borderBottom: '1px solid var(--color-divider)',
                                 }}>
                                     <span style={{ fontSize: '13px', color: 'var(--color-text-main)' }}>{entry.reason}</span>
                                     <span style={{ color: 'var(--color-success)', fontWeight: 700, fontSize: '13px' }}>+{entry.amount}</span>
@@ -206,7 +206,7 @@ function Robo() {
                             <div key={source.label} style={{
                                 display: 'flex', justifyContent: 'space-between',
                                 padding: '12px 4px',
-                                borderBottom: '1px solid var(--color-surface-alt)',
+                                borderBottom: '1px solid var(--color-divider)',
                             }}>
                                 <span style={{ fontSize: '14px' }}>{source.label}</span>
                                 <span style={{ color: 'var(--color-primary)', fontWeight: 600, fontSize: '14px' }}>+{source.xp}</span>
@@ -247,11 +247,11 @@ function Robo() {
 function SectionDivider({ label }) {
     return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-            <div style={{ flex: 1, height: '1px', background: 'var(--color-surface-alt)' }} />
+            <div style={{ flex: 1, height: '1px', background: 'var(--color-divider)' }} />
             <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--color-text-muted)' }}>
                 {label}
             </span>
-            <div style={{ flex: 1, height: '1px', background: 'var(--color-surface-alt)' }} />
+            <div style={{ flex: 1, height: '1px', background: 'var(--color-divider)' }} />
         </div>
     )
 }
@@ -259,7 +259,7 @@ function SectionDivider({ label }) {
 function UpgradeCard({ upgrade, unlocked }) {
     return (
         <div style={{
-            background: 'var(--color-surface)',
+            background: 'var(--color-card',
             borderRadius: '14px',
             padding: '14px',
             opacity: unlocked ? 1 : 0.6,
