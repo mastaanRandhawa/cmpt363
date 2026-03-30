@@ -1,4 +1,3 @@
-import { Command } from "lucide-react"
 import { useState } from "react";
 
 import Button from "../components/Button"
@@ -54,18 +53,7 @@ function Settings() {
 
     return (
         <>
-            <Header onBack={true} />
-            <div style={{
-                color: 'var(--color-text)',
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '48px',
-            }}>
-                <Command size={48} />
-                &nbsp;<span>Help</span>
-            </div>
+            <Header onBack={true} title="Help" />
 
             {/* Demo Onboarding Actions */}
             <div style={sectionDivStyle}>
