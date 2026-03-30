@@ -79,7 +79,7 @@ function BottomNav() {
             justifyContent: 'space-around',
             alignItems: 'center',
             padding: '12px 0 28px',
-            zIndex: 50,
+            zIndex: 1000,
         }}>
             {tabs.map(({ label, icon: Icon, path, action }) => {
                 const effectiveLabel = (label === "Robo" && settings.aiAssistantName.trim() !== '')
