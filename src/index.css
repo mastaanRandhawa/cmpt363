@@ -7,7 +7,7 @@
 
 /* Base */
 body {
-  font-family: var(--font-primary), serif;
+  font-family: var(--font-primary), sans-serif;
   font-size: 17px;
   font-weight: 400;
 }
@@ -34,6 +34,11 @@ body {
 .body {
   font-size: 17px;
   font-weight: 400;
+}
+
+.body-light {
+  font-size: 17px;
+  font-weight: 200;
 }
 
 .body-medium {
@@ -110,16 +115,37 @@ html, body {
   display: none;
 }
 
+input[type="date"],
+input[type="time"] {
+  color: var(--color-text-secondary-muted) !important;
+}
+input[data-has-value="true"] {
+  color: var(--color-text-main) !important;
+}
+
+
 /* Fade the modal backdrop in and out */
 /* https://dev.to/kevinbism/css-animation-with-display-none-4pan */
-.modal-backdrop {
-  background: var(--color-modal-shade);
-  opacity: 1;
-  transition: opacity 0.1s ease;
+.modal-overlay {
+  position: fixed;   /* Fixes it to the viewport, not the document */
+  top: 0;
+  left: 0;
+  width: 100vw;      /* Full screen width */
+  height: 100vh;     /* Full screen height */
+  background: var(--color-modal);
+  display: flex;
+  align-items: center;    /* Vertical center */
+  justify-content: center;  /* Horizontal center */
+  z-index: 9999;     /* Ensure it's on top of everything */
+}
 
-  @starting-style {
-    opacity: 0;
-  }
+.modal-content {
+  background: var(--color-card);
+  padding: 24px;
+  border-radius: 20px;
+  max-width: 90%;    /* Responsive width */
+  width: 400px;      /* Fixed base width */
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
 
 .bottom-tray {
