@@ -73,7 +73,7 @@ function Tasks() {
 
     return (
         <div
-            style={{ color: 'var(--colour-text-main)', position: 'relative', minHeight: '100%', display: 'flex', flexDirection: 'column', paddingBottom: '16px' }}
+            style={{ color: 'var(--color-text-main)', position: 'relative', minHeight: '100%', display: 'flex', flexDirection: 'column', paddingBottom: '16px' }}
             onClick={closeAll}
         >
             {/* header */}
@@ -82,7 +82,7 @@ function Tasks() {
                 title="Tasks"
             />
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '0 20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '20px'}}>
 
                 {/* search */}
                 <div onClick={e => e.stopPropagation()} style={{ paddingBottom: '8px' }}>
