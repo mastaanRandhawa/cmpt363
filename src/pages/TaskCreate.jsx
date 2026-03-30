@@ -384,7 +384,7 @@ function TaskCreate() {
 
     // ─── form ─────────────────────────────────────────────────────────────────
     return (
-        <div style={{ color: 'var(--color-text)', position: 'relative', display: 'flex', flexDirection: 'column', paddingBottom: '96px' }}>
+        <div style={{ color: 'var(--colour-text-main)', position: 'relative', display: 'flex', flexDirection: 'column', paddingBottom: '96px' }}>
             <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
 
             <Header
@@ -486,7 +486,7 @@ function TaskCreate() {
                         <input
                             type="date"
                             value={date}
-                            max="9999-12-31"
+                            max="3000-12-31"
                             onChange={e => { setDate(e.target.value); setErrors(p => ({ ...p, date: null })) }}
                             className="body"
                             style={{
@@ -854,7 +854,7 @@ function TaskCreate() {
                                         borderBottom: i < aiPending.length - 1 ? '1px solid var(--color-divider)' : 'none'
                                     }}>
                                         {/* Label (No icon on the left) */}
-                                        <span className="body" style={{ flex: 1, color: 'var(--color-text-main)' }}>
+                                        <span className='body-light`' style={{ flex: 1, color: 'var(--color-text-main)' }}>
                         {s.label}
                     </span>
 

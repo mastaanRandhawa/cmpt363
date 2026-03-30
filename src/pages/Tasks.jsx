@@ -73,7 +73,7 @@ function Tasks() {
 
     return (
         <div
-            style={{ color: 'var(--color-text)', position: 'relative', minHeight: '100%', display: 'flex', flexDirection: 'column', paddingBottom: '16px' }}
+            style={{ color: 'var(--colour-text-main)', position: 'relative', minHeight: '100%', display: 'flex', flexDirection: 'column', paddingBottom: '16px' }}
             onClick={closeAll}
         >
             {/* header */}

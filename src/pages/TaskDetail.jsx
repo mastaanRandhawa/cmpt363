@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Pencil, Plus, MapPin, Repeat, Trash2, CheckCircle, X, GripVertical } from 'lucide-react'
-import { priority as priorityMap } from '../data/priority'
+import {Pencil, Plus, MapPin, Repeat, Trash2, CheckCircle, X, GripVertical, Gauge} from 'lucide-react'
+import { priority as priorityMap, effort as effortMap } from '../data/chipColors'
 import useTaskStore from '../data/useTaskStore'
 import useToastStore from '../data/useToastStore'
 import Header from '../components/Header'
@@ -33,20 +33,47 @@ function TaskDetail() {
     // ─── task not found ───────────────────────────────────────────────────────
     if (!task) {
         return (
-            <div className="p-6" style={{ color: 'var(--color-text)' }}>
-                <button
-                    onClick={() => navigate(-1)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)' }}
-                >
-                    ← Back
-                </button>
-                <p>Task not found.</p>
+            <div style={{ height: '100vh', background: 'var(--color-bg)', color: 'var(--color-text-main)' }}>
+                <Header
+                    title="Task Details"
+                    onBack={() => navigate('/tasks')}
+                />
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '40px',
+                    textAlign: 'center',
+                    gap: '16px'
+                }}>
+                    <div style={{ fontSize: '48px' }}>🔍</div>
+                    <h2 className="h2">Task not found</h2>
+                    <p className="body" style={{ color: 'var(--color-text-secondary)' }}>
+                        This task may have been deleted or moved.
+                    </p>
+                    <button
+                        onClick={() => navigate('/tasks')}
+                        className="label-bold"
+                        style={{
+                            padding: '12px 24px',
+                            background: 'var(--color-primary)',
+                            color: 'white',
+                            borderRadius: '12px',
+                            border: 'none',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Return to Tasks
+                    </button>
+                </div>
             </div>
         )
     }
 
     // ─── derived state ────────────────────────────────────────────────────────
-    const p              = priorityMap[task.priority]
+    const p = priorityMap[task?.priority] || priorityMap.low;
+    const e = effortMap[task?.effort] || effortMap["1"];
     const rawSubtasks    = task.subtasks ?? []
     const completedCount = rawSubtasks.filter(s => s.done).length
     const isComplete     = task.status === 'completed'
@@ -59,9 +86,20 @@ function TaskDetail() {
 
     // ─── helpers ──────────────────────────────────────────────────────────────
     function formatDate(dateStr) {
-        if (!dateStr) return null
-        return new Date(dateStr + 'T00:00:00')
-            .toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+        if (!dateStr) return null;
+        const date = new Date(dateStr + 'T00:00:00');
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const isToday = date.getTime() === today.getTime();
+
+        if (isToday) return 'Today';
+
+        return date.toLocaleDateString('en-US', {
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric'
+        });
     }
 
     // ─── complete ─────────────────────────────────────────────────────────────
@@ -72,28 +110,31 @@ function TaskDetail() {
     }
 
     function markComplete() {
-        setShowCompleteConfirm(false)
+        setShowCompleteConfirm(false);
+        const previousStatus = task.status;
+        const previousSubtasks = [...task.subtasks];
+        const allSubtasksDone = task.subtasks.map(s => ({ ...s, done: true }));
+        updateTask(task.id, {
+            status: 'completed',
+            subtasks: allSubtasksDone
+        });
 
-        // Snapshot original subtasks before marking all done (needed for undo)
-        const originalSubtasks = task.subtasks
-
-        updateTask(task.id, { subtasks: subtasks.map(s => ({ ...s, done: true })) })
-        toggleComplete(task.id)
-        navigate('/tasks')
+        navigate('/tasks');
 
         showToast({
-            message:     `"${task.name}" completed`,
-            icon:        <CheckCircle size={16} color="var(--color-success)" />,
-            barColor:    'var(--color-primary)',
+            message: `"${task.name}" completed`,
+            icon: <CheckCircle size={16} color="var(--color-success)" />,
+            barColor: 'var(--color-primary)',
             actionLabel: 'Undo',
-            onAction:    () => {
-                toggleComplete(task.id)
-                updateTask(task.id, { subtasks: originalSubtasks })
-                dismissToast()
+            onAction: () => {
+                updateTask(task.id, {
+                    status: previousStatus,
+                    subtasks: previousSubtasks
+                });
+                dismissToast();
             },
-            onExpire: () => {},
             duration: 5000,
-        })
+        });
     }
 
     // ─── delete ───────────────────────────────────────────────────────────────
@@ -106,8 +147,8 @@ function TaskDetail() {
 
         showToast({
             message:     `"${taskName}" deleted`,
-            icon:        <Trash2 size={16} color="var(--color-danger)" />,
-            barColor:    'var(--color-danger)',
+            icon:        <Trash2 size={16} color="var(--color-important)" />,
+            barColor:    'var(--color-important)',
             onExpire: () => deleteTask(taskId),
             duration: 3000,
         })
@@ -121,16 +162,9 @@ function TaskDetail() {
         setAddingSubtask(false)
     }
 
-    const labelStyle = {
-        fontSize: '11px',
-        fontWeight: 700,
-        letterSpacing: '0.08em',
-        color: 'var(--color-text-muted)',
-    }
-
     // ─── render ───────────────────────────────────────────────────────────────
     return (
-        <div className="flex flex-col pb-0" style={{ color: 'var(--color-text)', position: 'relative', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ color: 'var(--color-text-main)', position: 'relative', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
 
             <Header
                 title="Task Details"
@@ -138,54 +172,138 @@ function TaskDetail() {
                 onBack={() => navigate(-1)}
             />
 
-            <div className="flex flex-col gap-5 p-5">
+            {/* This container handles the scrolling and the side padding */}
+            <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '20px 20px 40px 20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '24px'
+            }}>
 
                 {/* title + due */}
+                {/*
+                    .h3 = 22px / 400 / uppercase — closest class to the title size.
+                    fontWeight overridden to 700 (the max weight available in DM Sans).
+                */}
                 <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '6px', paddingTop: '8px' }}>
-                    <h1 style={{ fontSize: '22px', fontWeight: 800, margin: 0, letterSpacing: '0.04em' }}>
-                        {task.name.toUpperCase()}
+                    <h1 className="h3" style={{ fontWeight: 700, margin: 0, color: 'var(--color-secondary)' }}>
+                        {task.name}
                     </h1>
                     {task.due && (
-                        <p style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: 'var(--color-text-muted)' }}>
+                        /*
+                            .body-semibold = 17px / 600 — replaces the old 16px/600 inline
+                            which had no matching class in the type scale.
+                        */
+                        <p className="body-semibold" style={{ margin: 0, color: 'var(--color-text-secondary)' }}>
                             Due: {formatDate(task.due)}{task.time ? ` · ${task.time}` : ''}
                         </p>
                     )}
                 </div>
 
                 {/* meta chips */}
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                    <span style={{
-                        background: `color-mix(in srgb, ${p.color} 15%, transparent)`,
+                {/*
+                    All chips now use label-bold (14px / 700 / uppercase).
+                    fontWeight capped at 700 — DM Sans only ships 400–700.
+                */}
+                <div style={{
+                    display: 'flex',
+                    gap: '10px',
+                    flexWrap: 'wrap',
+                    justifyContent: 'center',
+                    padding: '0 10px'
+                }}>
+                    {/* Priority Chip */}
+                    <span className="label-bold" style={{
+                        background: `color-mix(in srgb, ${p.color} 12%, transparent)`,
                         color: p.color,
-                        fontSize: '11px', fontWeight: 700, padding: '4px 14px', borderRadius: '20px',
+                        padding: '6px 14px',
+                        borderRadius: '20px',
+                        letterSpacing: '0.04em',
                     }}>
                         {p.label}
                     </span>
+
+                    {/* Effort Chip */}
                     {task.effort && (
-                        <span style={{ background: 'var(--color-surface)', color: 'var(--color-primary)', fontSize: '11px', fontWeight: 700, padding: '4px 14px', borderRadius: '20px' }}>
-                            EFFORT: {task.effort}
+                        <span className="label-bold" style={{
+                            background: `color-mix(in srgb, ${e.color} 12%, transparent)`,
+                            color: e.color,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '6px 14px',
+                            borderRadius: '20px',
+                            letterSpacing: '0.04em',
+                        }}>
+                            <Gauge size={14} strokeWidth={2.5} />
+                            {task.effort}
                         </span>
                     )}
+
+                    {/* Repeat Chip */}
                     {task.repeat && (
-                        <span style={{ background: 'var(--color-surface)', color: 'var(--color-text-muted)', fontSize: '11px', fontWeight: 700, padding: '4px 14px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <Repeat size={10} />{task.repeat.frequency}
+                        <span className="label-bold" style={{
+                            background: 'var(--color-card)',
+                            color: 'var(--color-text-secondary)',
+                            border: '1px solid var(--color-divider)',
+                            padding: '6px 14px',
+                            borderRadius: '20px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            letterSpacing: '0.04em',
+                        }}>
+                            <Repeat size={12} strokeWidth={2.5} />
+                            {task.repeat.frequency}
                         </span>
                     )}
+
+                    {/* Location Chip */}
                     {task.location && (
-                        <span style={{ background: 'var(--color-surface)', color: 'var(--color-text-muted)', fontSize: '11px', fontWeight: 700, padding: '4px 14px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <MapPin size={10} />{task.location.label}
+                        <span className="label-bold" style={{
+                            background: 'var(--color-card)',
+                            color: 'var(--color-text-secondary)',
+                            border: '1.5px solid var(--color-divider)',
+                            padding: '6px 14px',
+                            borderRadius: '20px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            letterSpacing: '0.04em',
+                        }}>
+                            <MapPin size={12} strokeWidth={2.5} />
+                            {(() => {
+                                const fullText = typeof task.location === 'object' ? task.location.label : task.location;
+                                return fullText.split(',')[0].trim();
+                            })()}
                         </span>
                     )}
                 </div>
 
                 {/* notes */}
                 {task.description && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-                        <p style={{ ...labelStyle, margin: 0 }}>NOTES OR CONTEXT</p>
-                        <div style={{
-                            background: 'var(--color-surface)', borderRadius: '14px', padding: '14px',
-                            fontSize: '14px', lineHeight: 1.6, color: 'var(--color-text)',
-                            border: '1.5px solid var(--color-surface-alt)',
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+                        {/*
+                            label-bold = 14px / 700 / uppercase — replaces the old labelStyle
+                            object which used 11px (not in type scale) with letterSpacing added inline.
+                        */}
+                        <p className="label-bold" style={{ margin: '0 0 4px 0', color: 'var(--color-text-secondary)', letterSpacing: '0.08em' }}>
+                            Notes or Context
+                        </p>
+                        {/*
+                            .caption = 15px / 400 — replaces the old inline fontSize: 15px.
+                        */}
+                        <div className="caption" style={{
+                            background: 'var(--color-card)',
+                            borderRadius: '16px',
+                            padding: '16px',
+                            lineHeight: 1.6,
+                            color: 'var(--color-text-main)',
+                            border: '1.5px solid var(--color-divider)',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                            whiteSpace: 'pre-wrap',
                         }}>
                             {task.description}
                         </div>
@@ -193,16 +311,23 @@ function TaskDetail() {
                 )}
 
                 {/* subtasks */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <p style={{ ...labelStyle, margin: 0 }}>SUBTASKS</p>
+                        <span className="label-bold" style={{ color: 'var(--color-secondary)' }}>Subtasks</span>
                         {subtasks.length > 0 && (
-                            <span style={{
-                                fontSize: '14px', fontWeight: 700,
-                                color: completedCount === subtasks.length ? 'var(--color-success)' : 'var(--color-text)',
-                                transition: 'color 0.3s ease',
+                            /*
+                                label-bold = 14px / 700 / uppercase.
+                                Removed the old fontSize: '11px' inline override that
+                                contradicted the class.
+                            */
+                            <span className="label-bold" style={{
+                                color: completedCount === subtasks.length
+                                    ? 'var(--color-success)'
+                                    : 'var(--color-text-secondary)',
                             }}>
-                                {completedCount === subtasks.length ? 'Complete ✓' : `${completedCount} / ${subtasks.length} done`}
+                                {completedCount === subtasks.length
+                                    ? 'Complete ✓'
+                                    : `${completedCount} / ${subtasks.length} Done`}
                             </span>
                         )}
                     </div>
@@ -216,61 +341,87 @@ function TaskDetail() {
                         />
                     )}
 
-                    <div style={{ background: 'var(--color-surface)', borderRadius: '14px', overflow: 'hidden' }}>
+                    {/* The Subtask Card Container */}
+                    <div style={{
+                        background: 'var(--color-card)',
+                        borderRadius: '16px',
+                        overflow: 'hidden',
+                        border: '1.5px solid var(--color-divider)',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                    }}>
                         {subtasks.map((subtask, i) => (
                             <div
                                 key={subtask.id}
                                 {...getDragProps(i)}
                                 style={{
-                                    display: 'flex', alignItems: 'center', gap: '12px', padding: '13px 14px',
-                                    borderBottom: i < subtasks.length - 1 ? '1px solid var(--color-surface-alt)' : 'none',
+                                    display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px',
+                                    borderBottom: i < subtasks.length - 1 ? '1px solid var(--color-divider)' : 'none',
                                     opacity: dragOverIndex === i ? 0.4 : 1,
-                                    transition: 'opacity 0.15s',
+                                    background: dragOverIndex === i ? 'var(--color-bg)' : 'transparent',
                                     cursor: 'grab',
                                 }}
                             >
-                                <GripVertical size={14} color="var(--color-text-muted)" style={{ flexShrink: 0, opacity: 0.5 }} />
+                                {/* 1. Drag Handle */}
+                                <GripVertical size={14} color="var(--color-text-secondary)" style={{ flexShrink: 0, opacity: 0.4 }} />
+
+                                {/* 2. Number — caption (15px / 400) matching the Edit Task view */}
+                                <span className="caption" style={{
+                                    color: 'var(--color-text-secondary)',
+                                    width: '16px',
+                                    flexShrink: 0,
+                                    textAlign: 'center',
+                                    opacity: subtask.done ? 0.4 : 1
+                                }}>
+                                    {i + 1}
+                                </span>
+
+                                {/* 3. Checkbox */}
                                 <CircleCheck
                                     checked={subtask.done}
                                     onChange={() => toggleSubtask(task.id, subtask.id)}
                                     size={22}
                                 />
 
-                                <span style={{
-                                    flex: 1, fontSize: '14px',
-                                    color: subtask.done ? 'var(--color-text-muted)' : 'var(--color-text)',
+                                {/* 4. Label — .body = 17px / 400 */}
+                                <span className="body" style={{
+                                    flex: 1,
+                                    fontWeight: subtask.done ? 500 : 600,
+                                    color: subtask.done ? 'var(--color-text-secondary)' : 'var(--color-text-main)',
                                     textDecoration: subtask.done ? 'line-through' : 'none',
-                                    transition: 'all 0.15s',
                                 }}>
                                     {subtask.label}
                                 </span>
 
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                                {/* 5. AI Chip & Delete */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                                     {subtask.ai && !subtask.done && (
-                                        <span style={{
-                                            fontSize: '9px', fontWeight: 700, letterSpacing: '0.06em',
-                                            color: 'var(--color-primary-soft)',
-                                            background: 'color-mix(in srgb, var(--color-primary) 12%, transparent)',
-                                            padding: '2px 6px', borderRadius: '999px',
+                                        <span className='body-light' style={{
+                                            fontWeight: 700,
+                                            color: 'var(--color-primary)',
+                                            background: 'var(--color-primary-soft)',
+                                            padding: '3px 8px',
+                                            borderRadius: '999px',
+                                            border: '1px solid color-mix(in srgb, var(--color-primary) 25%, transparent)'
                                         }}>
                                             AI
                                         </span>
                                     )}
                                     <button
                                         onClick={() => removeSubtask(task.id, subtask.id)}
-                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: '0 2px' }}
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: '4px' }}
                                     >
-                                        <X size={14} />
+                                        <X size={18} />
                                     </button>
                                 </div>
                             </div>
                         ))}
 
-                        {/* add subtask row */}
+                        {/* Add Subtask Row */}
                         {addingSubtask ? (
                             <div style={{
-                                display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px',
-                                borderTop: subtasks.length > 0 ? '1px solid var(--color-surface-alt)' : 'none',
+                                display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px',
+                                borderTop: subtasks.length > 0 ? '1px solid var(--color-divider)' : 'none',
+                                background: 'var(--color-bg)'
                             }}>
                                 <input
                                     autoFocus
@@ -280,26 +431,42 @@ function TaskDetail() {
                                         if (e.key === 'Enter') handleAddSubtask()
                                         if (e.key === 'Escape') setAddingSubtask(false)
                                     }}
-                                    placeholder="New subtask..."
-                                    style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--color-text)', fontSize: '14px' }}
+                                    placeholder="Next step..."
+                                    className="body"
+                                    style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--color-text-main)' }}
                                 />
-                                <button onClick={handleAddSubtask} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', fontWeight: 700, fontSize: '13px' }}>Add</button>
-                                <button onClick={() => setAddingSubtask(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
-                                    <X size={14} />
+                                <button
+                                    onClick={handleAddSubtask}
+                                    className="label-bold"
+                                    style={{
+                                        background: 'var(--color-success-soft)',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        padding: '6px 12px',
+                                        color: 'var(--color-success)',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Add
                                 </button>
                             </div>
                         ) : (
+                            /*
+                                label-bold = 14px / 700 / uppercase.
+                                Removed the old fontSize: '12px' override.
+                            */
                             <button
                                 onClick={() => setAddingSubtask(true)}
+                                className="label-bold"
                                 style={{
-                                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                                    padding: '12px', background: 'none', border: 'none',
-                                    borderTop: subtasks.length > 0 ? '1px solid var(--color-surface-alt)' : 'none',
-                                    cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: '13px', fontWeight: 600,
+                                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                    padding: '16px', background: 'none', border: 'none',
+                                    borderTop: subtasks.length > 0 ? '1px solid var(--color-divider)' : 'none',
+                                    cursor: 'pointer', color: 'var(--color-text-secondary)',
                                 }}
                             >
-                                <Plus size={14} />
-                                ADD SUBTASK
+                                <Plus size={16} />
+                                Add Subtask
                             </button>
                         )}
                     </div>
@@ -312,64 +479,89 @@ function TaskDetail() {
             {/* action bar — always at the bottom */}
             <div style={{
                 marginTop: 'auto',
-                padding: '12px 20px 16px',
+                padding: '16px 20px 32px',
                 background: 'var(--color-bg)',
-                borderTop: '1px solid var(--color-surface-alt)',
+                borderTop: '1.5px solid var(--color-divider)',
                 display: 'flex',
-                gap: '10px',
+                gap: '12px',
+                zIndex: 10
             }}>
                 <button
                     onClick={() => setShowDeleteConfirm(true)}
+                    className="label-bold"
                     style={{
-                        flex: 1, padding: '14px',
+                        flex: 1,
+                        padding: '14px 8px',
                         background: 'none',
-                        border: '1.5px solid var(--color-danger)',
-                        borderRadius: '14px',
-                        color: 'var(--color-danger)',
-                        fontWeight: 700, fontSize: '13px', cursor: 'pointer',
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                        border: '1.5px solid var(--color-important)',
+                        borderRadius: '16px',
+                        color: 'var(--color-important)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.2s ease'
                     }}
                 >
-                    <Trash2 size={16} />
+                    <Trash2 size={18} strokeWidth={2.5} />
+                    {/*
+                        label-bold handles size (14px) and weight (700).
+                        Removed the old fontSize: '11px' inline override.
+                    */}
                     Delete
                 </button>
+
                 <button
                     onClick={() => navigate('/tasks/create', { state: { editId: id }, replace: true })}
+                    className="label-bold"
                     style={{
-                        flex: 1, padding: '14px',
+                        flex: 1,
+                        padding: '14px 8px',
                         background: 'none',
                         border: '1.5px solid var(--color-primary)',
-                        borderRadius: '14px',
+                        borderRadius: '16px',
                         color: 'var(--color-primary)',
-                        fontWeight: 700, fontSize: '13px', cursor: 'pointer',
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.2s ease'
                     }}
                 >
-                    <Pencil size={16} />
+                    <Pencil size={18} strokeWidth={2.5} />
                     Edit
                 </button>
+
                 <button
                     onClick={handleComplete}
+                    className="label-bold"
                     style={{
-                        flex: 1, padding: '14px',
-                        background: isComplete ? 'color-mix(in srgb, var(--color-success) 15%, transparent)' : 'none',
+                        flex: 1,
+                        padding: '14px 8px',
+                        background: isComplete ? 'var(--color-success-soft)' : 'none',
                         border: '1.5px solid var(--color-success)',
-                        borderRadius: '14px',
+                        borderRadius: '16px',
                         color: 'var(--color-success)',
-                        fontWeight: 700, fontSize: '13px', cursor: 'pointer',
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.2s ease'
                     }}
                 >
-                    <CheckCircle size={16} />
-                    {isComplete ? 'Undo' : 'Complete'}
+                    <CheckCircle size={18} strokeWidth={2.5} />
+                    {isComplete ? 'Undo' : 'Done'}
                 </button>
             </div>
 
             {/* delete confirm */}
             {showDeleteConfirm && (
                 <ConfirmDialog
-                    icon={<Trash2 size={24} color="var(--color-danger)" />}
-                    title="DELETE TASK?"
+                    icon={<Trash2 size={24} color="var(--color-important)" />}
+                    title="Delete Task?"
                     message="This task will be permanently removed."
                     confirmLabel="Delete Task"
                     confirmVariant="danger"
@@ -382,7 +574,7 @@ function TaskDetail() {
             {showCompleteConfirm && (
                 <ConfirmDialog
                     icon={<CheckCircle size={24} color="var(--color-accent)" />}
-                    title="NOT QUITE DONE?"
+                    title="Not Quite Done?"
                     message={`${completedCount} of ${subtasks.length} subtasks are complete. Mark everything done anyway?`}
                     confirmLabel="Mark Done"
                     confirmVariant="success"
