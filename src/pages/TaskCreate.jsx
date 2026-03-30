@@ -97,6 +97,7 @@ function TaskCreate() {
     const [aiSnapshot, setAiSnapshot]   = useState(null)    // form values at time of last AI call
     const [aiPending, setAiPending]     = useState([])      // suggestions awaiting user decision
     const [aiOriginal, setAiOriginal]   = useState([])      // raw AI output for template saving
+    const [aiInstructions, setAiInstructions] = useState('')      // user directions to the AI
 
     // ─── confirm step ─────────────────────────────────────────────────────────
     const [step, setStep]           = useState('form')
@@ -108,7 +109,8 @@ function TaskCreate() {
         date      !== aiSnapshot.date     ||
         priority  !== aiSnapshot.priority ||
         effort    !== aiSnapshot.effort   ||
-        (!notesPrivate && notes !== aiSnapshot.notes)
+        (!notesPrivate && notes !== aiSnapshot.notes) ||
+        aiInstructions !== aiSnapshot.aiInstructions
     )
 
     // ─── unsaved changes guard ────────────────────────────────────────────────
@@ -208,7 +210,7 @@ function TaskCreate() {
     async function runAISuggestions() {
         setAiLoading(true)
         setAiPending([])
-        const snap = { name, date, priority, effort, notes: notesPrivate ? null : notes }
+        const snap = { name, date, priority, effort, notes: notesPrivate ? null : notes, aiInstructions }
         setAiSnapshot(snap)
         setAiSubmitted(true)
         try {
@@ -221,7 +223,7 @@ function TaskCreate() {
                 description: notesPrivate ? null : notes,
                 location,
             }
-            const result = await generateSubtasks(task)
+            const result = await generateSubtasks(task, aiInstructions || null)
             setAiOriginal(result)
             setAiPending(result.map(s => ({ ...s, id: s.id || crypto.randomUUID() })))
         } catch {
@@ -712,6 +714,23 @@ function TaskCreate() {
                             <ChevronRight size={16} color="var(--color-text-muted)" />
                         </div>
                     )
+                )}
+
+                {/* Instructions for AI — only visible when AI Suggestions is on */}
+                {!isEdit && aiSuggest && level >= 3 && (
+                    <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                            <Command size={11} color="var(--color-primary)" />
+                            <span style={labelStyle}>INSTRUCTIONS FOR AI</span>
+                        </div>
+                        <Input
+                            multiline rows={3}
+                            value={aiInstructions}
+                            onChange={e => setAiInstructions(e.target.value)}
+                            placeholder="Optional: guide the AI — e.g. 'Focus on research steps only' or 'Keep it under 3 subtasks'. Your notes above won't be shared if marked private."
+                        />
+
+                    </div>
                 )}
 
                 {/* submit buttons */}
