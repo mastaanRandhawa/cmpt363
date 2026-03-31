@@ -124,7 +124,7 @@ export function BottomTray({ children, id, style, _parentRef, onDismiss, aboveNa
                 flexDirection: 'column',
                 justifyContent: 'start',
                 alignItems: 'center',
-                padding: '12px 0 28px',
+                padding: '12px 0 24px',
                 minHeight: 200,
                 maxHeight: '75%',
                 transform: 'translateY(var(--tray-offset-y))',
@@ -193,7 +193,7 @@ export function BottomTrayItem({ label, icon, rightIcon, onClick }) {
                     className="label-bold"
                     style={{
                         flex: '1 1',
-                        textAlign: 'left'
+                        textAlign: 'center'
                     }}
                 >
                     {label}
