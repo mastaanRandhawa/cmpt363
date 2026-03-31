@@ -412,6 +412,62 @@ function TaskDetail() {
                                 </div>
                             </div>
                         ))}
+
+                        {/* Add Subtask Row */}
+                        {addingSubtask ? (
+                            <div style={{
+                                display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px',
+                                borderTop: subtasks.length > 0 ? '1px solid var(--color-divider)' : 'none',
+                                background: 'var(--color-bg)'
+                            }}>
+                                <input
+                                    autoFocus
+                                    value={newSubtask}
+                                    onChange={e => setNewSubtask(e.target.value)}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') handleAddSubtask()
+                                        if (e.key === 'Escape') setAddingSubtask(false)
+                                    }}
+                                    placeholder="Next step..."
+                                    className="body"
+                                    style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--color-text-main)' }}
+                                />
+                                <button
+                                    onClick={handleAddSubtask}
+                                    className="label-bold"
+                                    style={{
+                                        background: 'var(--color-success-soft)',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        padding: '6px 12px',
+                                        color: 'var(--color-success)',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Add
+                                </button>
+                                <button
+                                    onClick={() => setAddingSubtask(false)}
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: '4px' }}
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => setAddingSubtask(true)}
+                                className="label-bold"
+                                style={{
+                                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                    padding: '16px', background: 'none', border: 'none',
+                                    borderTop: subtasks.length > 0 ? '1px solid var(--color-divider)' : 'none',
+                                    cursor: 'pointer', color: 'var(--color-text-secondary)',
+                                }}
+                            >
+                                <Plus size={16} />
+                                Add Subtask
+                            </button>
+                        )}
                     </div>
                 </div>
 
