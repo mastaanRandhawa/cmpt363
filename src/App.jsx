@@ -20,7 +20,7 @@ import useNotificationStore from './data/useNotificationStore'
 import useRoboStore from './data/useRoboStore'
 import useBottomTrayStore from './data/useBottomTrayStore'
 import useSessionStore from './data/useSessionStore'
-import DebugPanel from './components/DebugPanel'
+//import DebugPanel from './components/DebugPanel'
 import Chat from "./pages/Chat.jsx";
 import useSettingsStore from './data/useSettingsStore'
 import { useDeviceProfile } from './hooks/useDeviceProfile'
@@ -132,8 +132,8 @@ function StatusBar() {
 
 function App() {
     const [theme, setTheme] = useState(() => {
-        document.documentElement.setAttribute('data-theme', 'lavender')
-        return 'lavender'
+        document.documentElement.setAttribute('data-theme', 'original')
+        return 'original'
     })
 
     const [locked, setLocked] = useState(true)
