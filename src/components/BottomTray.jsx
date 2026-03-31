@@ -127,6 +127,8 @@ export function BottomTray({ children, id, style, _parentRef, onDismiss, aboveNa
                 padding: '12px 0 24px',
                 minHeight: 200,
                 maxHeight: '75%',
+                borderTopLeftRadius: '25px',
+                borderTopRightRadius: '25px',
                 transform: 'translateY(var(--tray-offset-y))',
                 // Caller overrides (strip aboveNav-related keys to avoid conflicts)
                 ...(style ?? {}),
