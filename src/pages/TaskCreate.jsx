@@ -384,7 +384,7 @@ function TaskCreate() {
 
     // ─── form ─────────────────────────────────────────────────────────────────
     return (
-        <div style={{ color: 'var(--colour-text-main)', position: 'relative', display: 'flex', flexDirection: 'column', paddingBottom: '96px' }}>
+        <div style={{ color: 'var(--color-text-main)', position: 'relative', display: 'flex', flexDirection: 'column', paddingBottom: '96px' }}>
             <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
 
             <Header

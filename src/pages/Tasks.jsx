@@ -80,6 +80,7 @@ function Tasks() {
             <Header
                 subtitle={`TODAY · ${today}`}
                 title="Tasks"
+                onBack={() => navigate(-1)}
             />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '20px'}}>
@@ -106,7 +107,7 @@ function Tasks() {
                             key={f.value}
                             onClick={() => setFilter(f.value)}
                             style={{
-                                background: filter === f.value ? 'var(--color-primary)' : 'var(--color-surface)',
+                                background: filter === f.value ? 'var(--color-primary)' : 'var(--color-card)',
                                 color: filter === f.value ? 'white' : 'var(--color-text-muted)',
                                 border: 'none',
                                 borderRadius: '20px',
@@ -126,11 +127,11 @@ function Tasks() {
 
                 {/* divider */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ flex: 1, height: '2px', background: 'var(--color-surface-alt)' }} />
+                    <div style={{ flex: 1, height: '2px', background: 'var(--color-divider)' }} />
                     <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--color-text-muted)' }}>
                         TASKS
                     </span>
-                    <div style={{ flex: 1, height: '2px', background: 'var(--color-surface-alt)' }} />
+                    <div style={{ flex: 1, height: '2px', background: 'var(--color-divider)' }} />
                 </div>
 
                 {/* task list */}

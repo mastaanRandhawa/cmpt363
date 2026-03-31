@@ -153,7 +153,7 @@ function Chat() {
 
     return (
         <div style={{
-            color: 'var(--color-text)',
+            color: 'var(--color-text-main)',
             display: 'flex',
             flexDirection: 'column',
             height: '100%',
@@ -162,7 +162,7 @@ function Chat() {
             <Header
                 subtitle="YOUR COMPANION"
                 title={roboName}
-                onBack={() => navigate('/robo')}
+                onBack={() => navigate(-1)}
             />
 
             {/* ── message list ──────────────────────────────────────────── */}
@@ -188,7 +188,7 @@ function Chat() {
                     <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
                         <RoboAvatar />
                         <div style={{
-                            background: 'var(--color-surface)',
+                            background: 'var(--color-card)',
                             borderRadius: '18px 18px 18px 4px',
                             padding: '12px 16px',
                             display: 'flex',
@@ -208,7 +208,7 @@ function Chat() {
             {/* ── input bar ─────────────────────────────────────────────── */}
             <div style={{
                 padding: '10px 12px 24px',
-                borderTop: '1px solid var(--color-surface-alt)',
+                borderTop: '1px solid var(--color-divider)',
                 background: 'var(--color-bg)',
                 display: 'flex',
                 gap: '8px',
@@ -223,11 +223,11 @@ function Chat() {
                     rows={1}
                     style={{
                         flex: 1,
-                        background: 'var(--color-surface)',
-                        border: '1.5px solid var(--color-surface-alt)',
+                        background: 'var(--color-card)',
+                        border: '1.5px solid var(--color-divider)',
                         borderRadius: '20px',
                         padding: '10px 14px',
-                        color: 'var(--color-text)',
+                        color: 'var(--color-text-main)',
                         fontSize: '14px',
                         outline: 'none',
                         resize: 'none',
@@ -247,7 +247,7 @@ function Chat() {
                         borderRadius: '50%',
                         background: input.trim() && !loading
                             ? 'var(--color-primary)'
-                            : 'var(--color-surface-alt)',
+                            : 'var(--color-divider)',
                         border: 'none',
                         display: 'flex',
                         alignItems: 'center',
@@ -300,8 +300,8 @@ function MessageBubble({ msg, roboName }) {
                 {!isUser && <RoboAvatar />}
                 <div style={{
                     maxWidth: 'calc(76% - 36px)',
-                    background: isUser ? 'var(--color-primary)' : 'var(--color-surface)',
-                    color: isUser ? 'white' : 'var(--color-text)',
+                    background: isUser ? 'var(--color-primary)' : 'var(--color-card)',
+                    color: isUser ? 'white' : 'var(--color-text-main)',
                     borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
                     padding: '10px 14px',
                     fontSize: '14px',

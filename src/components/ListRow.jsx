@@ -147,7 +147,7 @@ export function ListSection({ label }) {
             <div style={{
                 flex: 1,
                 height: '1px',
-                background: 'var(--color-surface-alt)',
+                background: 'var(--color-divider)',
             }} />
         </div>
     )
@@ -179,7 +179,7 @@ export function ListRow({ label, description, right, onPress, children }) {
                     <span style={{
                         fontSize: '14px',
                         fontWeight: 500,
-                        color: 'var(--color-text)',
+                        color: 'var(--color-text-main)',
                     }}>
                         {label}
                     </span>

@@ -1,6 +1,18 @@
 import { useState, useRef, useEffect } from 'react'
 import useBottomTrayStore from '../data/useBottomTrayStore'
 
+// BottomTrayModal
+// Persistent bottom tray. Renders whatever contents are set using the
+// bottomTrayStore hook and can be swiped away to dismiss.
+// Sticks to the bottom of the phone frame via position: sticky and sits above
+// the tab bar.
+//
+// When aboveNav is true the tray's bottom edge is positioned using the
+// --bottom-nav-height CSS custom property that BottomNav publishes on the
+// phone-frame element. This keeps the tray flush with the nav's top edge
+// on every device profile without any hard-coded pixel offsets.
+
+// Bottom tray as blocking modal.
 export function BottomTrayModal(props) {
     const { dismiss } = useBottomTrayStore()
     const _modalRef = useRef(null)
@@ -26,7 +38,7 @@ export function BottomTrayModal(props) {
     )
 }
 
-export function BottomTray({ children, id, style, _parentRef, onDismiss }) {
+export function BottomTray({ children, id, style, _parentRef, onDismiss, aboveNav }) {
     const bottomTrayStore = useBottomTrayStore()
 
     const [ dismissing, setDismissing ] = useState(false);
@@ -62,7 +74,7 @@ export function BottomTray({ children, id, style, _parentRef, onDismiss }) {
         if (dismissing) return;
         startY.current = null
 
-        const trayHeight = trayRef.current?.clientHeight
+        const trayHeight        = trayRef.current?.clientHeight
         const dismissActivation = trayHeight * 0.6
 
         if (lastDiff.current > dismissActivation) {
@@ -78,16 +90,21 @@ export function BottomTray({ children, id, style, _parentRef, onDismiss }) {
     }
 
     useEffect(() => {
-        const parent = _parentRef?.current;
+        const parent = _parentRef?.current
         parent?.addEventListener('touchstart', onTouchStart)
-        parent?.addEventListener('touchmove', onTouchMove)
-        parent?.addEventListener('touchend', onTouchEnd)
+        parent?.addEventListener('touchmove',  onTouchMove)
+        parent?.addEventListener('touchend',   onTouchEnd)
         return () => {
             parent?.removeEventListener('touchstart', onTouchStart)
-            parent?.removeEventListener('touchmove', onTouchMove)
-            parent?.removeEventListener('touchend', onTouchEnd)
+            parent?.removeEventListener('touchmove',  onTouchMove)
+            parent?.removeEventListener('touchend',   onTouchEnd)
         }
     }, [_parentRef])
+
+    // When the tray sits above the nav bar, place its bottom edge exactly at
+    // the nav's top edge using the CSS variable BottomNav publishes.
+    // Fall back to 0 if the variable is not yet set (first paint).
+    const bottomOffset = aboveNav ? 'var(--bottom-nav-height, 0px)' : '0px'
 
     return (
         <div
@@ -100,8 +117,6 @@ export function BottomTray({ children, id, style, _parentRef, onDismiss }) {
             className='bottom-tray'
             style={{
                 position: 'absolute',
-                zIndex: 100,
-                bottom: 0,
                 width: '100%',
                 background: 'var(--color-card)',
                 borderTop: '1px solid var(--color-divider)',
@@ -109,14 +124,18 @@ export function BottomTray({ children, id, style, _parentRef, onDismiss }) {
                 flexDirection: 'column',
                 justifyContent: 'start',
                 alignItems: 'center',
-                padding: '12px 0 28px',
+                padding: '12px 0 24px',
                 minHeight: 200,
                 maxHeight: '75%',
                 transform: 'translateY(var(--tray-offset-y))',
-                ...(style ?? {})
+                // Caller overrides (strip aboveNav-related keys to avoid conflicts)
+                ...(style ?? {}),
+                // Re-assert the computed values so caller can't accidentally clobber them
+                bottom: bottomOffset,
+                zIndex: aboveNav ? 49 : (style?.zIndex ?? 100),
             }}
         >
-            <BottomTrayHandle/>
+            <BottomTrayHandle />
             {children}
         </div>
     )
@@ -174,7 +193,7 @@ export function BottomTrayItem({ label, icon, rightIcon, onClick }) {
                     className="label-bold"
                     style={{
                         flex: '1 1',
-                        textAlign: 'left'
+                        textAlign: 'center'
                     }}
                 >
                     {label}

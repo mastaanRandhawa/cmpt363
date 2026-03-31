@@ -3,6 +3,7 @@ import { BellOff } from 'lucide-react'
 import Header from '../components/Header'
 import { Section } from '../components/Section'
 import useNotificationStore from '../data/useNotificationStore'
+import { useNavigate } from 'react-router-dom'
 
 const POLL_INTERVAL_MS = 15000
 
@@ -27,7 +28,7 @@ function NotificationCard({ notification }) {
     return (
         <div style={{
             padding: '14px 20px',
-            borderBottom: '1px solid var(--color-surface-alt)',
+            borderBottom: '1px solid var(--color-divider)',
             display: 'flex',
             gap: '12px',
             alignItems: 'flex-start',
@@ -87,7 +88,7 @@ export default function Notifications() {
     const notifications      = useNotificationStore(s => s.notifications)
     const fetchNotifications = useNotificationStore(s => s.fetchNotifications)
     const markAllRead        = useNotificationStore(s => s.markAllRead)
-
+    const navigate   = useNavigate()
     useEffect(() => {
         fetchNotifications().then(() => {
             setTimeout(markAllRead, 1500)
@@ -101,8 +102,11 @@ export default function Notifications() {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <Header title="Notifications" />
+            <Header title="Notifications"
+                    onBack={() => navigate(-1)}
+            />
 
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '20px 0' }}>
             <div style={{ flex: 1, overflowY: 'auto' }}>
                 {notifications.length === 0 ? (
                     <EmptyState />
@@ -115,7 +119,6 @@ export default function Notifications() {
                                 ))}
                             </Section>
                         )}
-
                         {read.length > 0 && (
                             <Section
                                 header="READ"
@@ -131,6 +134,7 @@ export default function Notifications() {
                 )}
             </div>
         </div>
+        </div>
     )
 }
 
@@ -144,6 +148,7 @@ function EmptyState() {
             gap: 12,
             height: '60%',
             color: 'var(--color-text-muted)',
+            paddingTop: '20px'
         }}>
             <BellOff size={36} strokeWidth={1.5} />
             <p style={{ margin: 0, fontSize: 14 }}>No notifications yet</p>
