@@ -30,6 +30,15 @@ function TaskDetail() {
 
     const { show: showToast, dismiss: dismissToast } = useToastStore()
 
+    // ─── drag sort — must be before any early returns (Rules of Hooks) ────────
+    function setSubtasksOrdered(ordered) {
+        if (task) updateTask(task.id, { subtasks: ordered })
+    }
+    const { items: subtasks, getDragProps, dragOverIndex } = useDragSort(
+        task?.subtasks ?? [],
+        setSubtasksOrdered
+    )
+
     // ─── task not found ───────────────────────────────────────────────────────
     if (!task) {
         return (
@@ -77,12 +86,6 @@ function TaskDetail() {
     const rawSubtasks    = task.subtasks ?? []
     const completedCount = rawSubtasks.filter(s => s.done).length
     const isComplete     = task.status === 'completed'
-
-    // Drag-to-reorder — persists order to store on drop
-    function setSubtasksOrdered(ordered) {
-        updateTask(task.id, { subtasks: ordered })
-    }
-    const { items: subtasks, getDragProps, dragOverIndex } = useDragSort(rawSubtasks, setSubtasksOrdered)
 
     // ─── helpers ──────────────────────────────────────────────────────────────
     function formatDate(dateStr) {
