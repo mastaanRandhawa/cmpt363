@@ -105,6 +105,14 @@ function TaskDetail() {
         });
     }
 
+    function formatDuration(seconds) {
+        if (!seconds || seconds < 60) return null
+        const h = Math.floor(seconds / 3600)
+        const m = Math.floor((seconds % 3600) / 60)
+        if (h > 0) return `${h}h ${m > 0 ? m + 'm' : ''}`.trim()
+        return `${m}m`
+    }
+
     // ─── complete ─────────────────────────────────────────────────────────────
     function handleComplete() {
         const allDone = subtasks.length === 0 || completedCount === subtasks.length
@@ -195,12 +203,13 @@ function TaskDetail() {
                         {task.name}
                     </h1>
                     {task.due && (
-                        /*
-                            .body-semibold = 17px / 600 — replaces the old 16px/600 inline
-                            which had no matching class in the type scale.
-                        */
                         <p className="body-semibold" style={{ margin: 0, color: 'var(--color-text-secondary)' }}>
                             Due: {formatDate(task.due)}{task.time ? ` · ${task.time}` : ''}
+                        </p>
+                    )}
+                    {formatDuration(task.timeLogged) && (
+                        <p className="caption" style={{ margin: 0, color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                            ⏱ {formatDuration(task.timeLogged)} logged
                         </p>
                     )}
                 </div>

@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Play, Pause, RotateCcw, ChevronDown, CheckCircle } from 'lucide-react'
+import ConfirmDialog from '../components/ConfirmDialog'
+import FadeOverlay from '../components/FadeOverlay'
 import useTaskStore from '../data/useTaskStore'
 import Header from '../components/Header'
 import CircleCheck from '../components/CircleCheck'
-import SegmentedControl from "../components/SegmentedControl.jsx";
 
 // ─── constants ────────────────────────────────────────────────────────────────
 const PHASES = {
@@ -48,13 +49,15 @@ function playDing() {
 function Timer() {
     const navigate      = useNavigate()
     const location      = useLocation()
-    const allTasks = useTaskStore(s => s.tasks)
-    const tasks = allTasks.filter(t => t.status !== 'completed')
+    const allTasks      = useTaskStore(s => s.tasks)
+    const tasks         = allTasks.filter(t => t.status !== 'completed')
     const toggleSubtask = useTaskStore(s => s.toggleSubtask)
+    const logTime       = useTaskStore(s => s.logTime)
 
     // Pre-select task if navigated here with state
     const [selectedTaskId, setSelectedTaskId] = useState(location.state?.taskId ?? '')
     const [showTaskDrop, setShowTaskDrop]     = useState(false)
+    const [pendingTaskId, setPendingTaskId]   = useState(null)  // task switch awaiting confirmation
 
     // Timer state
     const [phase, setPhase]                   = useState('focus')
@@ -63,15 +66,24 @@ function Timer() {
     const [completedPomos, setCompletedPomos] = useState(0)  // focus sessions done
     const [waitingForUser, setWaitingForUser] = useState(false) // dinged, waiting to start next
 
-    const intervalRef = useRef(null)
-    const phaseRef    = useRef(phase)
-    phaseRef.current  = phase
+    const intervalRef       = useRef(null)
+    const phaseRef          = useRef(phase)
+    phaseRef.current        = phase
+    const sessionStartRef   = useRef(null)   // wall-clock time when last started
+    const selectedTaskIdRef = useRef(selectedTaskId)
+    selectedTaskIdRef.current = selectedTaskId
 
     const selectedTask = tasks.find(t => t.id === selectedTaskId) ?? null
     const currentPhase = PHASES[phase]
 
     // ─── tick ─────────────────────────────────────────────────────────────────
     const handleDone = useCallback(() => {
+        // Log the full focus duration to the task when a focus session completes
+        if (phaseRef.current === 'focus' && selectedTaskIdRef.current) {
+            logTime(selectedTaskIdRef.current, PHASES.focus.duration)
+        }
+        sessionStartRef.current = null
+
         setRunning(false)
         playDing()
         setWaitingForUser(true)
@@ -102,23 +114,83 @@ function Timer() {
         return () => clearInterval(intervalRef.current)
     }, [running, handleDone])
 
+    // ─── unmount: log any in-progress focus time when navigating away ───────────
+    useEffect(() => {
+        return () => {
+            if (phaseRef.current === 'focus' && sessionStartRef.current !== null && selectedTaskIdRef.current) {
+                const elapsed = Math.round((Date.now() - sessionStartRef.current) / 1000)
+                if (elapsed > 0) useTaskStore.getState().logTime(selectedTaskIdRef.current, elapsed)
+            }
+        }
+    }, []) // empty deps — runs once, reads latest values via refs
+
     // ─── controls ─────────────────────────────────────────────────────────────
     function handleStartPause() {
         setWaitingForUser(false)
+        if (running) {
+            // Pausing — log elapsed focus time so far
+            if (phase === 'focus' && selectedTaskId && sessionStartRef.current !== null) {
+                const elapsed = Math.round((Date.now() - sessionStartRef.current) / 1000)
+                if (elapsed > 0) logTime(selectedTaskId, elapsed)
+            }
+            sessionStartRef.current = null
+        } else {
+            // Starting — record wall-clock start
+            if (phase === 'focus') sessionStartRef.current = Date.now()
+        }
         setRunning(r => !r)
     }
 
     function handleReset() {
+        sessionStartRef.current = null
         setRunning(false)
         setWaitingForUser(false)
         setSecondsLeft(PHASES[phase].duration)
     }
 
     function handleSwitchPhase(p) {
+        sessionStartRef.current = null
         setRunning(false)
         setWaitingForUser(false)
         setPhase(p)
         setSecondsLeft(PHASES[p].duration)
+    }
+
+    // ─── task switching ──────────────────────────────────────────────────────────
+    function handleTaskSelect(newId) {
+        setShowTaskDrop(false)
+        if (newId === selectedTaskId) return
+        // If a focus session is actively running, ask what to do
+        if (running && phase === 'focus' && sessionStartRef.current !== null) {
+            setPendingTaskId(newId)
+        } else {
+            setSelectedTaskId(newId)
+        }
+    }
+
+    function handleSwitchAndReset(newId) {
+        // Log elapsed time to the OLD task, reset timer, switch task
+        if (selectedTaskId && sessionStartRef.current !== null) {
+            const elapsed = Math.round((Date.now() - sessionStartRef.current) / 1000)
+            if (elapsed > 0) logTime(selectedTaskId, elapsed)
+        }
+        sessionStartRef.current = null
+        setRunning(false)
+        setSecondsLeft(PHASES.focus.duration)
+        setSelectedTaskId(newId)
+        setPendingTaskId(null)
+    }
+
+    function handleSwitchAndSplit(newId) {
+        // Log elapsed time to OLD task, continue timer, switch task
+        if (selectedTaskId && sessionStartRef.current !== null) {
+            const elapsed = Math.round((Date.now() - sessionStartRef.current) / 1000)
+            if (elapsed > 0) logTime(selectedTaskId, elapsed)
+        }
+        // Reset the start ref so future logging is against the new task
+        sessionStartRef.current = Date.now()
+        setSelectedTaskId(newId)
+        setPendingTaskId(null)
     }
 
     // ─── progress ring ────────────────────────────────────────────────────────
@@ -354,7 +426,7 @@ function Timer() {
                             }}>
                                 {/* None option */}
                                 <button
-                                    onClick={() => { setSelectedTaskId(''); setShowTaskDrop(false) }}
+                                    onClick={() => handleTaskSelect('')}
                                     className="body"
                                     style={{
                                         width: '100%', textAlign: 'left',
@@ -376,7 +448,7 @@ function Timer() {
                                 {tasks.map((t, i) => (
                                     <button
                                         key={t.id}
-                                        onClick={() => { setSelectedTaskId(t.id); setShowTaskDrop(false) }}
+                                        onClick={() => handleTaskSelect(t.id)}
                                         style={{
                                             width: '100%', textAlign: 'left',
                                             padding: '12px 16px', background: 'none', border: 'none',
@@ -471,6 +543,22 @@ function Timer() {
                 )}
 
             </div>
+            {/* Task-switch confirmation — only shown when timer is running */}
+            {pendingTaskId !== null && (
+                <>
+                    <FadeOverlay visible={true} />
+                    <ConfirmDialog
+                        icon={<RotateCcw size={24} color="var(--color-accent)" />}
+                        title="Switch Task?"
+                        message={`Timer is running. Log ${formatTime(PHASES.focus.duration - secondsLeft)} to the current task, then…`}
+                        confirmLabel="Reset Timer"
+                        cancelLabel="Keep Going"
+                        confirmVariant="primary"
+                        onConfirm={() => handleSwitchAndReset(pendingTaskId)}
+                        onCancel={() => handleSwitchAndSplit(pendingTaskId)}
+                    />
+                </>
+            )}
         </div>
     )
 }
