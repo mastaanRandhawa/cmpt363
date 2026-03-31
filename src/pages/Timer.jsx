@@ -210,7 +210,7 @@ function Timer() {
             flexDirection: 'column',
             paddingBottom: '96px',
         }}>
-            <Header title="Pomodoro" onBack={() => navigate(-1)} />
+            <Header title="Timer" onBack={() => navigate(-1)} />
 
             <div style={{
                 display: 'flex',

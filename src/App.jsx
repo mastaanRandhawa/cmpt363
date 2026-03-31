@@ -30,7 +30,7 @@ const themes = [
     { value: 'ocean',    label: 'Midnight Ocean' },
     { value: 'arctic',   label: 'Arctic Dusk' },
     { value: 'matcha',   label: 'Matcha Latte' },
-    { value: 'original',   label: 'Original' },
+    { value: 'original', label: 'Original' },
 ]
 
 const devControlStyle = {
@@ -88,10 +88,10 @@ function StatusBar() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 {/* Signal bars */}
                 <svg width="17" height="12" viewBox="0 0 17 12" fill="none">
-                    <rect x="0"  y="8" width="3" height="4" rx="1" fill="var(--color-text-main)" />
-                    <rect x="4.5" y="5" width="3" height="7" rx="1" fill="var(--color-text-main)" />
-                    <rect x="9"  y="2.5" width="3" height="9.5" rx="1" fill="var(--color-text-main)" />
-                    <rect x="13.5" y="0" width="3" height="12" rx="1" fill="var(--color-text-main)" opacity="0.3" />
+                    <rect x="0"   y="8"   width="3" height="4"    rx="1" fill="var(--color-text-main)" />
+                    <rect x="4.5" y="5"   width="3" height="7"    rx="1" fill="var(--color-text-main)" />
+                    <rect x="9"   y="2.5" width="3" height="9.5"  rx="1" fill="var(--color-text-main)" />
+                    <rect x="13.5" y="0"  width="3" height="12"   rx="1" fill="var(--color-text-main)" opacity="0.3" />
                 </svg>
                 {/* Wi-Fi */}
                 <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
@@ -136,6 +136,14 @@ function App() {
         return 'lavender'
     })
 
+    const [locked, setLocked] = useState(true)
+    const setUnlocked         = useSessionStore(s => s.setUnlocked)
+
+    function handleUnlock() {
+        setLocked(false)
+        setUnlocked()
+    }
+
     const { isRealDevice, match, sw, sh } = useDeviceProfile()
     const bottomTrayAboveNav = useBottomTrayStore(s => s.aboveNav)
     const bottomTrayID       = useBottomTrayStore(s => s.id)
@@ -155,7 +163,7 @@ function App() {
     function handleTheme(value) {
         setTheme(value)
         document.documentElement.setAttribute('data-theme', value)
-        bottomTrayAboveNav.marginBottom = 80 // Approx. height of BottomNav
+        bottomTrayAboveNav.marginBottom = 80
     }
 
     const frameW = match ? match.w : 440
@@ -169,25 +177,24 @@ function App() {
 
     const routes = (
         <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/tasks" element={<Tasks />} />
-            <Route path="/tasks/create" element={<TaskCreate />} />
-            <Route path="/tasks/:id" element={<TaskDetail />} />
-            <Route path="/robo" element={<Robo />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/help" element={<Help />} />
-            <Route path="/settings" element={<Settings />} />
+            <Route path="/"              element={<Home />} />
+            <Route path="/tasks"         element={<Tasks />} />
+            <Route path="/tasks/create"  element={<TaskCreate />} />
+            <Route path="/tasks/:id"     element={<TaskDetail />} />
+            <Route path="/robo"          element={<Robo />} />
+            <Route path="/calendar"      element={<Calendar />} />
+            <Route path="/help"          element={<Help />} />
+            <Route path="/settings"      element={<Settings />} />
             <Route path="/notifications" element={<Notifications />} />
-            <Route path="/timer" element={<Timer />} />
+            <Route path="/timer"         element={<Timer />} />
             <Route path="/tasks/:id/edit" element={<TaskCreate />} />
-            <Route path="/robo/chat" element={<Chat />} />
+            <Route path="/robo/chat"     element={<Chat />} />
         </Routes>
     )
 
     // ─── Real device (phone / tablet): full-screen, no frame ───────────────────
     if (isRealDevice) {
         return (
-            // data-phone-frame lets BottomNav publish --bottom-nav-height here
             <div
                 data-phone-frame
                 style={{
@@ -197,9 +204,11 @@ function App() {
                     display: 'flex',
                     flexDirection: 'column',
                     overflow: 'hidden',
-                    position: 'relative',   // required for absolute children
+                    position: 'relative',
                 }}
             >
+                {locked && <LockScreen onUnlock={handleUnlock} />}
+
                 <BrowserRouter>
                     <div
                         className="phone-scroll"
@@ -269,7 +278,7 @@ function App() {
                 </span>
             </div>
 
-            {/* Phone frame — data-phone-frame lets BottomNav publish --bottom-nav-height here */}
+            {/* Phone frame */}
             <div
                 data-phone-frame
                 style={{
@@ -303,6 +312,8 @@ function App() {
                     borderRadius: '20px',
                     zIndex: 1000,
                 }} />
+
+                {locked && <LockScreen onUnlock={handleUnlock} />}
 
                 <BrowserRouter>
                     <div
@@ -340,7 +351,6 @@ function App() {
 
                     <BottomNav />
                 </BrowserRouter>
-
             </div>
         </div>
     )
