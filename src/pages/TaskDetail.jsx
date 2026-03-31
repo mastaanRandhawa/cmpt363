@@ -313,7 +313,7 @@ function TaskDetail() {
                 {/* subtasks */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span className="label-bold" style={{ color: 'var(--color-secondary)' }}>Subtasks</span>
+                        <span className="label-bold" style={{ margin: '0 0 4px 0', color: 'var(--color-text-secondary)', letterSpacing: '0.08em' }}>Subtasks</span>
                         {subtasks.length > 0 && (
                             /*
                                 label-bold = 14px / 700 / uppercase.
@@ -362,14 +362,14 @@ function TaskDetail() {
                                 }}
                             >
                                 {/* 1. Drag Handle */}
-                                <GripVertical size={14} color="var(--color-text-secondary)" style={{ flexShrink: 0, opacity: 0.4 }} />
+                                <GripVertical size={16} color="var(--color-text-secondary)" style={{ flexShrink: 0, opacity: 0.6 }} />
 
                                 {/* 2. Number — caption (15px / 400) matching the Edit Task view */}
                                 <span className="caption" style={{
                                     color: 'var(--color-text-secondary)',
                                     width: '16px',
                                     flexShrink: 0,
-                                    textAlign: 'center',
+                                    textAlign: 'right',
                                     opacity: subtask.done ? 0.4 : 1
                                 }}>
                                     {i + 1}
@@ -379,13 +379,13 @@ function TaskDetail() {
                                 <CircleCheck
                                     checked={subtask.done}
                                     onChange={() => toggleSubtask(task.id, subtask.id)}
-                                    size={22}
+                                    size={24}
                                 />
 
                                 {/* 4. Label — .body = 17px / 400 */}
                                 <span className="body" style={{
                                     flex: 1,
-                                    fontWeight: subtask.done ? 500 : 600,
+                                    fontWeight: subtask.done ? 400 : 500,
                                     color: subtask.done ? 'var(--color-text-secondary)' : 'var(--color-text-main)',
                                     textDecoration: subtask.done ? 'line-through' : 'none',
                                 }}>
@@ -395,80 +395,20 @@ function TaskDetail() {
                                 {/* 5. AI Chip & Delete */}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                                     {subtask.ai && !subtask.done && (
-                                        <span className='body-light' style={{
+                                        <span className='caption' style={{
                                             fontWeight: 700,
                                             color: 'var(--color-primary)',
                                             background: 'var(--color-primary-soft)',
-                                            padding: '3px 8px',
-                                            borderRadius: '999px',
+                                            padding: '3px 16px',
+                                            borderRadius: '24px',
                                             border: '1px solid color-mix(in srgb, var(--color-primary) 25%, transparent)'
                                         }}>
                                             AI
                                         </span>
                                     )}
-                                    <button
-                                        onClick={() => removeSubtask(task.id, subtask.id)}
-                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: '4px' }}
-                                    >
-                                        <X size={18} />
-                                    </button>
                                 </div>
                             </div>
                         ))}
-
-                        {/* Add Subtask Row */}
-                        {addingSubtask ? (
-                            <div style={{
-                                display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px',
-                                borderTop: subtasks.length > 0 ? '1px solid var(--color-divider)' : 'none',
-                                background: 'var(--color-bg)'
-                            }}>
-                                <input
-                                    autoFocus
-                                    value={newSubtask}
-                                    onChange={e => setNewSubtask(e.target.value)}
-                                    onKeyDown={e => {
-                                        if (e.key === 'Enter') handleAddSubtask()
-                                        if (e.key === 'Escape') setAddingSubtask(false)
-                                    }}
-                                    placeholder="Next step..."
-                                    className="body"
-                                    style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--color-text-main)' }}
-                                />
-                                <button
-                                    onClick={handleAddSubtask}
-                                    className="label-bold"
-                                    style={{
-                                        background: 'var(--color-success-soft)',
-                                        border: 'none',
-                                        borderRadius: '8px',
-                                        padding: '6px 12px',
-                                        color: 'var(--color-success)',
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    Add
-                                </button>
-                            </div>
-                        ) : (
-                            /*
-                                label-bold = 14px / 700 / uppercase.
-                                Removed the old fontSize: '12px' override.
-                            */
-                            <button
-                                onClick={() => setAddingSubtask(true)}
-                                className="label-bold"
-                                style={{
-                                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                                    padding: '16px', background: 'none', border: 'none',
-                                    borderTop: subtasks.length > 0 ? '1px solid var(--color-divider)' : 'none',
-                                    cursor: 'pointer', color: 'var(--color-text-secondary)',
-                                }}
-                            >
-                                <Plus size={16} />
-                                Add Subtask
-                            </button>
-                        )}
                     </div>
                 </div>
 
