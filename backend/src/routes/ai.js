@@ -8,27 +8,27 @@ const r = Router()
 
 const MOCK_BREAKDOWN = {
     default: [
-        { label: 'Research and gather relevant information', estimatedMinutes: 20 },
-        { label: 'Create an outline or plan',               estimatedMinutes: 10 },
-        { label: 'Complete the first draft or attempt',     estimatedMinutes: 30 },
-        { label: 'Review and make improvements',            estimatedMinutes: 15 },
-        { label: 'Final check and submit or deliver',       estimatedMinutes: 10 },
+        { label: 'Research and gather relevant information', estSubtaskTime: 1200 },
+        { label: 'Create an outline or plan',               estSubtaskTime: 600  },
+        { label: 'Complete the first draft or attempt',     estSubtaskTime: 1800 },
+        { label: 'Review and make improvements',            estSubtaskTime: 900  },
+        { label: 'Final check and submit or deliver',       estSubtaskTime: 600  },
     ],
     shopping: [
-        { label: 'Check what you already have at home', estimatedMinutes: 5  },
-        { label: 'Write a shopping list',               estimatedMinutes: 5  },
-        { label: 'Go to the store',                     estimatedMinutes: 20 },
-        { label: 'Buy items from the list',             estimatedMinutes: 20 },
-        { label: 'Return home and put items away',      estimatedMinutes: 10 },
+        { label: 'Check what you already have at home', estSubtaskTime: 300  },
+        { label: 'Write a shopping list',               estSubtaskTime: 300  },
+        { label: 'Go to the store',                     estSubtaskTime: 1200 },
+        { label: 'Buy items from the list',             estSubtaskTime: 1200 },
+        { label: 'Return home and put items away',      estSubtaskTime: 600  },
     ],
     essay: [
-        { label: 'Research the topic and gather sources', estimatedMinutes: 45 },
-        { label: 'Create a detailed outline',             estimatedMinutes: 20 },
-        { label: 'Write the introduction',                estimatedMinutes: 20 },
-        { label: 'Write the body paragraphs',            estimatedMinutes: 60 },
-        { label: 'Write the conclusion',                  estimatedMinutes: 15 },
-        { label: 'Add citations and references',          estimatedMinutes: 20 },
-        { label: 'Proofread and submit',                  estimatedMinutes: 20 },
+        { label: 'Research the topic and gather sources', estSubtaskTime: 2700 },
+        { label: 'Create a detailed outline',             estSubtaskTime: 1200 },
+        { label: 'Write the introduction',                estSubtaskTime: 1200 },
+        { label: 'Write the body paragraphs',            estSubtaskTime: 3600 },
+        { label: 'Write the conclusion',                  estSubtaskTime: 900  },
+        { label: 'Add citations and references',          estSubtaskTime: 1200 },
+        { label: 'Proofread and submit',                  estSubtaskTime: 1200 },
     ],
 }
 
@@ -56,11 +56,11 @@ r.post('/breakdown', async (req, res, next) => {
 
         const data     = pickBreakdown(task.name)
         const subtasks = data.map((item, i) => ({
-            id:               `ai-${i}-${Date.now()}`,
-            label:            item.label,
-            done:             false,
-            ai:               true,
-            estimatedMinutes: item.estimatedMinutes,
+            id:             `ai-${i}-${Date.now()}`,
+            label:          item.label,
+            done:           false,
+            ai:             true,
+            estSubtaskTime: item.estSubtaskTime,
         }))
 
         res.json({ subtasks })

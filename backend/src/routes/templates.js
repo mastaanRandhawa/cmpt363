@@ -63,20 +63,20 @@ export function createTemplatesRouter(prisma) {
 
             const diffPayload = {
                 kept: diff.kept.map(s => ({
-                    label:             s.label,
-                    estimatedMinutes: s.estimatedMinutes ?? null,
+                    label:          s.label,
+                    estSubtaskTime: s.estSubtaskTime ?? null,
                 })),
                 removed: diff.removed.map(s => ({ label: s.label })),
                 userAdded: diff.userAdded.map(s => ({
-                    label:             s.label,
-                    estimatedMinutes: s.estimatedMinutes ?? null,
+                    label:          s.label,
+                    estSubtaskTime: s.estSubtaskTime ?? null,
                 })),
             }
 
             const finalPayload = finalSubtasks.map(sub => ({
-                label:             sub.label,
-                estimatedMinutes: sub.estimatedMinutes ?? null,
-                fromAI:            !!sub.ai,
+                label:          sub.label,
+                estSubtaskTime: sub.estSubtaskTime ?? null,
+                fromAI:         !!sub.ai,
             }))
 
             const existing = await prisma.taskTemplate.findUnique({
