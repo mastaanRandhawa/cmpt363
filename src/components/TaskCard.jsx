@@ -32,16 +32,34 @@
 //   ))
 
 import { useState, useRef } from 'react'
-import { priority as priorityMap } from '../data/priority'
+import { priority as priorityMap } from '../data/chipColors'
 import { Pencil, Trash2 } from 'lucide-react'
 import CircleCheck from './CircleCheck'
 
-function TaskCard({ title, due, time, priority = 'med', subtasks = [], completed = false, onComplete, onClick, onDelete, onEdit, swipeX = 0, onSwipeChange }) {
+function TaskCard({
+                      title,
+                      due,
+                      time,
+                      priority = 'med',
+                      effort: effortLevel, // Passed as 1, 2, 3, etc.
+                      subtasks = [],
+                      completed = false,
+                      onComplete,
+                      onClick,
+                      onDelete,
+                      onEdit,
+                      swipeX = 0,
+                      onSwipeChange
+                  }) {
     const done                  = completed
     const [swiping, setSwiping] = useState(false)
     const startX                = useRef(null)
     const startSwipeX           = useRef(0)
-    const p                     = priorityMap[priority]
+
+    // Pulling from updated data structures
+    const p                     = priorityMap[priority] || priorityMap.med
+    const e                     = effortLevel ? effortMap[effortLevel] : null
+
     const firstSubtask          = subtasks[0]
     const remaining             = subtasks.length - 1
     const THRESHOLD             = 60
@@ -102,7 +120,7 @@ function TaskCard({ title, due, time, priority = 'med', subtasks = [], completed
                 <div
                     onClick={() => { onDelete?.(); onSwipeChange?.(0) }}
                     style={{
-                        background: 'var(--color-danger)',
+                        background: 'var(--color-important)',
                         width: '64px',
                         height: '100%',
                         display: 'flex',
@@ -127,7 +145,7 @@ function TaskCard({ title, due, time, priority = 'med', subtasks = [], completed
                     onClick?.()
                 }}
                 style={{
-                    background: 'var(--color-surface)',
+                    background: 'var(--color-card)',
                     borderRadius: '16px',
                     padding: '14px 16px',
                     display: 'flex',
@@ -150,7 +168,7 @@ function TaskCard({ title, due, time, priority = 'med', subtasks = [], completed
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
                         <span style={{
-                            color: done ? 'var(--color-text-muted)' : 'var(--color-text)',
+                            color: done ? 'var(--color-text-muted)' : 'var(--color-text-main)',
                             fontWeight: 600,
                             fontSize: '14px',
                             flex: 1,
@@ -159,19 +177,31 @@ function TaskCard({ title, due, time, priority = 'med', subtasks = [], completed
                         }}>
                             {title}
                         </span>
+
                         {!done && (
-                            <span style={{
-                                background: `color-mix(in srgb, ${p.color} 15%, transparent)`,
-                                color: p.color,
-                                fontSize: '10px',
-                                fontWeight: 700,
-                                letterSpacing: '0.06em',
-                                padding: '2px 8px',
-                                borderRadius: '20px',
-                                whiteSpace: 'nowrap',
-                            }}>
-                                {p.label}
-                            </span>
+                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                {/* Effort Badge */}
+                                {e && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: e.color }}>
+                                        <Gauge size={12} />
+                                        <span style={{ fontSize: '10px', fontWeight: 800 }}>{e.label}</span>
+                                    </div>
+                                )}
+
+                                {/* Priority Badge */}
+                                <span style={{
+                                    background: `var(--color-${p.chipColor}-soft)`,
+                                    color: p.color,
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    letterSpacing: '0.06em',
+                                    padding: '2px 8px',
+                                    borderRadius: '20px',
+                                    whiteSpace: 'nowrap',
+                                }}>
+                                    {p.label}
+                                </span>
+                            </div>
                         )}
                     </div>
 

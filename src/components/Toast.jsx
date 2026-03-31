@@ -43,7 +43,7 @@
 //     progress={dismissProgress}
 //   />
 
-function Toast({ message, icon, progress, barColor = 'var(--color-primary)', actionLabel, onAction }) {
+function Toast({ message, icon, progress, barColor = 'var(--color-accent)', actionLabel, onAction }) {
     const showBar = progress !== undefined
 
     return (
@@ -52,18 +52,18 @@ function Toast({ message, icon, progress, barColor = 'var(--color-primary)', act
             bottom: '90px',
             left: '50%',
             transform: 'translateX(-50%)',
-            background: 'var(--color-surface)',
+            background: 'var(--color-card)',
             borderRadius: '16px',
             overflow: 'hidden',
             boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
-            zIndex: 100,
+            zIndex: 500,
             whiteSpace: 'nowrap',
-            border: '1px solid var(--color-surface-alt)',
+            border: '1px solid var(--color-divider)',
             minWidth: '260px',
         }}>
             {/* progress bar */}
             {showBar && (
-                <div style={{ height: '3px', background: 'var(--color-surface-alt)' }}>
+                <div style={{ height: '3px', background: 'var(--color-divider)' }}>
                     <div style={{
                         height: '100%',
                         width: `${progress}%`,
@@ -76,7 +76,7 @@ function Toast({ message, icon, progress, barColor = 'var(--color-primary)', act
             {/* content */}
             <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
                 {icon && icon}
-                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text)', flex: 1 }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-main)', flex: 1 }}>
                     {message}
                 </span>
                 {actionLabel && onAction && (

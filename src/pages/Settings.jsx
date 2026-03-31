@@ -21,7 +21,7 @@ function Settings() {
     return (
         <>
             <Header title="Settings" onBack={true} />
-            <div className="page flex flex-col gap-4 p-6 min-h-screen">
+            <div className="page flex flex-col gap-4 p-6 min-h-screen" style={{ padding: '16px' }}>
 
                 <Section header="GENERAL" {...sectionProps}>
                     <ListRow

@@ -11,6 +11,7 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import DebugPanel from '../components/DebugPanel'
 
 const useSettingsStore = create(
     persist(
@@ -106,6 +107,8 @@ const useSettingsStore = create(
                         aiBehaviour: value,
                     })
                 },
+                showDebugPanel: false,
+                setShowDebugPanel: (val) => set({ showDebugPanel: val }),
             }
         }
     )

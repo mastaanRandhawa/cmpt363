@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { Command, Lock, Unlock } from 'lucide-react'
 import Header from '../components/Header'
 import useRoboStore, { xpProgressInLevel, levelFromXp } from '../data/useRoboStore'
+import Section from "../components/Section.jsx";
 
 const moods = [
     { label: 'Energized', emoji: '🚀' },
@@ -50,15 +51,16 @@ function Robo() {
     const lockedUpgrades   = upgrades.filter(u => u.level >  level)
 
     return (
-        <div style={{ color: 'var(--color-text)', paddingBottom: '96px' }}>
+        <div style={{ color: 'var(--color-text-main)', paddingBottom: '96px' }}>
 
             <Header
                 subtitle="YOUR COMPANION"
                 title="Robo"
+                onBack={() => navigate(-1)}
                 rightAction={
                     <button
                         onClick={() => navigate('/robo/chat')}
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', border: '1.5px solid var(--color-text)', borderRadius: '20px', padding: '8px 16px', background: 'none', color: 'var(--color-text)', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', border: '1.5px solid var(--color-text-main)', borderRadius: '20px', padding: '8px 16px', background: 'none', color: 'var(--color-text-main)', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
                     >
                         <Command size={14} /> CHAT
                     </button>
@@ -70,11 +72,11 @@ function Robo() {
                 {/* mood selector */}
                 <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                        <div style={{ flex: 1, height: '1px', background: 'var(--color-surface-alt)' }} />
+                        <div style={{ flex: 1, height: '1px', background: 'var(--color-divider)' }} />
                         <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--color-text-muted)' }}>
                             TODAY'S MOOD
                         </span>
-                        <div style={{ flex: 1, height: '1px', background: 'var(--color-surface-alt)' }} />
+                        <div style={{ flex: 1, height: '1px', background: 'var(--color-divider)' }} />
                     </div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
                         {moods.map((m, i) => (
@@ -86,10 +88,10 @@ function Robo() {
                                     borderRadius: '20px',
                                     border: moodToday === i
                                         ? '1.5px solid var(--color-primary)'
-                                        : '1.5px solid var(--color-surface-alt)',
+                                        : '1.5px solid var(--color-divider)',
                                     background: moodToday === i
                                         ? 'color-mix(in srgb, var(--color-primary) 15%, transparent)'
-                                        : 'var(--color-surface)',
+                                        : 'var(--color-card',
                                     color: moodToday === i ? 'var(--color-primary)' : 'var(--color-text-muted)',
                                     fontWeight: 600,
                                     fontSize: '13px',
@@ -110,60 +112,63 @@ function Robo() {
 
                 {/* robo card */}
                 <div style={{
-                    background: 'linear-gradient(135deg, #7C6FCD 0%, #5B4FAA 100%)',
+                    background: 'linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 70%, black) 0%, color-mix(in srgb, var(--color-primary-soft) 70%, black) 100%)',
                     borderRadius: '20px',
-                    padding: '20px',
-                    display: 'flex', flexDirection: 'column', gap: '16px',
+                    padding: '18px 20px 20px',
+                    display: 'flex', flexDirection: 'column', gap: '14px',
                 }}>
+                    {/* top row: icon+name | level+xp badge */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <div style={{
-                                background: 'rgba(255,255,255,0.15)', borderRadius: '14px',
-                                width: '52px', height: '52px',
+                                background: 'rgba(255,255,255,0.1)', borderRadius: '14px',
+                                width: '48px', height: '48px',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                border: '1px solid rgba(255,255,255,0.08)',
                             }}>
-                                <Command size={28} color="white" />
+                                <Command size={26} color="white" />
                             </div>
-                            <span style={{ color: 'white', fontWeight: 700, fontSize: '20px' }}>ROBO</span>
+                            <span style={{ color: 'white', fontWeight: 700, fontSize: '18px', letterSpacing: '0.04em' }}>ROBO</span>
                         </div>
-                        <div style={{ textAlign: 'right' }}>
-                            <p style={{ margin: 0, color: 'white', fontWeight: 800, fontSize: '20px', lineHeight: 1 }}>
-                                Level {level}
-                            </p>
-                            <p style={{ margin: 0, color: 'rgba(255,255,255,0.6)', fontSize: '11px', fontWeight: 600 }}>
-                                {xp} XP TOTAL
-                            </p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ color: 'white', fontWeight: 700, fontSize: '17px' }}>Level {level}</span>
                         </div>
                     </div>
 
-                    {/* stats */}
+                    {/* stats: streak + combo */}
                     <div style={{ display: 'flex', gap: '10px' }}>
-                        {[
-                            { value: streak > 0 ? `${streak} ${streak === 1 ? 'Day' : 'Days'}` : '—', label: 'STREAK' },
-                            { value: level < 10 ? `${progress.current} / ${progress.max}` : 'MAX', label: 'XP THIS LEVEL' },
-                        ].map(stat => (
-                            <div key={stat.label} style={{
-                                flex: 1, background: 'rgba(255,255,255,0.15)', borderRadius: '12px',
-                                padding: '10px', textAlign: 'center',
-                            }}>
-                                <p style={{ color: 'white', fontWeight: 700, fontSize: '16px', margin: 0 }}>{stat.value}</p>
-                                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '10px', fontWeight: 600, letterSpacing: '0.08em', margin: 0 }}>{stat.label}</p>
-                            </div>
-                        ))}
+                        <div style={{
+                            flex: 1, background: 'rgba(255,255,255,0.08)', borderRadius: '14px',
+                            padding: '12px 14px', textAlign: 'center',
+                            border: '1px solid rgba(255,255,255,0.06)',
+                        }}>
+                            <p style={{ color: 'white', fontWeight: 700, fontSize: '17px', margin: 0 }}>
+                                {streak > 0 ? `${streak} ${streak === 1 ? 'Day' : 'Days'}` : '—'}
+                            </p>
+                            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', margin: '3px 0 0' }}>STREAK</p>
+                        </div>
+                        <div style={{
+                            flex: 1, background: 'rgba(255,255,255,0.08)', borderRadius: '14px',
+                            padding: '12px 14px', textAlign: 'center',
+                            border: '1px solid rgba(255,255,255,0.06)',
+                        }}>
+                            <p style={{ color: 'white', fontWeight: 700, fontSize: '17px', margin: 0 }}>
+                                x{(1 + streak * 0.1).toFixed(1)}
+                            </p>
+                            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', margin: '3px 0 0' }}>COMBO</p>
+                        </div>
                     </div>
 
                     {/* xp bar */}
                     {level < 10 && (
                         <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                                <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', fontWeight: 600 }}>
-                                    LEVEL {level + 1} PROGRESS
-                                </span>
-                                <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px' }}>
-                                    {progress.percent}%
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.06em' }}>XP</span>
+                                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', fontWeight: 600 }}>
+                                    {progress.current} / {progress.max}
                                 </span>
                             </div>
-                            <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: '999px', height: '8px' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: '999px', height: '7px' }}>
                                 <div style={{
                                     width: `${progress.percent}%`,
                                     height: '100%',
@@ -176,46 +181,63 @@ function Robo() {
                     )}
                 </div>
 
-                {/* xp log */}
-                {xpLog.length > 0 && (
-                    <div>
-                        <SectionDivider label="RECENT XP" />
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            {xpLog.slice(0, 6).map((entry, i) => (
-                                <div key={i} style={{
-                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                                    padding: '10px 4px',
-                                    borderBottom: '1px solid var(--color-surface-alt)',
-                                }}>
-                                    <span style={{ fontSize: '13px', color: 'var(--color-text)' }}>{entry.reason}</span>
-                                    <span style={{ color: 'var(--color-success)', fontWeight: 700, fontSize: '13px' }}>+{entry.amount}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
 
                 {/* xp sources */}
-                <div>
-                    <SectionDivider label="XP SOURCES" />
+                    <Section
+                        header={"XP SOURCES"}
+                        collapsible={true}
+                        headerColor={'var(--color-text-secondary)'}
+                    >
+                        <div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                         {xpSources.map(source => (
                             <div key={source.label} style={{
                                 display: 'flex', justifyContent: 'space-between',
                                 padding: '12px 4px',
-                                borderBottom: '1px solid var(--color-surface-alt)',
+                                borderBottom: '1px solid var(--color-divider)',
                             }}>
                                 <span style={{ fontSize: '14px' }}>{source.label}</span>
                                 <span style={{ color: 'var(--color-primary)', fontWeight: 600, fontSize: '14px' }}>+{source.xp}</span>
                             </div>
                         ))}
                     </div>
+
                 </div>
+            </Section>
+
+
+                {/* xp log */}
+                <Section
+                    header={"RECENT XP EARNED"}
+                    collapsible={true}
+                    headerStyle={{ fontWeight: 700, fontSize: '14px' }}
+                >
+                {xpLog.length > 0 && (
+                    <div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            {xpLog.slice(0, 6).map((entry, i) => (
+                                <div key={i} style={{
+                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                    padding: '10px 4px',
+                                    borderBottom: '1px solid var(--color-divider)',
+                                }}>
+                                    <span style={{ fontSize: '13px', color: 'var(--color-text-main)' }}>{entry.reason}</span>
+                                    <span style={{ color: 'var(--color-success)', fontWeight: 700, fontSize: '13px' }}>+{entry.amount}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </Section>
 
                 {/* unlocked upgrades */}
+                <Section
+                    header={"UNLOCKED UPGRADES"}
+                    collapsible={true}
+                    headerColor={'var(--color-text-secondary)'}
+                >
                 {unlockedUpgrades.length > 0 && (
                     <div>
-                        <SectionDivider label="UPGRADES ACQUIRED" />
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                             {unlockedUpgrades.map(upgrade => (
                                 <UpgradeCard key={upgrade.label} upgrade={upgrade} unlocked />
@@ -223,11 +245,16 @@ function Robo() {
                         </div>
                     </div>
                 )}
+                </Section>
 
                 {/* locked upgrades */}
+                <Section
+                    header={"LOCKED UPGRADE CHIPS"}
+                    collapsible={true}
+                    headerColor={'var(--color-text-secondary)'}
+                >
                 {lockedUpgrades.length > 0 && (
                     <div>
-                        <SectionDivider label="LOCKED UPGRADE CHIPS" />
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                             {lockedUpgrades.map(upgrade => (
                                 <UpgradeCard key={upgrade.label} upgrade={upgrade} unlocked={false} />
@@ -235,28 +262,17 @@ function Robo() {
                         </div>
                     </div>
                 )}
-
+                </Section>
             </div>
         </div>
     )
 }
 
-function SectionDivider({ label }) {
-    return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-            <div style={{ flex: 1, height: '1px', background: 'var(--color-surface-alt)' }} />
-            <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--color-text-muted)' }}>
-                {label}
-            </span>
-            <div style={{ flex: 1, height: '1px', background: 'var(--color-surface-alt)' }} />
-        </div>
-    )
-}
 
 function UpgradeCard({ upgrade, unlocked }) {
     return (
         <div style={{
-            background: 'var(--color-surface)',
+            background: 'var(--color-card',
             borderRadius: '14px',
             padding: '14px',
             opacity: unlocked ? 1 : 0.6,

@@ -1,6 +1,21 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
-import { Command, X, Pencil, Check, Plus, CheckCircle, MapPin, AlertTriangle, GripVertical, Lock, ChevronRight, Timer as TimerIcon } from 'lucide-react'
+import {
+    Command,
+    X,
+    Pencil,
+    Check,
+    Plus,
+    CheckCircle,
+    MapPin,
+    AlertTriangle,
+    GripVertical,
+    Lock,
+    ChevronRight,
+    Gauge,
+    Timer as TimerIcon,
+    Trash2
+} from 'lucide-react'
 import useTaskStore from '../data/useTaskStore'
 import useDebugStore from '../data/useDebugStore'
 import useNavGuardStore from '../data/useNavGuardStore'
@@ -14,23 +29,11 @@ import Button from '../components/Button'
 import RepeatPicker from '../components/RepeatPicker'
 import ConfirmDialog from '../components/ConfirmDialog'
 import FadeOverlay from '../components/FadeOverlay'
-import { priority as priorityMap } from '../data/priority'
+import { priority as priorityMap, effort as effortMap } from '../data/chipColors.js'
 
 const priorities = ['low', 'med', 'high']
 
-const priorityColors = {
-    low:  'var(--color-priority-low)',
-    med:  'var(--color-priority-med)',
-    high: 'var(--color-priority-high)',
-}
-
-const effortColors = {
-    1: 'var(--color-success)',
-    2: 'var(--color-success)',
-    3: 'var(--color-primary)',
-    4: 'var(--color-accent)',
-    5: 'var(--color-danger)',
-}
+const effortLevels = [1, 2, 3, 4, 5]
 
 const labelStyle = {
     fontSize: '11px',
@@ -41,7 +44,7 @@ const labelStyle = {
 
 const errorStyle = {
     fontSize: '12px',
-    color: 'var(--color-danger)',
+    color: 'var(--color-important)',
     marginLeft: '8px',
     fontWeight: 600,
 }
@@ -97,6 +100,7 @@ function TaskCreate() {
     const [aiSnapshot, setAiSnapshot]   = useState(null)    // form values at time of last AI call
     const [aiPending, setAiPending]     = useState([])      // suggestions awaiting user decision
     const [aiOriginal, setAiOriginal]   = useState([])      // raw AI output for template saving
+    const [aiInstructions, setAiInstructions] = useState('')      // user directions to the AI
 
     // ─── confirm step ─────────────────────────────────────────────────────────
     const [step, setStep]           = useState('form')
@@ -108,7 +112,8 @@ function TaskCreate() {
         date      !== aiSnapshot.date     ||
         priority  !== aiSnapshot.priority ||
         effort    !== aiSnapshot.effort   ||
-        (!notesPrivate && notes !== aiSnapshot.notes)
+        (!notesPrivate && notes !== aiSnapshot.notes) ||
+        aiInstructions !== aiSnapshot.aiInstructions
     )
 
     // ─── unsaved changes guard ────────────────────────────────────────────────
@@ -208,7 +213,7 @@ function TaskCreate() {
     async function runAISuggestions() {
         setAiLoading(true)
         setAiPending([])
-        const snap = { name, date, priority, effort, notes: notesPrivate ? null : notes }
+        const snap = { name, date, priority, effort, notes: notesPrivate ? null : notes, aiInstructions }
         setAiSnapshot(snap)
         setAiSubmitted(true)
         try {
@@ -221,7 +226,7 @@ function TaskCreate() {
                 description: notesPrivate ? null : notes,
                 location,
             }
-            const result = await generateSubtasks(task)
+            const result = await generateSubtasks(task, aiInstructions || null)
             setAiOriginal(result)
             setAiPending(result.map(s => ({ ...s, id: s.id || crypto.randomUUID() })))
         } catch {
@@ -344,53 +349,51 @@ function TaskCreate() {
 
     // ─── confirm screen ───────────────────────────────────────────────────────
     if (step === 'confirm') {
-        const p     = priorityMap[priority] ?? { label: priority?.toUpperCase(), color: 'var(--color-text-muted)' }
-        const curXp = useRoboStore.getState().xp
-        const lvl   = levelFromXp(curXp)
+        const p = priorityMap[priority]
+        const e = effortMap[effort]
+        const lvl = levelFromXp(xp)
         return (
-            <div style={{ color: 'var(--color-text)', minHeight: '100%', display: 'flex', flexDirection: 'column', paddingBottom: '96px' }}>
-                <Header title="Add A New Task" />
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '24px', padding: '32px 20px 20px' }}>
-
-                    <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'color-mix(in srgb, var(--color-success) 20%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <CheckCircle size={36} color="var(--color-success)" />
+            <div style={{ color: 'var(--color-text-main)', minHeight: '100dvh', background: 'var(--color-bg)' }}>
+                <Header title="Success" />
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '24px', padding: '40px 20px' }}>
+                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--color-success-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <CheckCircle size={40} color="var(--color-success)" />
                     </div>
 
-                    <p style={{ margin: 0, fontSize: '26px', fontWeight: 800 }}>Task Created!</p>
+                    <h1 className="h2" style={{ margin: 0 }}>Task Created!</h1>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
-                        <p style={{ margin: 0, fontSize: '16px', fontWeight: 800, letterSpacing: '0.06em' }}>{name.toUpperCase()}</p>
-                        {date && <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-muted)' }}>Due: {formatDate(date)}</p>}
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                            <span style={{ background: `color-mix(in srgb, ${p.color} 15%, transparent)`, color: p.color, fontSize: '11px', fontWeight: 700, padding: '4px 14px', borderRadius: '20px' }}>{p.label}</span>
-                            {effort && <span style={{ background: 'var(--color-surface)', color: 'var(--color-primary)', fontSize: '11px', fontWeight: 700, padding: '4px 14px', borderRadius: '20px' }}>EFFORT: {effort}</span>}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+                        <p className="body-semibold" style={{ margin: 0, textTransform: 'uppercase' }}>{name}</p>
+                        <div className="caption" style={{ color: 'var(--color-text-secondary)' }}>Due: {formatDate(date)}</div>
+
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                            <span className="label-bold" style={{ background: `var(--color-${p.chipColor}-soft)`, color: p.color, padding: '4px 12px', borderRadius: '100px' }}>
+                                {p.label}
+                            </span>
+                            <span className="label-bold" style={{ background: e.soft, color: e.color, padding: '4px 12px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <Gauge size={14} /> {e.label}
+                            </span>
                         </div>
                     </div>
 
-                    <div style={{ background: 'var(--color-surface)', borderRadius: '16px', padding: '16px', width: '100%', textAlign: 'left' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                            <Command size={18} color="var(--color-primary)" />
-                            <p style={{ margin: 0, fontWeight: 700, fontSize: '14px' }}>Robo says:</p>
+                    <div style={{ background: 'var(--color-card)', borderRadius: '20px', padding: '20px', width: '100%', textAlign: 'left', border: '1px solid var(--color-divider)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: 'var(--color-primary)' }}>
+                            <Command size={18} />
+                            <span className="label-bold">ROBO FEEDBACK</span>
                         </div>
-                        <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
-                            Great! I've added this to your plan. Let's tackle it together!
+                        <p className="caption" style={{ color: 'var(--color-text-mid)', margin: '0 0 16px', lineHeight: '1.5' }}>
+                            I've scheduled this into your plan. Taking small steps is the key to big progress!
                         </p>
-                        <div style={{ display: 'flex', gap: '16px' }}>
-                            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-accent)' }}>🔥 Streak kept</span>
-                            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-success)' }}>✦ Level {lvl}</span>
-                            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-primary)' }}>{curXp} XP</span>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <span className="label-caps" style={{ color: 'var(--color-success)' }}>✦ Level {lvl}</span>
+                            <span className="label-caps" style={{ color: 'var(--color-primary)' }}>{xp} XP</span>
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
-                        <button onClick={() => navigate(`/tasks/${createdId}`)} style={{ flex: 1, padding: '14px', background: 'none', border: '1.5px solid var(--color-surface-alt)', borderRadius: '14px', color: 'var(--color-text)', fontWeight: 600, fontSize: '14px', cursor: 'pointer' }}>
-                            View Task
-                        </button>
-                        <button onClick={() => navigate('/timer', { state: { taskId: createdId } })} style={{ flex: 1, padding: '14px', background: 'var(--color-primary)', border: 'none', borderRadius: '14px', color: 'white', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}>
-                            Start Task
-                        </button>
+                    <div style={{ display: 'flex', gap: '12px', width: '100%', marginTop: 'auto' }}>
+                        <Button onClick={() => navigate('/tasks')} variant="secondary" style={{ flex: 1 }}>Back to List</Button>
+                        <Button onClick={() => navigate(`/tasks/${createdId}`)} variant="primary" style={{ flex: 1 }}>View Task</Button>
                     </div>
-
                 </div>
             </div>
         )
@@ -398,7 +401,7 @@ function TaskCreate() {
 
     // ─── form ─────────────────────────────────────────────────────────────────
     return (
-        <div style={{ color: 'var(--color-text)', position: 'relative', display: 'flex', flexDirection: 'column', paddingBottom: '96px' }}>
+        <div style={{ color: 'var(--color-text-main)', position: 'relative', display: 'flex', flexDirection: 'column', paddingBottom: '96px' }}>
             <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
 
             <Header
@@ -432,49 +435,108 @@ function TaskCreate() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', padding: '20px' }}>
 
-                {/* task name */}
-                <div>
-                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                        <span style={labelStyle}>TASK NAME <span style={{ color: 'var(--color-danger)' }}>*</span></span>
-                        {errors.name && <span style={errorStyle}>{errors.name}</span>}
+                {/* Task Name */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <label className="label-bold" style={{ color: 'var(--color-secondary)' }}>
+                            TASK NAME <span style={{ color: 'var(--color-important)' }}>*</span>
+                        </label>
+                        {errors.name && (
+                            <span className="label-bold" style={{ color: 'var(--color-important)' }}>
+                REQUIRED
+            </span>
+                        )}
                     </div>
-                    <Input value={name} onChange={e => { setName(e.target.value); setErrors(p => ({ ...p, name: null })) }} placeholder="Task Name" />
+                    <Input
+                        value={name}
+                        onChange={e => setName(e.target.value)}
+                        placeholder="What needs to be done?"
+                        className="body-semibold"
+                    />
                 </div>
 
                 {/* date + time + repeat */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center' }}>
-                            <span style={labelStyle}>DATE <span style={{ color: 'var(--color-danger)' }}>*</span></span>
-                            {errors.date && <span style={errorStyle}>{errors.date}</span>}
+                            {/* Header matches the "Notes" style using theme secondary color */}
+                            <label className="label-bold" style={{ color: 'var(--color-secondary)' }}>
+                                DATE <span style={{ color: 'var(--color-important)' }}>*</span>
+                            </label>
+                            {errors.date && (
+                                <span className="label-bold" style={{ color: 'var(--color-important)', marginLeft: '8px' }}>
+                    {errors.date}
+                </span>
+                            )}
                         </div>
+
                         <div style={{ display: 'flex', gap: '12px' }}>
+                            {/* Add Time Toggle */}
                             <button onClick={() => setAddTime(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                                <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `2px solid ${addTime ? 'var(--color-primary)' : 'var(--color-surface-alt)'}`, background: addTime ? 'var(--color-primary)' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
-                                    {addTime && <svg width="9" height="7" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                <div style={{
+                                    width: '18px', height: '18px', borderRadius: '6px',
+                                    border: `2px solid ${addTime ? 'var(--color-primary)' : 'var(--color-divider)'}`,
+                                    background: addTime ? 'var(--color-primary)' : 'none',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s'
+                                }}>
+                                    {addTime && <Check size={12} color="white" strokeWidth={3} />}
                                 </div>
-                                <span style={{ ...labelStyle, letterSpacing: '0.06em' }}>ADD TIME</span>
+                                <span className="label-bold" style={{ color: addTime ? 'var(--color-primary)' : 'var(--color-text-mid)' }}>ADD TIME</span>
                             </button>
+
+                            {/* Repeat Toggle */}
                             <button onClick={() => setRepeat(v => v ? null : { frequency: 'daily' })} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                                <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `2px solid ${repeat ? 'var(--color-primary)' : 'var(--color-surface-alt)'}`, background: repeat ? 'var(--color-primary)' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
-                                    {repeat && <svg width="9" height="7" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                <div style={{
+                                    width: '18px', height: '18px', borderRadius: '6px',
+                                    border: `2px solid ${repeat ? 'var(--color-primary)' : 'var(--color-divider)'}`,
+                                    background: repeat ? 'var(--color-primary)' : 'none',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s'
+                                }}>
+                                    {repeat && <Check size={12} color="white" strokeWidth={3} />}
                                 </div>
-                                <span style={{ ...labelStyle, letterSpacing: '0.06em' }}>REPEAT</span>
+                                <span className="label-bold" style={{ color: repeat ? 'var(--color-primary)' : 'var(--color-text-mid)' }}>REPEAT</span>
                             </button>
                         </div>
                     </div>
 
                     <div style={{ display: 'flex', gap: '10px' }}>
                         <input
-                            type="date" value={date} max="9999-12-31"
+                            type="date"
+                            value={date}
+                            max="3000-12-31"
                             onChange={e => { setDate(e.target.value); setErrors(p => ({ ...p, date: null })) }}
-                            style={{ flex: addTime ? '1.6' : '1', background: 'var(--color-surface)', border: '1.5px solid var(--color-surface-alt)', borderRadius: '12px', padding: '12px 14px', color: 'var(--color-text)', fontSize: '14px', outline: 'none', boxSizing: 'border-box', colorScheme: 'dark', minWidth: 0 }}
+                            className="body"
+                            style={{
+                                flex: addTime ? '1.6' : '1',
+                                background: 'var(--color-card)',
+                                border: '1px solid var(--color-divider)',
+                                borderRadius: '12px',
+                                padding: '12px 14px',
+                                color: 'var(--color-text-main)',
+                                outline: 'none',
+                                boxSizing: 'border-box',
+                                colorScheme: 'dark',
+                                minWidth: 0
+                            }}
                         />
                         {addTime && (
                             <input
-                                type="time" value={time}
+                                type="time"
+                                value={time}
                                 onChange={e => setTime(e.target.value)}
-                                style={{ flex: '1', background: 'var(--color-surface)', border: '1.5px solid var(--color-surface-alt)', borderRadius: '12px', padding: '12px 14px', color: 'var(--color-text)', fontSize: '14px', outline: 'none', boxSizing: 'border-box', colorScheme: 'dark', minWidth: 0 }}
+                                className="body"
+                                style={{
+                                    flex: '1',
+                                    background: 'var(--color-card)',
+                                    border: '1px solid var(--color-divider)',
+                                    borderRadius: '12px',
+                                    padding: '12px 14px',
+                                    color: 'var(--color-text-main)',
+                                    outline: 'none',
+                                    boxSizing: 'border-box',
+                                    colorScheme: 'dark',
+                                    minWidth: 0
+                                }}
                             />
                         )}
                     </div>
@@ -482,114 +544,225 @@ function TaskCreate() {
                     {repeat && <RepeatPicker value={repeat} onChange={setRepeat} />}
                 </div>
 
-                {/* priority */}
-                <div>
-                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                        <span style={labelStyle}>PRIORITY <span style={{ color: 'var(--color-danger)' }}>*</span></span>
-                        {errors.priority && <span style={errorStyle}>{errors.priority}</span>}
+                {/* Priority Selection */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <label className="label-bold" style={{ color: 'var(--color-secondary)' }}>
+                            PRIORITY <span style={{ color: 'var(--color-important)' }}>*</span>
+                        </label>
+                        {errors.priority && (
+                            <span className="label-bold" style={{ color: 'var(--color-important)' }}>
+                REQUIRED
+            </span>
+                        )}
                     </div>
                     <div style={{ display: 'flex', gap: '10px' }}>
-                        {priorities.map(p => {
-                            const selected = priority === p
-                            const color    = priorityColors[p]
+                        {priorities.map(key => {
+                            const selected = priority === key;
+                            const cfg = priorityMap[key];
                             return (
-                                <button key={p} onClick={() => { setPriority(p); setErrors(prev => ({ ...prev, priority: null })) }}
-                                        style={{ flex: 1, padding: '8px 0', borderRadius: '20px', border: `2px solid ${color}`, background: selected ? `color-mix(in srgb, ${color} 20%, transparent)` : 'none', color, fontWeight: 700, fontSize: '13px', cursor: 'pointer', letterSpacing: '0.04em' }}>
-                                    {p.toUpperCase()}
+                                <button
+                                    key={key}
+                                    onClick={() => { setPriority(key); setErrors(prev => ({ ...prev, priority: null })); }}
+                                    style={{
+                                        flex: 1, padding: '8px 0', borderRadius: '20px',
+                                        border: `2px solid ${cfg.color}`,
+                                        background: selected ? `var(--color-${cfg.chipColor}-soft)` : 'none',
+                                        color: cfg.color, fontWeight: 700, fontSize: '13px', cursor: 'pointer'
+                                    }}
+                                >
+                                    {cfg.label}
                                 </button>
-                            )
+                            );
                         })}
                     </div>
                 </div>
 
-                {/* effort */}
-                <div>
-                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                        <span style={labelStyle}>EFFORT <span style={{ color: 'var(--color-danger)' }}>*</span></span>
-                        {errors.effort && <span style={errorStyle}>{errors.effort}</span>}
+                {/* Effort Selection */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <label className="label-bold" style={{ color: 'var(--color-secondary)' }}>
+                            EFFORT <span style={{ color: 'var(--color-important)' }}>*</span>
+                        </label>
+                        {errors.effort && (
+                            <span className="label-bold" style={{ color: 'var(--color-important)' }}>
+                REQUIRED
+            </span>
+                        )}
                     </div>
-                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                        {[1, 2, 3, 4, 5].map(n => {
-                            const selected = effort === n
-                            const color    = effortColors[n]
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
+                        {effortLevels.map((num) => {
+                            const selected = effort === num;
+                            const cfg = effortMap[num];
                             return (
-                                <button key={n} onClick={() => { setEffort(n); setErrors(prev => ({ ...prev, effort: null })) }}
-                                        style={{ width: '44px', height: '44px', borderRadius: '50%', border: `2px solid ${color}`, background: selected ? `color-mix(in srgb, ${color} 20%, transparent)` : 'none', color, fontWeight: 700, fontSize: '15px', cursor: 'pointer', flexShrink: 0 }}>
-                                    {n}
+                                <button
+                                    key={num}
+                                    onClick={() => { setEffort(num); setErrors(prev => ({ ...prev, effort: null })); }}
+                                    style={{
+                                        flex: 1, padding: '8px 0', borderRadius: '20px',
+                                        border: `2px solid ${cfg.color}`,
+                                        background: selected ? cfg.soft : 'none',
+                                        color: cfg.color, fontWeight: 700, fontSize: '13px', cursor: 'pointer'
+                                    }}
+                                >
+                                    {cfg.label}
                                 </button>
-                            )
+                            );
                         })}
                     </div>
                 </div>
 
-                {/* notes + private checkbox */}
-                <div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                        <span style={labelStyle}>NOTES OR CONTEXT</span>
+
+                {/* Notes */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label  className="label-bold" style={{ color: 'var(--color-secondary)' }}>Notes</label>
                         <button
-                            onClick={() => setNotesPrivate(v => !v)}
-                            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                            type="button"
+                            onClick={() => setNotesPrivate(!notesPrivate)}
+                            className="label-bold"
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                padding: '0', // Critical: removes internal button spacing
+                                margin: '0',  // Critical: removes external button spacing
+                                color: !notesPrivate ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                                transition: 'color 0.2s ease'
+                            }}
                         >
-                            <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `2px solid ${notesPrivate ? 'var(--color-primary)' : 'var(--color-surface-alt)'}`, background: notesPrivate ? 'var(--color-primary)' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
-                                {notesPrivate && <svg width="9" height="7" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                            {/* Checkbox Square */}
+                            <div style={{
+                                width: '18px',
+                                height: '18px',
+                                borderRadius: '5px',
+                                border: `1.5px solid ${!notesPrivate ? 'var(--color-primary)' : 'var(--color-divider)'}`,
+                                background: !notesPrivate ? 'var(--color-primary)' : 'none',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.2s ease'
+                            }}>
+                                {!notesPrivate && (
+                                    <div style={{
+                                        width: '4px',
+                                        height: '8px',
+                                        border: 'solid white',
+                                        borderWidth: '0 2px 2px 0',
+                                        transform: 'rotate(45deg)',
+                                        marginBottom: '2px'
+                                    }} />
+                                )}
                             </div>
-                            <Lock size={11} color={notesPrivate ? 'var(--color-primary)' : 'var(--color-text-muted)'} />
-                            <span style={{ ...labelStyle, letterSpacing: '0.06em', color: notesPrivate ? 'var(--color-primary)' : 'var(--color-text-muted)' }}>PRIVATE</span>
+
+                            <span style={{ fontSize: '13px', letterSpacing: '0.5px' }}>
+            PRIVATE
+        </span>
                         </button>
                     </div>
                     <Input
-                        multiline rows={4}
+                        multiline
+                        rows={3}
                         value={notes}
                         onChange={e => setNotes(e.target.value)}
-                        placeholder={notesPrivate ? 'Notes Hidden' : "Enter any information you'd like handy while viewing this task"}
+                        placeholder="Add details or context..."
+                        className="caption"
                     />
-                    {notesPrivate && (
-                        <p style={{ margin: '6px 0 0', fontSize: '11px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <Lock size={10} /> These notes won't be shared with AI
-                        </p>
-                    )}
                 </div>
 
                 {/* location */}
                 <div style={{ position: 'relative' }}>
                     <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                        <span style={labelStyle}>LOCATION</span>
+                        <span className="label-bold" style={{ color: 'var(--color-secondary)' }}>LOCATION</span>
                         {location && (
-                            <button onClick={() => { setLocation(''); setLocQuery(''); setLocResults([]) }} style={{ background: 'none', border: 'none', cursor: 'pointer', marginLeft: '8px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', padding: 0 }}>
-                                <X size={13} />
+                            <button
+                                onClick={() => { setLocation(''); setLocQuery(''); setLocResults([]) }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', marginLeft: '8px', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', padding: 0 }}
+                            >
+                                <X size={14} />
                             </button>
                         )}
                     </div>
+
                     {location ? (
-                        <div style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-primary)', borderRadius: '12px', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <MapPin size={16} color="var(--color-primary)" style={{ flexShrink: 0 }} />
-                            <span style={{ fontSize: '14px', color: 'var(--color-text)', flex: 1 }}>{location}</span>
+                        <div style={{
+                            background: 'var(--color-card)',
+                            border: '1.5px solid var(--color-primary)',
+                            borderRadius: '14px',
+                            padding: '12px 14px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px'
+                        }}>
+                            <MapPin size={18} color="var(--color-primary)" style={{ flexShrink: 0 }} />
+                            <span className="body-semibold" style={{ color: 'var(--color-text-main)', flex: 1 }}>{location}</span>
                         </div>
                     ) : (
                         <>
-                            <div style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-surface-alt)', borderRadius: '12px', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <MapPin size={16} color="var(--color-text-muted)" style={{ flexShrink: 0 }} />
+                            <div style={{
+                                background: 'var(--color-card)',
+                                border: '1px solid var(--color-divider)',
+                                borderRadius: '14px',
+                                padding: '12px 14px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px'
+                            }}>
+                                <MapPin size={18} color="var(--color-text-secondary)" style={{ flexShrink: 0 }} />
                                 <input
+                                    className="body"
                                     value={locQuery}
                                     onChange={e => { setLocQuery(e.target.value); setShowLocDrop(true) }}
                                     onFocus={() => locResults.length > 0 && setShowLocDrop(true)}
                                     placeholder="Search for a location..."
-                                    style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--color-text)', fontSize: '14px' }}
+                                    style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--color-text-main)' }}
                                 />
-                                {locLoading && <div style={{ width: '14px', height: '14px', borderRadius: '50%', border: '2px solid var(--color-primary)', borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />}
+                                {locLoading && (
+                                    <div style={{
+                                        width: '16px', height: '16px', borderRadius: '50%',
+                                        border: '2px solid var(--color-primary)',
+                                        borderTopColor: 'transparent',
+                                        animation: 'spin 0.7s linear infinite',
+                                        flexShrink: 0
+                                    }} />
+                                )}
                             </div>
+
                             {showLocDrop && locResults.length > 0 && (
-                                <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--color-surface)', border: '1.5px solid var(--color-surface-alt)', borderRadius: '12px', overflow: 'hidden', zIndex: 50, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
+                                <div style={{
+                                    position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0,
+                                    background: 'var(--color-card)',
+                                    border: '1px solid var(--color-divider)',
+                                    borderRadius: '14px',
+                                    overflow: 'hidden',
+                                    zIndex: 50,
+                                    boxShadow: '0 12px 30px rgba(0,0,0,0.4)'
+                                }}>
                                     {locResults.map((r, i) => {
                                         const locName = r.name || r.display_name.split(',')[0]
                                         const address = r.display_name.replace(locName + ', ', '')
                                         return (
-                                            <button key={r.place_id} onClick={() => { setLocation(r.display_name); setLocQuery(''); setShowLocDrop(false); setLocResults([]) }}
-                                                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', background: 'none', border: 'none', borderTop: i > 0 ? '1px solid var(--color-surface-alt)' : 'none', cursor: 'pointer', textAlign: 'left' }}>
-                                                <MapPin size={15} color="var(--color-text-muted)" style={{ flexShrink: 0 }} />
+                                            <button
+                                                key={r.place_id}
+                                                onClick={() => { setLocation(r.display_name); setLocQuery(''); setShowLocDrop(false); setLocResults([]) }}
+                                                style={{
+                                                    width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
+                                                    padding: '14px', background: 'none', border: 'none',
+                                                    borderTop: i > 0 ? '1px solid var(--color-divider)' : 'none',
+                                                    cursor: 'pointer', textAlign: 'left'
+                                                }}
+                                            >
+                                                <MapPin size={16} color="var(--color-text-secondary)" style={{ flexShrink: 0 }} />
                                                 <div style={{ flex: 1, minWidth: 0 }}>
-                                                    <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: 'var(--color-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{locName}</p>
-                                                    <p style={{ margin: 0, fontSize: '11px', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{address}</p>
+                                                    <p className="caption-medium" style={{ margin: 0, color: 'var(--color-text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                        {locName}
+                                                    </p>
+                                                    <p className="label-caps" style={{ margin: 0, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '11px' }}>
+                                                        {address}
+                                                    </p>
                                                 </div>
                                             </button>
                                         )
@@ -601,9 +774,9 @@ function TaskCreate() {
                 </div>
 
                 {/* subtasks */}
-                <div>
-                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                        <span style={labelStyle}>SUBTASKS</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <span className="label-bold" style={{ color: 'var(--color-secondary)' }}>SUBTASKS</span>
                     </div>
 
                     {/* user's subtasks + spinner overlay */}
@@ -628,42 +801,106 @@ function TaskCreate() {
                         {/* loading overlay */}
                         {aiLoading && (
                             <div style={{
-                                position: 'absolute', inset: 0,
-                                background: 'color-mix(in srgb, var(--color-bg) 75%, transparent)',
-                                borderRadius: '14px',
-                                display: 'flex', flexDirection: 'column',
-                                alignItems: 'center', justifyContent: 'center', gap: '10px',
-                                backdropFilter: 'blur(2px)',
+                                position: 'absolute',
+                                inset: 0,
+                                background: 'color-mix(in srgb, var(--color-bg) 80%, transparent)',
+                                borderRadius: '16px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '12px',
+                                backdropFilter: 'blur(4px)',
+                                zIndex: 10,
+                                border: '1px solid var(--color-divider)'
                             }}>
-                                <div style={{ width: '28px', height: '28px', borderRadius: '50%', border: '3px solid var(--color-primary)', borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite' }} />
-                                <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>Getting AI suggestions...</span>
+                                <div style={{
+                                    width: '32px',
+                                    height: '32px',
+                                    borderRadius: '50%',
+                                    border: '3px solid var(--color-primary)',
+                                    borderTopColor: 'transparent',
+                                    animation: 'spin 0.7s linear infinite'
+                                }} />
+                                <span className="label-bold" style={{ color: 'var(--color-primary)', letterSpacing: '0.05em' }}> Getting AI suggestions...</span>
                             </div>
                         )}
                     </div>
 
                     {/* AI pending suggestions */}
                     {aiPending.length > 0 && (
-                        <div style={{ marginTop: '12px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <div style={{ marginTop: '20px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    <Command size={12} color="var(--color-primary)" />
-                                    <span style={{ ...labelStyle, color: 'var(--color-primary)' }}>AI SUGGESTIONS</span>
+                                    <Command size={14} color="var(--color-primary)" />
+                                    <span className="label-bold" style={{ color: 'var(--color-secondary)' }}>AI SUGGESTIONS</span>
                                 </div>
-                                <button onClick={acceptAllPending} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', fontSize: '12px', fontWeight: 700, padding: 0 }}>
+
+                                {/* Accept All Button */}
+                                <button
+                                    onClick={acceptAllPending}
+                                    className="label-bold"
+                                    style={{
+                                        background: 'var(--color-success-soft)',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        padding: '6px 12px',
+                                        color: 'var(--color-success)',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                    }}
+                                >
                                     Accept All
                                 </button>
                             </div>
-                            <div style={{ background: 'var(--color-surface)', borderRadius: '14px', overflow: 'hidden', border: '1px solid color-mix(in srgb, var(--color-primary) 25%, transparent)' }}>
+
+                            <div style={{
+                                background: 'var(--color-card)',
+                                borderRadius: '16px',
+                                overflow: 'hidden',
+                                border: '1px solid color-mix(in srgb, var(--color-primary) 25%, transparent)'
+                            }}>
                                 {aiPending.map((s, i) => (
-                                    <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', borderBottom: i < aiPending.length - 1 ? '1px solid var(--color-surface-alt)' : 'none' }}>
-                                        <Command size={11} color="var(--color-primary)" style={{ flexShrink: 0, opacity: 0.5 }} />
-                                        <span style={{ flex: 1, fontSize: '14px', color: 'var(--color-text)' }}>{s.label}</span>
-                                        <button onClick={() => acceptPending(s.id)} style={{ background: 'color-mix(in srgb, var(--color-success) 15%, transparent)', border: 'none', borderRadius: '8px', padding: '4px 10px', color: 'var(--color-success)', fontWeight: 700, fontSize: '12px', cursor: 'pointer', flexShrink: 0 }}>
-                                            + Add
-                                        </button>
-                                        <button onClick={() => dismissPending(s.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: '2px', flexShrink: 0 }}>
-                                            <X size={13} />
-                                        </button>
+                                    <div key={s.id} style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '12px',
+                                        padding: '14px 16px',
+                                        borderBottom: i < aiPending.length - 1 ? '1px solid var(--color-divider)' : 'none'
+                                    }}>
+                                        {/* Label (No icon on the left) */}
+                                        <span className='body-light`' style={{ flex: 1, color: 'var(--color-text-main)' }}>
+                        {s.label}
+                    </span>
+
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            {/* Individual Add Button */}
+                                            <button
+                                                onClick={() => acceptPending(s.id)}
+                                                className="label-bold"
+                                                style={{
+                                                    background: 'var(--color-success-soft)',
+                                                    border: 'none',
+                                                    borderRadius: '8px',
+                                                    padding: '6px 12px',
+                                                    color: 'var(--color-success)',
+                                                    cursor: 'pointer',
+                                                    flexShrink: 0
+                                                }}
+                                            >
+                                                Add
+                                            </button>
+
+                                            {/* Dismiss Button */}
+                                            <button
+                                                onClick={() => dismissPending(s.id)}
+                                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: '4px', flexShrink: 0 }}
+                                            >
+                                                <X size={18} />
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -672,89 +909,274 @@ function TaskCreate() {
                 </div>
 
                 {/* use timer */}
-                <div style={{ background: 'var(--color-surface)', borderRadius: '16px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ background: 'var(--color-surface-alt)', borderRadius: '12px', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <TimerIcon size={20} color="var(--color-primary)" />
+                <div style={{
+                    background: 'var(--color-card)',
+                    borderRadius: '16px',
+                    padding: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '14px',
+                    border: '1px solid var(--color-divider)'
+                }}>
+                    <div style={{
+                        background: 'var(--color-primary-soft)',
+                        borderRadius: '12px',
+                        width: '44px',
+                        height: '44px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                    }}>
+                        <TimerIcon size={22} color="var(--color-primary)" />
                     </div>
+
                     <div style={{ flex: 1 }}>
-                        <p style={{ margin: 0, fontWeight: 700, fontSize: '13px', letterSpacing: '0.04em' }}>USE TIMER</p>
-                        <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-muted)' }}>Track time spent with Pomodoro</p>
+                        <p className="label-bold" style={{ margin: 0, color: 'var(--color-text-main)' }}>USE TIMER</p>
+                        <p className="caption" style={{ margin: 0, color: 'var(--color-text-secondary)' }}>Track time spent with Pomodoro</p>
                     </div>
-                    <button onClick={() => setTimed(v => !v)} style={{ width: '48px', height: '28px', borderRadius: '999px', border: 'none', flexShrink: 0, cursor: 'pointer', background: timed ? 'var(--color-primary)' : 'var(--color-surface-alt)', position: 'relative', transition: 'background 0.2s' }}>
-                        <span style={{ position: 'absolute', top: '4px', left: timed ? '24px' : '4px', width: '20px', height: '20px', borderRadius: '50%', background: 'white', transition: 'left 0.2s' }} />
+
+                    {/* Toggle Switch */}
+                    <button
+                        onClick={() => setTimed(v => !v)}
+                        style={{
+                            width: '48px',
+                            height: '26px',
+                            borderRadius: '999px',
+                            border: 'none',
+                            flexShrink: 0,
+                            cursor: 'pointer',
+                            background: timed ? 'var(--color-primary)' : 'var(--color-divider)',
+                            position: 'relative',
+                            transition: 'background 0.2s'
+                        }}
+                    >
+                        <div style={{
+                            position: 'absolute',
+                            top: '3px',
+                            left: timed ? '25px' : '3px',
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            background: 'white',
+                            transition: 'left 0.2s',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                        }} />
                     </button>
                 </div>
 
                 {/* AI suggestions toggle — create mode only, Level 3+ */}
                 {!isEdit && (
                     level >= 3 ? (
-                        <div style={{ background: 'var(--color-surface)', borderRadius: '16px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                            <div style={{ background: 'var(--color-surface-alt)', borderRadius: '12px', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                <Command size={20} color="var(--color-primary)" />
+                        <div style={{
+                            background: 'var(--color-card)',
+                            borderRadius: '16px',
+                            padding: '16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '14px',
+                            border: '1px solid var(--color-divider)'
+                        }}>
+                            <div style={{
+                                background: 'var(--color-primary-soft)',
+                                borderRadius: '12px',
+                                width: '44px',
+                                height: '44px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0
+                            }}>
+                                <Command size={22} color="var(--color-primary)" />
                             </div>
                             <div style={{ flex: 1 }}>
-                                <p style={{ margin: 0, fontWeight: 700, fontSize: '13px', letterSpacing: '0.04em' }}>AI SUGGESTIONS</p>
-                                <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-muted)' }}>Breakdown and Time Estimate</p>
+                                <p className="label-bold" style={{ margin: 0, color: 'var(--color-text-main)' }}>AI SUGGESTIONS</p>
+                                <p className="caption" style={{ margin: 0, color: 'var(--color-text-secondary)' }}>Breakdown and Time Estimate</p>
                             </div>
-                            <button onClick={handleAiToggle} style={{ width: '48px', height: '28px', borderRadius: '999px', border: 'none', flexShrink: 0, cursor: 'pointer', background: aiSuggest ? 'var(--color-primary)' : 'var(--color-surface-alt)', position: 'relative', transition: 'background 0.2s' }}>
-                                <span style={{ position: 'absolute', top: '4px', left: aiSuggest ? '24px' : '4px', width: '20px', height: '20px', borderRadius: '50%', background: 'white', transition: 'left 0.2s' }} />
+                            <button
+                                onClick={handleAiToggle}
+                                style={{
+                                    width: '48px',
+                                    height: '26px',
+                                    borderRadius: '999px',
+                                    border: 'none',
+                                    flexShrink: 0,
+                                    cursor: 'pointer',
+                                    background: aiSuggest ? 'var(--color-primary)' : 'var(--color-divider)',
+                                    position: 'relative',
+                                    transition: 'background 0.2s'
+                                }}
+                            >
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '3px',
+                                    left: aiSuggest ? '25px' : '3px',
+                                    width: '20px',
+                                    height: '20px',
+                                    borderRadius: '50%',
+                                    background: 'white',
+                                    transition: 'left 0.2s',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                                }} />
                             </button>
                         </div>
                     ) : (
-                        <div style={{ background: 'var(--color-surface)', borderRadius: '16px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '14px', border: '1px dashed color-mix(in srgb, var(--color-text-muted) 25%, transparent)', opacity: 0.75 }}>
-                            <div style={{ background: 'var(--color-surface-alt)', borderRadius: '12px', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                <Lock size={20} color="var(--color-text-muted)" />
+                        <div style={{
+                            background: 'var(--color-card)',
+                            borderRadius: '16px',
+                            padding: '16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '14px',
+                            border: '1px dashed var(--color-divider)',
+                            opacity: 0.6
+                        }}>
+                            <div style={{
+                                background: 'var(--color-divider)',
+                                borderRadius: '12px',
+                                width: '44px',
+                                height: '44px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0
+                            }}>
+                                <Lock size={20} color="var(--color-text-secondary)" />
                             </div>
                             <div style={{ flex: 1 }}>
-                                <p style={{ margin: 0, fontWeight: 700, fontSize: '13px', letterSpacing: '0.04em', color: 'var(--color-text-muted)' }}>AI SUGGESTIONS</p>
-                                <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-muted)' }}>Big Task Destroyer — unlock at Level 3</p>
+                                <p className="label-bold" style={{ margin: 0, color: 'var(--color-text-secondary)' }}>AI SUGGESTIONS</p>
+                                <p className="caption" style={{ margin: 0, color: 'var(--color-text-secondary)' }}>Big Task Destroyer — unlock at Lvl 3</p>
                             </div>
-                            <ChevronRight size={16} color="var(--color-text-muted)" />
+                            <ChevronRight size={18} color="var(--color-text-secondary-muted)" />
                         </div>
                     )
                 )}
 
+                {/* Instructions for AI — only visible when AI Suggestions is on */}
+                {!isEdit && aiSuggest && level >= 3 && (
+                    <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                            <Command size={11} color="var(--color-primary)" />
+                            <span style={labelStyle}>INSTRUCTIONS FOR AI</span>
+                        </div>
+                        <Input
+                            multiline rows={3}
+                            value={aiInstructions}
+                            onChange={e => setAiInstructions(e.target.value)}
+                            placeholder="Optional: guide the AI — e.g. 'Focus on research steps only' or 'Keep it under 3 subtasks'. Your notes above won't be shared if marked private."
+                        />
+
+                    </div>
+                )}
+
                 {/* submit buttons */}
                 {isEdit ? (
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                        <button onClick={() => setShowLeaveConfirm(true)} style={{ flex: 1, padding: '15px', background: 'none', border: '1.5px solid var(--color-surface-alt)', borderRadius: '14px', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: '14px', cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        <button
+                            onClick={() => setShowLeaveConfirm(true)}
+                            className="label-bold"
+                            style={{
+                                flex: 1,
+                                height: '56px',
+                                background: 'none',
+                                border: '1px solid var(--color-divider)',
+                                borderRadius: '16px',
+                                color: 'var(--color-text-secondary)',
+                                cursor: 'pointer'
+                            }}
+                        >
                             Discard
                         </button>
-                        <button onClick={handleCreate} style={{ flex: 2, padding: '15px', background: 'var(--color-primary)', border: 'none', borderRadius: '14px', color: 'white', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}>
+                        <button
+                            onClick={handleCreate}
+                            className="h3"
+                            style={{
+                                flex: 2,
+                                height: '56px',
+                                background: 'var(--color-primary)',
+                                border: 'none',
+                                borderRadius: '16px',
+                                color: 'white',
+                                fontWeight: 700,
+                                cursor: 'pointer'
+                            }}
+                        >
                             Save Changes
                         </button>
                     </div>
                 ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         {/* resubmit — only visible when form changed after an AI call */}
                         {formStale && (
                             <button
                                 onClick={runAISuggestions}
-                                style={{ width: '100%', padding: '14px', background: 'none', border: '1.5px solid var(--color-primary)', borderRadius: '14px', color: 'var(--color-primary)', fontWeight: 700, fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxSizing: 'border-box' }}
+                                className="label-bold"
+                                style={{
+                                    width: '100%',
+                                    height: '52px',
+                                    background: 'none',
+                                    border: '1.5px solid var(--color-primary)',
+                                    borderRadius: '16px',
+                                    color: 'var(--color-primary)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px',
+                                    boxSizing: 'border-box'
+                                }}
                             >
-                                <Command size={15} /> Update AI Suggestions
+                                <Command size={16} /> Update AI Suggestions
                             </button>
                         )}
+
                         <button
                             onClick={handleCreate}
                             disabled={formStale}
-                            style={{ width: '100%', padding: '15px', background: formStale ? 'var(--color-surface)' : 'var(--color-primary)', border: 'none', borderRadius: '14px', color: formStale ? 'var(--color-text-muted)' : 'white', fontWeight: 700, fontSize: '14px', cursor: formStale ? 'not-allowed' : 'pointer', transition: 'all 0.2s', boxSizing: 'border-box' }}
+                            className="h3"
+                            style={{
+                                width: '100%',
+                                height: '56px',
+                                background: formStale ? 'var(--color-card)' : 'var(--color-primary)',
+                                border: formStale ? '1px solid var(--color-divider)' : 'none',
+                                borderRadius: '16px',
+                                color: formStale ? 'var(--color-text-secondary-muted)' : 'white',
+                                fontWeight: 700,
+                                cursor: formStale ? 'not-allowed' : 'pointer',
+                                transition: 'all 0.2s',
+                                boxSizing: 'border-box'
+                            }}
                         >
                             Create Task
                         </button>
                     </div>
                 )}
-
             </div>
         </div>
     )
 }
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
-
 function ActionBtn({ onClick, color, children }) {
     return (
-        <button onClick={onClick} style={{ width: '26px', height: '26px', borderRadius: '8px', background: `color-mix(in srgb, ${color} 15%, transparent)`, border: 'none', cursor: 'pointer', color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <button
+            onClick={onClick}
+            style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '8px',
+                // Uses the soft variant of the passed color (e.g., var(--color-primary-soft))
+                background: `var(--color-${color}-soft)`,
+                border: 'none',
+                cursor: 'pointer',
+                // Uses the main variant (e.g., var(--color-primary))
+                color: `var(--color-${color})`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                transition: 'transform 0.1s active'
+            }}
+        >
             {children}
         </button>
     )
@@ -769,36 +1191,74 @@ function SubtaskDragList({
     const { items, getDragProps, dragOverIndex } = useDragSort(subtasks, setSubtasks)
 
     return (
-        <div style={{ background: 'var(--color-surface)', borderRadius: '14px', overflow: 'hidden' }}>
+        <div style={{ background: 'var(--color-card)', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--color-divider)' }}>
             {items.map((subtask, i) => (
                 <div
                     key={subtask.id}
                     {...getDragProps(i)}
-                    style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', borderBottom: i < items.length - 1 ? '1px solid var(--color-surface-alt)' : 'none', opacity: dragOverIndex === i ? 0.4 : 1, transition: 'opacity 0.15s', cursor: 'grab' }}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '14px 16px',
+                        borderBottom: i < items.length - 1 ? '1px solid var(--color-divider)' : 'none',
+                        opacity: dragOverIndex === i ? 0.4 : 1,
+                        transition: 'opacity 0.15s',
+                        cursor: 'grab'
+                    }}
                 >
-                    <GripVertical size={13} color="var(--color-text-muted)" style={{ flexShrink: 0, opacity: 0.5 }} />
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-text-muted)', width: '14px', flexShrink: 0, textAlign: 'right' }}>{i + 1}</span>
+                    <GripVertical size={20} color="var(--color-text-secondary)" style={{ flexShrink: 0 }} />
+
+                    <span className="h3" style={{ color: 'var(--color-text-secondary)', width: '14px', flexShrink: 0, textAlign: 'left', fontSize: '14px' }}>
+                        {i + 1}
+                    </span>
 
                     {editingId === subtask.id ? (
-                        <input autoFocus value={editLabel} onChange={e => setEditLabel(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') commitEdit(subtask.id); if (e.key === 'Escape') cancelEdit() }} style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--color-text)', fontSize: '14px' }} />
+                        <input
+                            autoFocus
+                            value={editLabel}
+                            onChange={e => setEditLabel(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') commitEdit(subtask.id); if (e.key === 'Escape') cancelEdit() }}
+                            className="body"
+                            style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--color-text-main)' }}
+                        />
                     ) : (
-                        <span style={{ flex: 1, fontSize: '14px', color: 'var(--color-text)' }}>{subtask.label}</span>
+                        <span className="body-light" style={{ flex: 1, color: 'var(--color-text-main)' }}>
+                            {subtask.label}
+                        </span>
                     )}
 
                     {subtask.ai && editingId !== subtask.id && (
-                        <span style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.06em', color: 'var(--color-primary-soft)', background: 'color-mix(in srgb, var(--color-primary) 12%, transparent)', padding: '2px 6px', borderRadius: '999px', flexShrink: 0 }}>AI</span>
+                        <span className="label-default" style={{
+                            fontSize: '10px',
+                            color: 'var(--color-primary)',
+                            background: 'var(--color-primary-soft)',
+                            padding: '2px 8px',
+                            borderRadius: '999px',
+                            flexShrink: 0
+                        }}>
+                            AI
+                        </span>
                     )}
 
-                    <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
                         {editingId === subtask.id ? (
                             <>
-                                <ActionBtn onClick={() => commitEdit(subtask.id)} color="var(--color-success)"><Check size={13} /></ActionBtn>
-                                <ActionBtn onClick={cancelEdit} color="var(--color-text-muted)"><X size={13} /></ActionBtn>
+                                <ActionBtn onClick={() => commitEdit(subtask.id)} color="success">
+                                    <Check size={14} strokeWidth={3} />
+                                </ActionBtn>
+                                <ActionBtn onClick={cancelEdit} color="secondary">
+                                    <X size={14} strokeWidth={3} />
+                                </ActionBtn>
                             </>
                         ) : (
                             <>
-                                <ActionBtn onClick={() => startEdit(subtask)} color="var(--color-primary)"><Pencil size={13} /></ActionBtn>
-                                <ActionBtn onClick={() => removeSubtask(subtask.id)} color="var(--color-danger)"><X size={13} /></ActionBtn>
+                                <ActionBtn onClick={() => startEdit(subtask)} color="secondary">
+                                    <Pencil size={14} />
+                                </ActionBtn>
+                                <ActionBtn onClick={() => removeSubtask(subtask.id)} color="important">
+                                    <X size={14} />
+                                </ActionBtn>
                             </>
                         )}
                     </div>
@@ -806,14 +1266,49 @@ function SubtaskDragList({
             ))}
 
             {addingNew ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', borderTop: items.length > 0 ? '1px solid var(--color-surface-alt)' : 'none' }}>
-                    <input autoFocus value={newSubtask} onChange={e => setNewSubtask(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addNewSubtask(); if (e.key === 'Escape') setAddingNew(false) }} placeholder="New subtask..." style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--color-text)', fontSize: '14px' }} />
-                    <button onClick={addNewSubtask} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', fontWeight: 700, fontSize: '13px' }}>Add</button>
-                    <button onClick={() => setAddingNew(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}><X size={14} /></button>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '14px 16px',
+                    background: 'color-mix(in srgb, var(--color-primary) 5%, transparent)',
+                    borderTop: items.length > 0 ? '1px solid var(--color-divider)' : 'none'
+                }}>
+                    <input
+                        autoFocus
+                        value={newSubtask}
+                        onChange={e => setNewSubtask(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') addNewSubtask(); if (e.key === 'Escape') setAddingNew(false) }}
+                        placeholder="New subtask..."
+                        className="body"
+                        style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--color-text-main)' }}
+                    />
+                    <button onClick={addNewSubtask} className="label-bold" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)' }}>
+                        Add
+                    </button>
+                    <button onClick={() => setAddingNew(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)' }}>
+                        <X size={18} />
+                    </button>
                 </div>
             ) : (
-                <button onClick={() => setAddingNew(true)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '12px', background: 'none', border: 'none', borderTop: items.length > 0 ? '1px solid var(--color-surface-alt)' : 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: '13px', fontWeight: 600 }}>
-                    <Plus size={14} /> ADD SUBTASK
+                <button
+                    onClick={() => setAddingNew(true)}
+                    className="label-bold"
+                    style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        padding: '16px',
+                        background: 'none',
+                        border: 'none',
+                        borderTop: items.length > 0 ? '1px solid var(--color-divider)' : 'none',
+                        cursor: 'pointer',
+                        color: 'var(--color-text-secondary)'
+                    }}
+                >
+                    <Plus size={16} /> ADD SUBTASK
                 </button>
             )}
         </div>

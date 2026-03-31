@@ -98,6 +98,15 @@ const useTaskStore = create((set, get) => ({
         set(s => ({ tasks: s.tasks.map(t => t.id === taskId ? updated : t) }))
     },
 
+    logTime: (taskId, seconds) =>
+        set(state => ({
+            tasks: state.tasks.map(t =>
+                t.id === taskId
+                    ? { ...t, timeLogged: (t.timeLogged ?? 0) + seconds }
+                    : t
+            )
+        })),
+
     // ── dev reset — re-fetches from server ───────────────────────────────────
     resetToSeed: async () => {
         await get().fetchTasks()
