@@ -9,17 +9,34 @@
 // Usage:
 //   <FadeOverlay visible={deletePending} navigating={navigating} />
 
-function FadeOverlay({ visible, navigating }) {
+function FadeOverlay({ visible, navigating, isModal = false }) {
+// When navigating, we want to fade into the theme's background color
+    // When just "dimming" for a modal, we use the theme's modal variable
+    const backgroundColor = navigating
+        ? 'var(--color-bg)'
+        : (isModal ? 'var(--color-modal)' : 'rgba(0, 0, 0, 0.45)');
+
     return (
         <div style={{
-            position: 'absolute',
+            // Switch to fixed for full-screen centering
+            position: isModal ? 'fixed' : 'absolute',
             inset: 0,
-            background: 'var(--color-bg)',
-            zIndex: 50,
-            borderRadius: 'inherit',
-            pointerEvents: 'none',
-            opacity: navigating ? 1 : visible ? 0.6 : 0,
-            transition: navigating ? 'opacity 0.35s ease' : 'opacity 0.2s ease',
+            background: backgroundColor,
+            zIndex: isModal ? 1000 : 100, // Higher z-index for modals
+            borderRadius: isModal ? 0 : 'inherit',
+
+            // If it's a modal, we WANT pointer events to block clicking the background
+            pointerEvents: (visible || navigating) ? 'auto' : 'none',
+
+            opacity: (navigating || visible) ? 1 : 0,
+            transition: navigating
+                ? 'opacity 0.4s ease-in-out'
+                : 'opacity 0.2s ease-out',
+
+            // This centers the content if you put the Dialog inside this div
+            display: isModal ? 'flex' : 'block',
+            alignItems: 'center',
+            justifyContent: 'center',
         }} />
     )
 }

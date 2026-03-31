@@ -1,4 +1,5 @@
 import Header from '../components/Header'
+import { useNavigate } from 'react-router-dom'
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const MONTHS = [
@@ -19,7 +20,7 @@ function Calendar() {
     const year       = today.getFullYear()
     const month      = today.getMonth()
     const todayDate  = today.getDate()
-
+    const navigate   = useNavigate()
     const daysInMonth = getDaysInMonth(year, month)
     const startOffset = getFirstDayOfMonth(year, month)
 
@@ -37,9 +38,13 @@ function Calendar() {
     return (
         <div className="page flex flex-col gap-0 min-h-screen" style={{ background: 'var(--color-bg)' }}>
 
-            <Header subtitle={`${MONTHS[month].toUpperCase()} ${year}`} title="Calendar" />
+            <Header
+                subtitle={`${MONTHS[month].toUpperCase()} ${year}`}
+                title="Calendar"
+                onBack={() => navigate(-1)}
+            />
 
-            <div style={{ padding: '0 16px 16px' }}>
+            <div style={{ padding: '20px 16px 16px' }}>
 
                 {/* Coming Soon banner */}
                 <div style={{
@@ -59,7 +64,7 @@ function Calendar() {
                         color: 'var(--color-text-muted)',
                         letterSpacing: '0.02em',
                     }}>
-                        Placeholder - Coming Soon
+                        Coming Soon - Integrated Calendars!
                     </span>
                 </div>
 
@@ -126,7 +131,7 @@ function Calendar() {
                                                     ? '#fff'
                                                     : isSun || isSat
                                                         ? 'var(--color-text-muted)'
-                                                        : 'var(--color-text)',
+                                                        : 'var(--color-text-main)',
                                                 userSelect: 'none',
                                                 lineHeight: 1,
                                             }}>

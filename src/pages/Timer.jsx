@@ -7,7 +7,7 @@ function Timer() {
     const task = location.state?.task
 
     return (
-        <div className="flex flex-col pb-24" style={{ color: 'var(--color-text)' }}>
+        <div className="flex flex-col pb-24" style={{ color: 'var(--color-text-main)' }}>
             <Header
                 subtitle="FOCUS MODE"
                 title={task?.name || 'Task'}

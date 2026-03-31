@@ -119,6 +119,11 @@ function Settings() {
                             fullWidth
                         />
                     </ListRow>
+                    <ListRow
+                        label="Debug Panel"
+                        description="Show the developer debug panel alongside the app."
+                        right={<Toggle checked={settings.showDebugPanel} onChange={settings.setShowDebugPanel} />}
+                    />
                 </Section>
 
             </div>

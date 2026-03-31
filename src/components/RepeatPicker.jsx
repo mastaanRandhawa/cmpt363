@@ -14,7 +14,6 @@
 //
 // Usage:
 //   <RepeatPicker value={repeat} onChange={setRepeat} />
-
 import { useState } from 'react'
 import { Repeat, ChevronDown, ChevronUp } from 'lucide-react'
 
@@ -35,14 +34,13 @@ const DAY_FULL = {
 
 function repeatLabel(value) {
     if (!value) return 'Does not repeat'
-    const freq = FREQUENCIES.find(f => f.value === value.frequency)
-    if (value.frequency === 'weekly' && value.days?.length) {
+    if (value.frequency === 'weekly' && value.days?.length > 0) {
         return `Weekly on ${value.days.map(d => d.slice(0, 3)).join(', ')}`
     }
-    if (value.frequency === 'custom' && value.days?.length) {
+    if (value.frequency === 'custom' && value.days?.length > 0) {
         return value.days.map(d => d.slice(0, 3)).join(', ')
     }
-    return freq?.label ?? 'Does not repeat'
+    return FREQUENCIES.find(f => f.value === value.frequency)?.label ?? 'Does not repeat'
 }
 
 function RepeatPicker({ value, onChange }) {
@@ -53,9 +51,7 @@ function RepeatPicker({ value, onChange }) {
 
     function handleFrequency(freq) {
         if (freq === null) { onChange(null); return }
-        if (freq === 'weekly')  { onChange({ frequency: 'weekly',  days: [] }); return }
-        if (freq === 'custom')  { onChange({ frequency: 'custom',  days: [] }); return }
-        onChange({ frequency: freq })
+        onChange({ frequency: freq, days: (freq === 'weekly' || freq === 'custom') ? [] : undefined })
     }
 
     function toggleDay(dayShort) {
@@ -69,7 +65,7 @@ function RepeatPicker({ value, onChange }) {
     const showDayPicker = selectedFreq === 'weekly' || selectedFreq === 'custom'
 
     return (
-        <div>
+        <div style={{ width: '100%' }}>
             {/* trigger row */}
             <button
                 onClick={() => setOpen(o => !o)}
@@ -78,37 +74,38 @@ function RepeatPicker({ value, onChange }) {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '12px',
-                    background: 'var(--color-surface)',
-                    border: '1.5px solid var(--color-surface-alt)',
-                    borderRadius: open ? '12px 12px 0 0' : '12px',
-                    padding: '12px 14px',
+                    background: 'var(--color-card)',
+                    border: `1.5px solid ${open ? 'var(--color-primary)' : 'var(--color-divider)'}`,
+                    borderRadius: open ? '16px 16px 0 0' : '16px',
+                    padding: '14px 16px',
                     cursor: 'pointer',
-                    color: 'var(--color-text)',
                     textAlign: 'left',
-                    transition: 'border-radius 0.15s',
+                    transition: 'all 0.2s ease',
                 }}
             >
-                <Repeat size={16} color="var(--color-text-muted)" style={{ flexShrink: 0 }} />
-                <span style={{ flex: 1, fontSize: '14px', color: value ? 'var(--color-text)' : 'var(--color-text-muted)' }}>
+                <Repeat size={18} color="var(--color-text-mid)" style={{ flexShrink: 0 }} />
+                <span className="label-bold" style={{
+                    flex: 1,
+                    fontSize: '15px',
+                    color: value ? 'var(--color-text-main)' : 'var(--color-text-secondary)'
+                }}>
                     {repeatLabel(value)}
                 </span>
                 {open
-                    ? <ChevronUp size={16} color="var(--color-text-muted)" />
-                    : <ChevronDown size={16} color="var(--color-text-muted)" />
+                    ? <ChevronUp size={18} color="var(--color-text-secondary-muted)" />
+                    : <ChevronDown size={18} color="var(--color-text-secondary-muted)" />
                 }
             </button>
 
             {/* expanded panel */}
             {open && (
                 <div style={{
-                    background: 'var(--color-surface)',
-                    border: '1.5px solid var(--color-surface-alt)',
+                    background: 'var(--color-card)',
+                    border: '1.5px solid var(--color-divider)',
                     borderTop: 'none',
-                    borderRadius: '0 0 12px 12px',
+                    borderRadius: '0 0 16px 16px',
                     overflow: 'hidden',
                 }}>
-
-                    {/* frequency options */}
                     {FREQUENCIES.map((f, i) => {
                         const active = selectedFreq === f.value
                         return (
@@ -120,65 +117,64 @@ function RepeatPicker({ value, onChange }) {
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'space-between',
-                                    padding: '12px 16px',
-                                    background: active
-                                        ? 'color-mix(in srgb, var(--color-primary) 10%, transparent)'
-                                        : 'none',
+                                    padding: '14px 16px',
+                                    background: active ? 'var(--color-primary-soft)' : 'none',
                                     border: 'none',
-                                    borderTop: i > 0 ? '1px solid var(--color-surface-alt)' : 'none',
+                                    borderTop: i > 0 ? '1px solid var(--color-divider)' : 'none',
                                     cursor: 'pointer',
-                                    color: active ? 'var(--color-primary)' : 'var(--color-text)',
-                                    fontSize: '14px',
-                                    fontWeight: active ? 600 : 400,
+                                    color: active ? 'var(--color-primary)' : 'var(--color-text-main)',
                                     textAlign: 'left',
                                 }}
+                                className="label-medium"
                             >
                                 {f.label}
                                 {active && (
-                                    <span style={{
+                                    <div style={{
                                         width: '8px', height: '8px', borderRadius: '50%',
-                                        background: 'var(--color-primary)', flexShrink: 0,
+                                        background: 'var(--color-primary)',
                                     }} />
                                 )}
                             </button>
                         )
                     })}
 
-                    {/* day picker — shown for weekly and custom */}
+                    {/* Day Picker */}
                     {showDayPicker && (
                         <div style={{
-                            padding: '12px 16px 16px',
-                            borderTop: '1px solid var(--color-surface-alt)',
-                            display: 'flex', gap: '6px', flexWrap: 'wrap',
+                            padding: '16px',
+                            borderTop: '1px solid var(--color-divider)',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            gap: '4px',
                         }}>
                             {DAYS.map(day => {
-                                const full    = DAY_FULL[day]
-                                const active  = selectedDays.includes(full)
+                                const full = DAY_FULL[day]
+                                const active = selectedDays.includes(full)
                                 return (
                                     <button
                                         key={day}
                                         onClick={() => toggleDay(day)}
                                         style={{
-                                            width: '38px', height: '38px',
+                                            width: '40px',
+                                            height: '40px',
                                             borderRadius: '50%',
-                                            border: `2px solid ${active ? 'var(--color-primary)' : 'var(--color-surface-alt)'}`,
-                                            background: active
-                                                ? 'color-mix(in srgb, var(--color-primary) 20%, transparent)'
-                                                : 'none',
-                                            color: active ? 'var(--color-primary)' : 'var(--color-text-muted)',
-                                            fontSize: '11px',
-                                            fontWeight: 700,
+                                            border: `2px solid ${active ? 'var(--color-primary)' : 'var(--color-divider)'}`,
+                                            background: active ? 'var(--color-primary-soft)' : 'transparent',
+                                            color: active ? 'var(--color-primary)' : 'var(--color-text-secondary)',
                                             cursor: 'pointer',
-                                            flexShrink: 0,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            transition: 'all 0.15s ease',
                                         }}
+                                        className="label-caps"
                                     >
-                                        {day}
+                                        {day[0]}
                                     </button>
                                 )
                             })}
                         </div>
                     )}
-
                 </div>
             )}
         </div>

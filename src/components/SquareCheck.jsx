@@ -1,12 +1,11 @@
-function CircleCheck({ checked, onChange, size = 22 }) {
+function SquareCheck({ checked, onChange, size = 22 }) {
     return (
         <div
             onClick={e => { e.stopPropagation(); onChange(!checked) }}
             style={{
                 width: `${size}px`,
                 height: `${size}px`,
-                borderRadius: '50%',
-                // Using divider for unchecked and success for checked
+                borderRadius: '6px', // Squircle/Rounded square look
                 border: `2px solid ${checked ? 'var(--color-success)' : 'var(--color-divider)'}`,
                 background: checked ? 'var(--color-success)' : 'transparent',
                 flexShrink: 0,
@@ -28,7 +27,7 @@ function CircleCheck({ checked, onChange, size = 22 }) {
                     <path
                         d="M1 4L3.5 6.5L9 1"
                         stroke="#FFFFFF"
-                        strokeWidth="2"
+                        strokeWidth="2.2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                     />
@@ -38,4 +37,4 @@ function CircleCheck({ checked, onChange, size = 22 }) {
     )
 }
 
-export default CircleCheck
+export default SquareCheck

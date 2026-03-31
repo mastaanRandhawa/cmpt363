@@ -1,4 +1,107 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --font-primary: 'DM Sans', sans-serif;
+}
+
+#root {
+  height: 100%;
+}
+/* Base */
+body {
+  font-family: var(--font-primary), sans-serif;
+  font-size: 17px;
+  font-weight: 400;
+}
+
+/* Headings */
+.h1 {
+  font-size: 32px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.h2 {
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.h3 {
+  font-size: 22px;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+/* Body */
+.body {
+  font-size: 17px;
+  font-weight: 400;
+}
+
+.body-light {
+  font-size: 17px;
+  font-weight: 200;
+}
+
+.body-medium {
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.body-semibold {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+/* Caption */
+.caption {
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.caption-medium {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* Labels */
+.label-caps {
+  font-size: 13px;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.label-default {
+  font-size: 13px;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.label-bold {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Base icon class */
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* Size variants */
+.icon-16 { font-size: 16px; }
+.icon-20 { font-size: 20px; }
+.icon-24 { font-size: 24px; }
+.icon-28 { font-size: 28px; }
+.icon-32 { font-size: 32px; }
+.icon-36 { font-size: 36px; }
+.icon-40 { font-size: 40px; }
+.icon-44 { font-size: 44px; }
+.icon-48 { font-size: 48px; }
 
 html, body {
   margin: 0;
@@ -15,16 +118,37 @@ html, body {
   display: none;
 }
 
+input[type="date"],
+input[type="time"] {
+  color: var(--color-text-secondary-muted) !important;
+}
+input[data-has-value="true"] {
+  color: var(--color-text-main) !important;
+}
+
+
 /* Fade the modal backdrop in and out */
 /* https://dev.to/kevinbism/css-animation-with-display-none-4pan */
-.modal-backdrop {
-  background: var(--color-modal-shade);
-  opacity: 1;
-  transition: opacity 0.1s ease;
+.modal-overlay {
+  position: fixed;   /* Fixes it to the viewport, not the document */
+  top: 0;
+  left: 0;
+  width: 100vw;      /* Full screen width */
+  height: 100vh;     /* Full screen height */
+  background: var(--color-modal);
+  display: flex;
+  align-items: center;    /* Vertical center */
+  justify-content: center;  /* Horizontal center */
+  z-index: 9999;     /* Ensure it's on top of everything */
+}
 
-  @starting-style {
-    opacity: 0;
-  }
+.modal-content {
+  background: var(--color-card);
+  padding: 24px;
+  border-radius: 20px;
+  max-width: 90%;    /* Responsive width */
+  width: 400px;      /* Fixed base width */
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
 
 .bottom-tray {
@@ -41,73 +165,133 @@ html, body {
 }
 
 [data-theme="lavender"] {
-  --color-primary:       #7C6FCD;
-  --color-primary-soft:  #A89FDC;
-  --color-accent:        #E8C97E;
-  --color-success:       #7BAE8F;
-  --color-bg:            #1E1B2E;
-  --color-surface:       #2A2640;
-  --color-surface-alt:   #332F4A;
-  --color-separator:     #544d80;
-  --color-modal-shade:   #211f2855;
-  --color-text:          #F5F0FF;
-  --color-text-muted:    #A89FDC;
-  --color-danger:        #E07070;
-  --color-priority-high: #E07070;
-  --color-priority-med:  #E8C97E;
-  --color-priority-low:  #7BAE8F;
-}
+  --color-important: #E07070;
+  --color-accent: #E8C97E;
+  --color-primary: #7C6FCD;
+  --color-secondary: #A89FDC;
+  --color-success: #7BAE8F;
 
+  /* Soft Opaque Variants (Mixed with #1E1B2E) */
+  --color-important-soft: #3B2B38;
+  --color-accent-soft:    #3C3539;
+  --color-primary-soft:   #2E2948;
+  --color-secondary-soft: #34304f;
+  --color-success-soft:   #2C303F;
+
+  --color-bg: #1E1B2E;
+  --color-card: #2A2640;
+  --color-divider: #544d80;
+
+  --color-text-main: #F5F0FF;
+  --color-text-muted: #A89FDC;
+  --color-text-mid: #8E84C5;
+  --color-text-secondary: #746B9E;
+  --color-text-secondary-muted: #5A527A;
+
+  --color-modal: rgba(15, 13, 23, 0.85); /* Deep midnight purple */
+}
 [data-theme="ocean"] {
-  --color-primary:       #1B7FA8;
-  --color-primary-soft:  #4EC9D4;
-  --color-accent:        #E8735A;
-  --color-success:       #4EC9D4;
-  --color-bg:            #1A1714;
-  --color-surface:       #26211D;
-  --color-surface-alt:   #2F2A25;
-  --color-separator:     #2e2924;
-  --color-modal-shade:   #100f0f55;
-  --color-text:          #F0F4F8;
-  --color-text-muted:    #4EC9D4;
-  --color-danger:        #E8735A;
-  --color-priority-high: #E8735A;
-  --color-priority-med:  #F0C070;
-  --color-priority-low:  #4EC9D4;
-}
+  --color-important: #E8735A;
+  --color-accent: #F0C070;
+  --color-primary: #1B7FA8;
+  --color-secondary: #4EC9D4;
+  --color-success: #4EC9D4;
 
+  /* Soft Opaque Variants (Mixed with #1A1714) */
+  --color-important-soft: #3D2621;
+  --color-accent-soft:    #3E3224;
+  --color-primary-soft:   #1A2930;
+  --color-secondary-soft: #233638;
+  --color-success-soft:   #233638;
+
+  --color-bg: #1A1714;
+  --color-card: #26211D;
+  --color-divider: #2e2924;
+
+  --color-text-main: #F0F4F8;
+  --color-text-muted: #4EC9D4;
+  --color-text-mid: #3E9FA8;
+  --color-text-secondary: #2E757C;
+  --color-text-secondary-muted: #1E4B50;
+
+  --color-modal: rgba(10, 9, 8, 0.85); /* Deep obsidian */
+}
 [data-theme="arctic"] {
-  --color-primary:       #3A7BD5;
-  --color-primary-soft:  #7AACE8;
-  --color-accent:        #9B7DE0;
-  --color-success:       #7AACE8;
-  --color-bg:            #161C24;
-  --color-surface:       #1F2D3D;
-  --color-surface-alt:   #263545;
-  --color-separator:     #4a6887;
-  --color-modal-shade:   #171c2155;
-  --color-text:          #EDF2FA;
-  --color-text-muted:    #7AACE8;
-  --color-danger:        #E05555;
-  --color-priority-high: #E05555;
-  --color-priority-med:  #9B7DE0;
-  --color-priority-low:  #7AACE8;
+  --color-important: #E05555;
+  --color-accent: #9B7DE0;
+  --color-primary: #3A7BD5;
+  --color-secondary: #7AACE8;
+  --color-success: #7AACE8;
+
+  /* Soft Opaque Variants (Mixed with #161C24) */
+  --color-important-soft: #36252C;
+  --color-accent-soft:    #2B2B45;
+  --color-primary-soft:   #1D2B41;
+  --color-secondary-soft: #273447;
+  --color-success-soft:   #273447;
+
+  --color-bg: #161C24;
+  --color-card: #1F2D3D;
+  --color-divider: #4a6887;
+
+  --color-text-main: #EDF2FA;
+  --color-text-muted: #7AACE8;
+  --color-text-mid: #6189B8;
+  --color-text-secondary: #486689;
+  --color-text-secondary-muted: #304459;
+
+  --color-modal: rgba(10, 14, 20, 0.85); /* Deep arctic blue-black */
 }
 
 [data-theme="matcha"] {
-  --color-primary:       #6BAF8D;
-  --color-primary-soft:  #4A7C5F;
-  --color-accent:        #C49A4A;
-  --color-success:       #4A7C5F;
-  --color-bg:            #F5F2EC;
-  --color-surface:       #E8E2D8;
-  --color-surface-alt:   #D8D0C4;
-  --color-separator:     #d8d0c5;
-  --color-modal-shade:   #eae9e655;
-  --color-text:          #2C2418;
-  --color-text-muted:    #4A7C5F;
-  --color-danger:        #B03030;
-  --color-priority-high: #B03030;
-  --color-priority-med:  #9A7020;
-  --color-priority-low:  #4A7C5F;
+  --color-important: #B03030;
+  --color-accent: #C49A4A;
+  --color-primary: #6BAF8D;
+  --color-secondary: #4A7C5F;
+  --color-success: #4A7C5F;
+
+  /* Soft Opaque Variants (Mixed with #F5F2EC) */
+  --color-important-soft: #f1dbdb;
+  --color-accent-soft:    #f2ede0;
+  --color-primary-soft:   #e8f0eb;
+  --color-secondary-soft: #e2e9e4;
+  --color-success-soft:   #e2e9e4;
+
+  --color-bg: #F5F2EC;
+  --color-card: #E8E2D8;
+  --color-divider: #d8d0c5;
+
+  --color-text-main: #2C2418;
+  --color-text-muted: #4A7C5F;
+  --color-text-mid: #5E5649;
+  --color-text-secondary: #7A7265;
+  --color-text-secondary-muted: #9B9386;
+
+  --color-modal: rgba(45, 42, 38, 0.4); /* A warm, dark brown tint */
+}
+[data-theme="original"] {
+  --color-important:  #fd6f42;
+  --color-accent: #c25e9f;
+  --color-primary: #5a7ed2;
+  --color-secondary: #8a6ed2;
+  --color-success: #4bae81;
+
+  /* Soft Opaque Variants */
+  --color-important-soft: #feeee8;
+  --color-accent-soft:    #f5eef4;
+  --color-primary-soft:   #e9edf9;
+  --color-secondary-soft: #f0ecf9;
+  --color-success-soft:   #ebf5f0;
+
+  --color-bg: #f5f6fa;
+  --color-card: #fdfdfd;
+  --color-divider: #e6e9f2;
+
+  --color-text-main: rgb(30, 42, 58);
+  --color-text-muted: rgb(46, 62, 81);
+  --color-text-mid: rgb(73, 93, 113);
+  --color-text-secondary: rgb(106, 121, 140);
+  --color-text-secondary-muted: rgb(153, 164, 179);
+
+  --color-modal: rgba(30, 42, 58, 0.5); /* Steel blue-grey wash */
 }

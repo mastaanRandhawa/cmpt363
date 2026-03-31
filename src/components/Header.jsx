@@ -1,34 +1,3 @@
-// Header
-// Top-of-page title bar with optional back button, subtitle, and right-side action slot.
-//
-// Props:
-//   title       – string, large bold page title
-//   subtitle    – string, small caps label displayed above the title (e.g. 'TIMER', 'YOUR COMPANION')
-//   onBack      – () => void, if provided renders a back chevron; if omitted no back button is shown.
-//                 If you just want default navigate(-1) behaviour, pass onBack={true} or a no-op.
-//   rightAction – ReactNode, anything rendered on the right side (icon buttons, chips, etc.)
-//
-// Usage examples:
-//   // Simple page title (no back)
-//   <Header title="Tasks" />
-//
-//   // Back navigation with subtitle (e.g. Task Detail / Timer)
-//   <Header subtitle="TIMER" title="Write CMPT376W Essay" onBack={() => navigate(-1)} />
-//
-//   // Title with right-side action (e.g. Home screen with level chip + notification bell)
-//   <Header
-//     title="Good Morning, Bob!"
-//     rightAction={
-//       <>
-//         <Chip label="LVL 4 · 330XP" color="primary" />
-//         <Bell size={20} color="var(--color-text-muted)" />
-//       </>
-//     }
-//   />
-//
-//   // Add Task (back to Tasks list)
-//   <Header title="Add A New Task" onBack={() => navigate('/tasks')} />
-
 import { ChevronLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
@@ -51,19 +20,21 @@ function Header({ title, subtitle, onBack, rightAction }) {
             position: 'sticky',
             top: 0,
             zIndex: 10,
+            // Glass effect: matches bg but adds a subtle bottom boundary
             background: 'var(--color-bg)',
+            borderBottom: '1px solid var(--color-divider)',
         }}>
 
             {/* text column */}
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1, minWidth: 0 }}>
 
-                {/* subtitle — fixed height, indented to match title (skips arrow width) */}
-                <p style={{
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    letterSpacing: '0.08em',
-                    color: 'var(--color-text-muted)',
-                    margin: 0,
+                {/* subtitle — visibility logic maintained */}
+                <p className="label-caps" style={{
+                    color: 'var(--color-text-secondary)',
+                    marginTop: 0,
+                    marginBottom: 0,
+                    marginLeft: 0,
+                    marginRight: 0,
                     height: '16px',
                     lineHeight: '16px',
                     paddingLeft: '26px',
@@ -73,7 +44,7 @@ function Header({ title, subtitle, onBack, rightAction }) {
                     {subtitle || 'X'}
                 </p>
 
-                {/* title row — arrow slot always 26px so title never shifts */}
+                {/* title row */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
                     <div style={{ width: '26px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
                         {onBack && (
@@ -83,7 +54,7 @@ function Header({ title, subtitle, onBack, rightAction }) {
                                     background: 'none',
                                     border: 'none',
                                     cursor: 'pointer',
-                                    color: 'var(--color-text-muted)',
+                                    color: 'var(--color-text-main)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     padding: '0',
@@ -95,15 +66,15 @@ function Header({ title, subtitle, onBack, rightAction }) {
                     </div>
 
                     {title && (
-                        <h1 style={{
-                            fontSize: '22px',
+                        <h1 className="h3" style={{
                             fontWeight: 700,
-                            color: 'var(--color-text)',
+                            color: 'var(--color-text-main)',
                             margin: 0,
                             lineHeight: 1.15,
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
+                            textTransform: 'none',
                         }}>
                             {title}
                         </h1>

@@ -53,7 +53,7 @@ function Toggle({
         height: `calc(1em + ${vPaddingEm}em)`,
         borderRadius: `calc(1em + ${vPaddingEm}em)`,
         transition: `background ${transitionTime} ${transitionFormula}`,
-        backgroundColor: 'var(--color-surface)',
+        backgroundColor: 'var(--color-card)',
         cursor: 'pointer',
     }
             
@@ -69,7 +69,7 @@ function Toggle({
     }
 
     if (isOn) {
-        trackStyle.backgroundColor = 'var(--color-surface-alt)'
+        trackStyle.backgroundColor = 'var(--color-divider)'
         thumbStyle.backgroundColor = 'var(--color-primary-soft)'
         thumbStyle.left = `${trackWidthEm - thumbWidthEm - hPaddingEm}em`
     }
