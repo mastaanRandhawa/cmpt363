@@ -367,7 +367,7 @@ function TaskDetail() {
                                 {/* 2. Number — caption (15px / 400) matching the Edit Task view */}
                                 <span className="caption" style={{
                                     color: 'var(--color-text-secondary)',
-                                    width: '16px',
+                                    width: '12px',
                                     flexShrink: 0,
                                     textAlign: 'right',
                                     opacity: subtask.done ? 0.4 : 1
@@ -385,7 +385,7 @@ function TaskDetail() {
                                 {/* 4. Label — .body = 17px / 400 */}
                                 <span className="body" style={{
                                     flex: 1,
-                                    fontWeight: subtask.done ? 400 : 500,
+                                    fontWeight: 400,
                                     color: subtask.done ? 'var(--color-text-secondary)' : 'var(--color-text-main)',
                                     textDecoration: subtask.done ? 'line-through' : 'none',
                                 }}>

@@ -1,4 +1,4 @@
-function Button({ label, variant = 'primary', onClick, fullWidth = false }) {
+function Button({ label, children, variant = 'primary', onClick, fullWidth = false, style }) {
     // Mapping variants to your specific theme tokens
     const variantStyles = {
         primary: {
@@ -33,11 +33,15 @@ function Button({ label, variant = 'primary', onClick, fullWidth = false }) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                userSelect: 'none'
+                userSelect: 'none',
+                padding: '16px 20px',
+                borderRadius: '16px',
+                transition: 'all 0.15s',
+                ...style,
             }}
-            className="label-bold px-5 py-4 rounded-2xl transition-all active:scale-[0.97] active:opacity-80"
+            className="label-bold active:scale-[0.97] active:opacity-80"
         >
-            {label}
+            {label ?? children}
         </button>
     )
 }

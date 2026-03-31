@@ -1,5 +1,6 @@
 import Header from '../components/Header'
 import { useNavigate } from 'react-router-dom'
+import Section from "../components/Section.jsx";
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const MONTHS = [
@@ -39,18 +40,17 @@ function Calendar() {
         <div className="page flex flex-col gap-0 min-h-screen" style={{ background: 'var(--color-bg)' }}>
 
             <Header
-                subtitle={`${MONTHS[month].toUpperCase()} ${year}`}
                 title="Calendar"
                 onBack={() => navigate(-1)}
             />
 
-            <div style={{ padding: '20px 16px 16px' }}>
+            <div style={{ padding: '16px' }}>
 
                 {/* Coming Soon banner */}
                 <div style={{
                     borderRadius: '14px',
                     border: '1px dashed var(--color-border, rgba(255,255,255,0.15))',
-                    background: 'var(--color-surface, rgba(255,255,255,0.04))',
+                    background: 'var(--color-card, rgba(255,255,255,0.04))',
                     padding: '14px 18px',
                     display: 'flex',
                     alignItems: 'center',
@@ -67,6 +67,10 @@ function Calendar() {
                         Coming Soon - Integrated Calendars!
                     </span>
                 </div>
+
+                <Section
+                    header={`${MONTHS[month].toUpperCase()} ${year}`}
+                />
 
                 {/* Day-of-week headers */}
                 <div style={{

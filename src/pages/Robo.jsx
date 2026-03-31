@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { Command, Lock, Unlock } from 'lucide-react'
 import Header from '../components/Header'
 import useRoboStore, { xpProgressInLevel, levelFromXp } from '../data/useRoboStore'
+import Section from "../components/Section.jsx";
 
 const moods = [
     { label: 'Energized', emoji: '🚀' },
@@ -180,10 +181,39 @@ function Robo() {
                     )}
                 </div>
 
+
+                {/* xp sources */}
+                    <Section
+                        header={"XP SOURCES"}
+                        collapsible={true}
+                        headerColor={'var(--color-text-secondary)'}
+                    >
+                        <div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        {xpSources.map(source => (
+                            <div key={source.label} style={{
+                                display: 'flex', justifyContent: 'space-between',
+                                padding: '12px 4px',
+                                borderBottom: '1px solid var(--color-divider)',
+                            }}>
+                                <span style={{ fontSize: '14px' }}>{source.label}</span>
+                                <span style={{ color: 'var(--color-primary)', fontWeight: 600, fontSize: '14px' }}>+{source.xp}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                </div>
+            </Section>
+
+
                 {/* xp log */}
+                <Section
+                    header={"RECENT XP EARNED"}
+                    collapsible={true}
+                    headerStyle={{ fontWeight: 700, fontSize: '14px' }}
+                >
                 {xpLog.length > 0 && (
                     <div>
-                        <SectionDivider label="RECENT XP" />
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                             {xpLog.slice(0, 6).map((entry, i) => (
                                 <div key={i} style={{
@@ -198,28 +228,16 @@ function Robo() {
                         </div>
                     </div>
                 )}
-
-                {/* xp sources */}
-                <div>
-                    <SectionDivider label="XP SOURCES" />
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        {xpSources.map(source => (
-                            <div key={source.label} style={{
-                                display: 'flex', justifyContent: 'space-between',
-                                padding: '12px 4px',
-                                borderBottom: '1px solid var(--color-divider)',
-                            }}>
-                                <span style={{ fontSize: '14px' }}>{source.label}</span>
-                                <span style={{ color: 'var(--color-primary)', fontWeight: 600, fontSize: '14px' }}>+{source.xp}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+            </Section>
 
                 {/* unlocked upgrades */}
+                <Section
+                    header={"UNLOCKED UPGRADES"}
+                    collapsible={true}
+                    headerColor={'var(--color-text-secondary)'}
+                >
                 {unlockedUpgrades.length > 0 && (
                     <div>
-                        <SectionDivider label="UPGRADES ACQUIRED" />
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                             {unlockedUpgrades.map(upgrade => (
                                 <UpgradeCard key={upgrade.label} upgrade={upgrade} unlocked />
@@ -227,11 +245,16 @@ function Robo() {
                         </div>
                     </div>
                 )}
+                </Section>
 
                 {/* locked upgrades */}
+                <Section
+                    header={"LOCKED UPGRADE CHIPS"}
+                    collapsible={true}
+                    headerColor={'var(--color-text-secondary)'}
+                >
                 {lockedUpgrades.length > 0 && (
                     <div>
-                        <SectionDivider label="LOCKED UPGRADE CHIPS" />
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                             {lockedUpgrades.map(upgrade => (
                                 <UpgradeCard key={upgrade.label} upgrade={upgrade} unlocked={false} />
@@ -239,23 +262,12 @@ function Robo() {
                         </div>
                     </div>
                 )}
-
+                </Section>
             </div>
         </div>
     )
 }
 
-function SectionDivider({ label }) {
-    return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-            <div style={{ flex: 1, height: '1px', background: 'var(--color-divider)' }} />
-            <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--color-text-muted)' }}>
-                {label}
-            </span>
-            <div style={{ flex: 1, height: '1px', background: 'var(--color-divider)' }} />
-        </div>
-    )
-}
 
 function UpgradeCard({ upgrade, unlocked }) {
     return (

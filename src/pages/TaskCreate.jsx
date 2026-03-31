@@ -1,6 +1,21 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
-import { Command, X, Pencil, Check, Plus, CheckCircle, MapPin, AlertTriangle, GripVertical, Lock, ChevronRight, Gauge, Timer as TimerIcon } from 'lucide-react'
+import {
+    Command,
+    X,
+    Pencil,
+    Check,
+    Plus,
+    CheckCircle,
+    MapPin,
+    AlertTriangle,
+    GripVertical,
+    Lock,
+    ChevronRight,
+    Gauge,
+    Timer as TimerIcon,
+    Trash2
+} from 'lucide-react'
 import useTaskStore from '../data/useTaskStore'
 import useDebugStore from '../data/useDebugStore'
 import useNavGuardStore from '../data/useNavGuardStore'

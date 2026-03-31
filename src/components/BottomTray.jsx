@@ -147,8 +147,8 @@ function BottomTrayHandle() {
             height: 6,
             width: '10%',
             borderRadius: 8,
-            margin: '8px 0 20px 0',
-            background: 'var(--color-primary-soft)',
+            margin: '8px 0 12px 0',
+            background: 'var(--color-divider)',
         }} />
     )
 }

@@ -21,7 +21,7 @@ function Settings() {
     return (
         <>
             <Header title="Settings" onBack={true} />
-            <div className="page flex flex-col gap-4 p-6 min-h-screen">
+            <div className="page flex flex-col gap-4 p-6 min-h-screen" style={{ padding: '16px' }}>
 
                 <Section header="GENERAL" {...sectionProps}>
                     <ListRow
@@ -119,11 +119,6 @@ function Settings() {
                             fullWidth
                         />
                     </ListRow>
-                    <ListRow
-                        label="Debug Panel"
-                        description="Show the developer debug panel alongside the app."
-                        right={<Toggle checked={settings.showDebugPanel} onChange={settings.setShowDebugPanel} />}
-                    />
                 </Section>
 
             </div>
