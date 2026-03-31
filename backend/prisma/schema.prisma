@@ -21,17 +21,27 @@ model User {
 }
 
 model Task {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  name        String
-  due         String?
-  time        String?
-  priority    String
-  effort      Int
-  description String   @default("")
-  status      String
+  name     String
+  due      String?
+  time     String?
+  priority String
+  effort   Int
+  status   String
+
+  // notes: visible to AI unless privateNotes is true
+  notes        String  @default("")
+  privateNotes Boolean @default(false)
+
+  // timer & AI
+  timer          Boolean @default(false)
+  useAI          Boolean @default(false)
+  timeLogged     Int     @default(0) // cumulative seconds
+  aiInstructions String  @default("")
+  totalTimeEst   Int? // estimated total seconds (AI-generated)
 
   location Json?
   repeat   Json?
@@ -43,22 +53,22 @@ model Task {
 }
 
 model Subtask {
-  id               String  @id @default(uuid())
-  taskId           String
-  task             Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
-  label            String
-  done             Boolean @default(false)
-  ai               Boolean @default(false)
-  estimatedMinutes Int?
+  label          String
+  done           Boolean @default(false)
+  ai             Boolean @default(false)
+  estSubtaskTime Int? // estimated seconds to complete this subtask
 
   sortOrder Int @default(0)
 }
 
 model Notification {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   title     String
   body      String
@@ -67,8 +77,8 @@ model Notification {
 }
 
 model RoboState {
-  userId           String  @id
-  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @id
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   xp               Int     @default(0)
   streak           Int     @default(0)
@@ -92,9 +102,9 @@ model XpLogEntry {
 }
 
 model TaskTemplate {
-  id            String   @id @default(uuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   normalizedKey String
   taskName      String
