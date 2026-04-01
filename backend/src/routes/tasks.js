@@ -26,7 +26,7 @@ export function createTasksRouter(prisma) {
             status:         t.status,
             notes:          t.notes,
             privateNotes:   t.privateNotes,
-            timer:          t.timer,
+            useTimer:          t.useTimer,
             useAI:          t.useAI,
             timeLogged:     t.timeLogged,
             aiInstructions: t.aiInstructions,
@@ -65,7 +65,7 @@ export function createTasksRouter(prisma) {
         try {
             const {
                 name, due, time, priority, effort, status,
-                notes, privateNotes, timer, useAI, timeLogged, aiInstructions, totalTimeEst,
+                notes, privateNotes, useTimer, useAI, timeLogged, aiInstructions, totalTimeEst,
                 location, repeat, subtasks = [],
             } = req.body
 
@@ -85,7 +85,7 @@ export function createTasksRouter(prisma) {
                     status:         status ?? 'todo',
                     notes:          notes ?? '',
                     privateNotes:   privateNotes ?? false,
-                    timer:          timer ?? false,
+                    useTimer:          useTimer ?? false,
                     useAI:          useAI ?? false,
                     timeLogged:     timeLogged ?? 0,
                     aiInstructions: aiInstructions ?? '',
@@ -118,7 +118,7 @@ export function createTasksRouter(prisma) {
 
             const {
                 name, due, time, priority, effort, status,
-                notes, privateNotes, timer, useAI, timeLogged, aiInstructions, totalTimeEst,
+                notes, privateNotes, useTimer, useAI, timeLogged, aiInstructions, totalTimeEst,
                 location, repeat, subtasks,
             } = req.body
 
@@ -131,7 +131,7 @@ export function createTasksRouter(prisma) {
             if (status !== undefined)         data.status         = status
             if (notes !== undefined)          data.notes          = notes
             if (privateNotes !== undefined)   data.privateNotes   = privateNotes
-            if (timer !== undefined)          data.timer          = timer
+            if (useTimer !== undefined)          data.useTimer          = useTimer
             if (useAI !== undefined)          data.useAI          = useAI
             if (timeLogged !== undefined)     data.timeLogged     = timeLogged
             if (aiInstructions !== undefined) data.aiInstructions = aiInstructions

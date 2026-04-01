@@ -37,7 +37,7 @@ model Task {
   privateNotes Boolean @default(false)
 
   // timer & AI
-  timer          Boolean @default(false)
+  useTimer       Boolean @default(false)
   useAI          Boolean @default(false)
   timeLogged     Int     @default(0) // cumulative seconds
   aiInstructions String  @default("")

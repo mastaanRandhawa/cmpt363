@@ -100,7 +100,7 @@ function Home() {
 
     const recTask = rec ? tasks.find(t => t.id === rec.taskId) : null
 
-    // ── up next (up to 3; prioritised by urgency, backfilled from remaining) ──
+    // ── up next (up to 3; prioritized by urgency, backfilled from remaining) ──
     const scoredPool = incompleteTasks
         .filter(t => t.id !== rec?.taskId)
         .sort((a, b) => {

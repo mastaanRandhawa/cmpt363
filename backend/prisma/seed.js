@@ -17,7 +17,7 @@ const DEMO_USER_ID = 'a0000001-0001-4001-8001-000000000001'
 //  time           'HH:MM'|null
 //  location       { type, label }|null   type: 'fixed'|'place'|'flexible'|'outdoor'
 //  repeat         { frequency, days? }|null
-//  timer          Boolean           whether the timer UI is shown on the task page
+//  useTimer          Boolean           whether the timer UI is shown on the task page
 //  useAI          Boolean           whether AI breakdown is enabled for this task
 //  timeLogged     Int               cumulative seconds logged via timer
 //  aiInstructions String            extra context fed to AI when useAI is true
@@ -37,7 +37,7 @@ const SEED_TASKS = [
         time:           null,
         location:       { type: 'fixed', label: 'Library' },
         repeat:         null,
-        timer:          true,
+        useTimer:          true,
         useAI:          true,
         timeLogged:     2700,           // 45 min already logged
         aiInstructions: 'Prioritize evaluation methods and user research frameworks.',
@@ -60,7 +60,7 @@ const SEED_TASKS = [
         time:           null,
         location:       { type: 'place', label: 'Superstore' },
         repeat:         { frequency: 'weekly', days: ['Tuesday'] },
-        timer:          false,
+        useTimer:          false,
         useAI:          false,
         timeLogged:     0,
         aiInstructions: '',
@@ -82,7 +82,7 @@ const SEED_TASKS = [
         time:           null,
         location:       { type: 'flexible', label: 'Anywhere' },
         repeat:         null,
-        timer:          true,
+        useTimer:          true,
         useAI:          true,
         timeLogged:     0,
         aiInstructions: 'Use IEEE citation format. Focus on the academic definition angle.',
@@ -107,7 +107,7 @@ const SEED_TASKS = [
         time:           '14:00',
         location:       { type: 'place', label: 'Medical Clinic' },
         repeat:         { frequency: 'yearly', label: 'Annual Checkup' },
-        timer:          false,
+        useTimer:          false,
         useAI:          false,
         timeLogged:     0,
         aiInstructions: '',
@@ -129,7 +129,7 @@ const SEED_TASKS = [
         time:           '11:00',
         location:       { type: 'place', label: 'SFU Bookstore' },
         repeat:         null,
-        timer:          false,
+        useTimer:          false,
         useAI:          false,
         timeLogged:     0,
         aiInstructions: '',
@@ -147,7 +147,7 @@ const SEED_TASKS = [
         time:           '15:30',
         location:       { type: 'place', label: 'Metropolis at Metrotown' },
         repeat:         null,
-        timer:          false,
+        useTimer:          false,
         useAI:          false,
         timeLogged:     0,
         aiInstructions: '',
@@ -169,7 +169,7 @@ const SEED_TASKS = [
         time:           '07:00',
         location:       { type: 'outdoor', label: 'Tynehead Park' },
         repeat:         { frequency: 'custom', days: ['Monday', 'Wednesday', 'Friday'] },
-        timer:          true,
+        useTimer:          true,
         useAI:          false,
         timeLogged:     0,
         aiInstructions: '',
@@ -187,7 +187,7 @@ const SEED_TASKS = [
         time:           '13:00',
         location:       { type: 'fixed', label: 'SFU AQ 3149' },
         repeat:         { frequency: 'weekly', days: ['Thursday'] },
-        timer:          false,
+        useTimer:          false,
         useAI:          false,
         timeLogged:     0,
         aiInstructions: '',
@@ -209,7 +209,7 @@ const SEED_TASKS = [
         time:           '10:00',
         location:       { type: 'fixed', label: 'Counselling Services' },
         repeat:         { frequency: 'weekly', days: ['Friday'] },
-        timer:          false,
+        useTimer:          false,
         useAI:          false,
         timeLogged:     0,
         aiInstructions: '',
@@ -248,7 +248,7 @@ async function main() {
                     status:         t.status,
                     notes:          t.notes,
                     privateNotes:   t.privateNotes,
-                    timer:          t.timer,
+                    useTimer:          t.useTimer,
                     useAI:          t.useAI,
                     timeLogged:     t.timeLogged,
                     aiInstructions: t.aiInstructions,

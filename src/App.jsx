@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useDeviceProfile } from './hooks/useDeviceProfile'
+//import { getRecommendedTask } from '/data/taskRecommendation'
+import BottomNav from './components/BottomNav'
+import BottomTray from './components/BottomTray'
 import Home from './pages/Home'
 import Tasks from './pages/Tasks'
 import TaskDetail from './pages/TaskDetail'
@@ -10,10 +14,9 @@ import Help from './pages/help'
 import Settings from './pages/Settings'
 import Notifications from './pages/Notifications'
 import LockScreen from './pages/LockScreen'
-import BottomNav from './components/BottomNav'
-import BottomTray from './components/BottomTray'
 import Timer from './pages/Timer'
 import Toast from './components/Toast'
+import Chat from "./pages/Chat.jsx";
 import useToastStore from './data/useToastStore'
 import useTaskStore from './data/useTaskStore'
 import useNotificationStore from './data/useNotificationStore'
@@ -21,9 +24,7 @@ import useRoboStore from './data/useRoboStore'
 import useBottomTrayStore from './data/useBottomTrayStore'
 import useSessionStore from './data/useSessionStore'
 //import DebugPanel from './components/DebugPanel'
-import Chat from "./pages/Chat.jsx";
 import useSettingsStore from './data/useSettingsStore'
-import { useDeviceProfile } from './hooks/useDeviceProfile'
 
 const themes = [
     { value: 'lavender', label: 'Lavender Mist' },
@@ -44,6 +45,7 @@ const devControlStyle = {
     outline: 'none',
 }
 
+{/* Faked status bar for website version - not rendered during mobile view */}
 function StatusBar() {
     const [time, setTime] = useState(() => {
         const now = new Date()
