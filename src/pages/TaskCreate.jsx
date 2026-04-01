@@ -65,17 +65,15 @@ function TaskCreate() {
     const editTask = editId ? tasks.find(t => t.id === editId) ?? null : null
     const isEdit   = !!editTask
 
-    const todayStr = new Date().toISOString().slice(0, 10)
-
     // ─── form state ───────────────────────────────────────────────────────────
     const [name, setName]           = useState(editTask?.name        ?? '')
-    const [date, setDate]           = useState(editTask?.due         ?? todayStr)
+    const [date, setDate]           = useState(editTask?.due         ?? '')
     const [addTime, setAddTime]     = useState(!!(editTask?.time))
     const [time, setTime]           = useState(typeof editTask?.time === 'string' ? editTask.time : '')
     const [priority, setPriority]   = useState(typeof editTask?.priority === 'string' ? editTask.priority : null)
     const [effort, setEffort]       = useState(typeof editTask?.effort === 'number' ? editTask.effort : null)
-    const [notes, setNotes]         = useState(typeof editTask?.note === 'string' ? editTask.note : '')
-    const [privateNotes, setPrivateNotes] = useState(false)
+    const [notes, setNotes]         = useState(typeof editTask?.notes === 'string' ? editTask.notes : '')
+    const [privateNotes, setNotesPrivate] = useState(editTask?.privateNotes ?? false)
     const [repeat, setRepeat]       = useState(editTask?.repeat      ?? null)
     const [location, setLocation]   = useState(
         typeof editTask?.location === 'string' ? editTask.location :
@@ -89,7 +87,7 @@ function TaskCreate() {
     const [errors, setErrors]         = useState({})
 
     // ─── subtasks ─────────────────────────────────────────────────────────────
-    const [subtasks, setSubtasks]     = useState([])
+    const [subtasks, setSubtasks]     = useState(editTask?.subtasks ?? [])
     const [editingId, setEditingId]   = useState(null)
     const [editLabel, setEditLabel]   = useState('')
     const [newSubtask, setNewSubtask] = useState('')
@@ -102,7 +100,7 @@ function TaskCreate() {
     const [aiSnapshot, setAiSnapshot]   = useState(null)    // form values at time of last AI call
     const [aiPending, setAiPending]     = useState([])      // suggestions awaiting user decision
     const [aiOriginal, setAiOriginal]   = useState([])      // raw AI output for template saving
-    const [aiInstructions, setAiInstructions] = useState('')      // user directions to the AI
+    const [aiInstructions, setAiInstructions] = useState(editTask?.aiInstructions ?? '')      // user directions to the AI
 
     // ─── confirm step ─────────────────────────────────────────────────────────
     const [step, setStep]           = useState('form')
@@ -110,10 +108,11 @@ function TaskCreate() {
 
     // ─── formStale: form changed after last AI submission ─────────────────────
     const formStale = aiSubmitted && aiSnapshot !== null && (
-        name      !== aiSnapshot.name     ||
-        date      !== aiSnapshot.date     ||
-        priority  !== aiSnapshot.priority ||
-        effort    !== aiSnapshot.effort   ||
+        name         !== aiSnapshot.name         ||
+        date         !== aiSnapshot.date         ||
+        priority     !== aiSnapshot.priority     ||
+        effort       !== aiSnapshot.effort       ||
+        privateNotes !== aiSnapshot.privateNotes ||
         (!privateNotes && notes !== aiSnapshot.notes) ||
         aiInstructions !== aiSnapshot.aiInstructions
     )
@@ -122,20 +121,22 @@ function TaskCreate() {
     const isDirty = step === 'form' && (() => {
         if (isEdit && editTask) {
             return (
-                name.trim()    !== (editTask.name        ?? '') ||
-                date           !== (editTask.due         ?? '') ||
-                time           !== (editTask.time        ?? '') ||
-                addTime        !== !!(editTask.time)            ||
-                priority       !== (editTask.priority    ?? null) ||
-                effort         !== (editTask.effort      ?? null) ||
-                notes.trim()   !== (editTask.notes ?? '') ||
-                (location||'') !== (typeof editTask.location === 'string' ? editTask.location : editTask.location?.label ?? '') ||
+                name.trim()       !== (editTask.name           ?? '') ||
+                date              !== (editTask.due            ?? '') ||
+                time              !== (editTask.time           ?? '') ||
+                addTime           !== !!(editTask.time)               ||
+                priority          !== (editTask.priority       ?? null) ||
+                effort            !== (editTask.effort         ?? null) ||
+                notes.trim()      !== (editTask.notes    ?? '') ||
+                privateNotes      !== (editTask.privateNotes   ?? false) ||
+                aiInstructions.trim() !== (editTask.aiInstructions ?? '') ||
+                (location||'')    !== (typeof editTask.location === 'string' ? editTask.location : editTask.location?.label ?? '') ||
                 JSON.stringify(repeat) !== JSON.stringify(editTask.repeat ?? null) ||
-                timed          !== (editTask.timed       ?? false)
+                timed             !== (editTask.timed          ?? false)
             )
         }
         return (
-            name.trim() !== '' || date !== todayStr || priority !== null ||
+            name.trim() !== '' || date !== '' || priority !== null ||
             effort !== null || notes.trim() !== '' || location !== '' ||
             addTime || repeat !== null || subtasks.length > 0
         )
@@ -149,17 +150,17 @@ function TaskCreate() {
     const clearGuard = useNavGuardStore(s => s.clearGuard)
 
     useEffect(() => {
-        setGuard((to, proceed) => {
-            if (isDirty) {
+        if (isDirty) {
+            setGuard((to, proceed) => {
                 setPendingNav(to)
                 setShowLeaveConfirm(true)
                 setPendingProceed(() => proceed)
-            } else {
-                navigate(to, { replace: true })
-            }
-        })
+            })
+        } else {
+            clearGuard()
+        }
         return () => clearGuard()
-    }, [isDirty, navigate, setGuard, clearGuard])
+    }, [isDirty, setGuard, clearGuard])
 
     useEffect(() => {
         const handler = e => { if (isDirty) { e.preventDefault(); e.returnValue = '' } }
@@ -169,8 +170,8 @@ function TaskCreate() {
 
     const guardedNavigate = useCallback((to) => {
         if (isDirty) { setPendingNav(to); setShowLeaveConfirm(true) }
-        else navigate(to, { replace: true })
-    }, [isDirty, navigate])
+        else navigate(to, { replace: isEdit })
+    }, [isDirty, navigate, isEdit])
 
     // ─── location autocomplete ────────────────────────────────────────────────
     useEffect(() => {
@@ -200,7 +201,7 @@ function TaskCreate() {
             time:      addTime ? (time || '—') : 'off',
             priority:  priority ?? '—',
             effort:    effort ?? '—',
-            notes:     privateNotes ? '[private notes that the user has chosen not to share]' : (notes ? `${notes.slice(0, 20)}${notes.length > 20 ? '…' : ''}` : '—'),
+            notes:     privateNotes ? '[private]' : (notes ? `${notes.slice(0, 20)}${notes.length > 20 ? '…' : ''}` : '—'),
             aiSuggest,
             aiLoading,
             formStale,
@@ -215,17 +216,18 @@ function TaskCreate() {
     async function runAISuggestions() {
         setAiLoading(true)
         setAiPending([])
-        const snap = { name, date, priority, effort, notes, aiInstructions, privateNotes }
+        const snap = { name, date, priority, effort, privateNotes, notes: privateNotes ? null : notes, aiInstructions }
         setAiSnapshot(snap)
         setAiSubmitted(true)
         try {
             const task = {
                 name,
-                due:         date,
-                time:        addTime ? time : null,
+                due:             date,
+                time:            addTime ? time : null,
                 priority,
                 effort,
-                notes: privateNotes ? null : notes,
+                notes:     privateNotes ? null : notes,
+                notesArePrivate: privateNotes || undefined,
                 location,
             }
             const result = await generateSubtasks(task, aiInstructions || null)
@@ -270,6 +272,7 @@ function TaskCreate() {
     function validate() {
         const e = {}
         if (!name.trim()) e.name     = 'Required'
+        if (!date)        e.date     = 'Required'
         if (!priority)    e.priority = 'Required'
         if (!effort)      e.effort   = 'Required'
         setErrors(e)
@@ -292,14 +295,16 @@ function TaskCreate() {
         const id = crypto.randomUUID()
         addTask({
             id,
-            name:        name.trim(),
-            due:         date,
-            time:        addTime ? time : null,
+            name:           name.trim(),
+            due:            date,
+            time:           addTime ? time : null,
             priority,
             effort,
-            notes: notes.trim(),
-            status:      'todo',
-            location:    location || null,
+            notes:    notes.trim(),
+            privateNotes,
+            aiInstructions: aiInstructions.trim() || null,
+            status:         'todo',
+            location:       location || null,
             repeat,
             timed,
             subtasks,
@@ -308,26 +313,18 @@ function TaskCreate() {
         setStep('confirm')
     }
 
-    function handleSaveEdit() {
+    async function handleSaveEdit() {
         if (!validate()) return
-
-        if (aiSuggest && aiOriginal.length > 0) {
-            useTaskTemplateStore.getState().saveTemplate({
-                taskName:      name.trim(),
-                aiSuggested:   aiOriginal,
-                finalSubtasks: subtasks,
-            })
-        }
-
-        updateTask(editId, {
-            name:        name,
-            due:         date,
-            time:        addTime ? time : null,
+        await updateTask(editId, {
+            name:           name.trim(),
+            due:            date,
+            time:           addTime ? time : null,
             priority,
             effort,
-            notes: notes,
-            privateNotes: privateNotes,
-            location:    location || null,
+            notes:    notes.trim(),
+            privateNotes,
+            aiInstructions: aiInstructions.trim() || null,
+            location:       location || null,
             repeat,
             timed,
         })
@@ -433,8 +430,8 @@ function TaskCreate() {
                     onConfirm={() => {
                         setShowLeaveConfirm(false)
                         clearGuard()
-                        navigate(pendingNav ?? (isEdit ? `/tasks/${editId}` : '/tasks'), { replace: true })
-                        setPendingProceed(null)
+                        if (pendingProceed) { pendingProceed(); setPendingProceed(null) }
+                        else navigate(pendingNav ?? (isEdit ? `/tasks/${editId}` : '/tasks'), { replace: isEdit })
                     }}
                     onCancel={() => {
                         setShowLeaveConfirm(false)
@@ -472,8 +469,13 @@ function TaskCreate() {
                         <div style={{ display: 'flex', alignItems: 'center' }}>
                             {/* Header matches the "Notes" style using theme secondary color */}
                             <label className="label-bold" style={{ color: 'var(--color-secondary)' }}>
-                                DATE
+                                DATE <span style={{ color: 'var(--color-important)' }}>*</span>
                             </label>
+                            {errors.date && (
+                                <span className="label-bold" style={{ color: 'var(--color-important)', marginLeft: '8px' }}>
+                    {errors.date}
+                </span>
+                            )}
                         </div>
 
                         <div style={{ display: 'flex', gap: '12px' }}>
@@ -625,7 +627,7 @@ function TaskCreate() {
                         <label  className="label-bold" style={{ color: 'var(--color-secondary)' }}>Notes</label>
                         <button
                             type="button"
-                            onClick={() => setPrivateNotes(!privateNotes)}
+                            onClick={() => setNotesPrivate(!privateNotes)}
                             className="label-bold"
                             style={{
                                 display: 'flex',
@@ -1058,8 +1060,8 @@ function TaskCreate() {
                     )
                 )}
 
-                {/* Instructions for AI — only visible when AI Suggestions is on */}
-                {!isEdit && aiSuggest && level >= 3 && (
+                {/* Instructions for AI — visible when AI Suggestions is on (create) or always in edit */}
+                {(isEdit || (aiSuggest && level >= 3)) && (
                     <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                             <Command size={11} color="var(--color-primary)" />
@@ -1071,7 +1073,6 @@ function TaskCreate() {
                             onChange={e => setAiInstructions(e.target.value)}
                             placeholder="Optional: guide the AI — e.g. 'Focus on research steps only' or 'Keep it under 3 subtasks'. Your notes above won't be shared if marked private."
                         />
-
                     </div>
                 )}
 
@@ -1093,41 +1094,18 @@ function TaskCreate() {
                         >
                             Discard
                         </button>
-                        {formStale && (
-                            <button
-                                onClick={runAISuggestions}
-                                className="label-bold"
-                                style={{
-                                    flex: 2,
-                                    height: '56px',
-                                    background: 'none',
-                                    border: '1.5px solid var(--color-primary)',
-                                    borderRadius: '16px',
-                                    color: 'var(--color-primary)',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '8px',
-                                }}
-                            >
-                                <Command size={16} /> Update AI Suggestions
-                            </button>
-                        )}
                         <button
                             onClick={handleCreate}
-                            disabled={formStale}
                             className="h3"
                             style={{
                                 flex: 2,
                                 height: '56px',
-                                background: formStale ? 'var(--color-card)' : 'var(--color-primary)',
-                                border: formStale ? '1px solid var(--color-divider)' : 'none',
+                                background: 'var(--color-primary)',
+                                border: 'none',
                                 borderRadius: '16px',
-                                color: formStale ? 'var(--color-text-secondary-muted)' : 'white',
+                                color: 'white',
                                 fontWeight: 700,
-                                cursor: formStale ? 'not-allowed' : 'pointer',
-                                transition: 'all 0.2s',
+                                cursor: 'pointer'
                             }}
                         >
                             Save Changes
