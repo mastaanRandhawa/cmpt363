@@ -22,8 +22,8 @@ import useBottomTrayStore from './data/useBottomTrayStore'
 import useSessionStore from './data/useSessionStore'
 //import DebugPanel from './components/DebugPanel'
 import Chat from "./pages/Chat.jsx";
-import useSettingsStore from './data/useSettingsStore'
 import { useDeviceProfile } from './hooks/useDeviceProfile'
+import OnboardingOverlay from './components/OnboardingOverlay'
 
 const themes = [
     { value: 'lavender', label: 'Lavender Mist' },
@@ -252,6 +252,7 @@ function App() {
                     )}
 
                     <BottomNav />
+                    <OnboardingOverlay />
                 </BrowserRouter>
             </div>
         )
@@ -361,6 +362,7 @@ function App() {
                     )}
 
                     <BottomNav />
+                    <OnboardingOverlay />
                 </BrowserRouter>
             </div>
         </div>
