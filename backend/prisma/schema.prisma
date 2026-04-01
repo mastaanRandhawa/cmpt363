@@ -35,7 +35,6 @@ model Task {
   // notes: visible to AI unless privateNotes is true
   notes        String  @default("")
   privateNotes Boolean @default(false)
-  description  String  @default("placeholder")
 
   // timer & AI
   useTimer       Boolean @default(false)
@@ -58,11 +57,10 @@ model Subtask {
   taskId String
   task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
-  label            String
-  done             Boolean @default(false)
-  ai               Boolean @default(false)
-  estSubtaskTime   Int? // estimated seconds to complete this subtask
-  estimatedMinutes Int? // placeholder
+  label          String
+  done           Boolean @default(false)
+  ai             Boolean @default(false)
+  estSubtaskTime Int? // estimated seconds to complete this subtask
 
   sortOrder Int @default(0)
 }
