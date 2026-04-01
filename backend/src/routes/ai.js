@@ -18,27 +18,27 @@ function getModel(systemInstruction) {
 
 const MOCK_BREAKDOWN = {
     default: [
-        { label: 'Research and gather relevant information', estimatedMinutes: 20 },
-        { label: 'Create an outline or plan',               estimatedMinutes: 10 },
-        { label: 'Complete the first draft or attempt',     estimatedMinutes: 30 },
-        { label: 'Review and make improvements',            estimatedMinutes: 15 },
-        { label: 'Final check and submit or deliver',       estimatedMinutes: 10 },
+        { label: 'Research and gather relevant information', estSubtaskTime: 20 },
+        { label: 'Create an outline or plan',               estSubtaskTime: 10 },
+        { label: 'Complete the first draft or attempt',     estSubtaskTime: 30 },
+        { label: 'Review and make improvements',            estSubtaskTime: 15 },
+        { label: 'Final check and submit or deliver',       estSubtaskTime: 10 },
     ],
     shopping: [
-        { label: 'Check what you already have at home', estimatedMinutes: 5  },
-        { label: 'Write a shopping list',               estimatedMinutes: 5  },
-        { label: 'Go to the store',                     estimatedMinutes: 20 },
-        { label: 'Buy items from the list',             estimatedMinutes: 20 },
-        { label: 'Return home and put items away',      estimatedMinutes: 10 },
+        { label: 'Check what you already have at home', estSubtaskTime: 5  },
+        { label: 'Write a shopping list',               estSubtaskTime: 5  },
+        { label: 'Go to the store',                     estSubtaskTime: 20 },
+        { label: 'Buy items from the list',             estSubtaskTime: 20 },
+        { label: 'Return home and put items away',      estSubtaskTime: 10 },
     ],
     essay: [
-        { label: 'Research the topic and gather sources', estimatedMinutes: 45 },
-        { label: 'Create a detailed outline',             estimatedMinutes: 20 },
-        { label: 'Write the introduction',                estimatedMinutes: 20 },
-        { label: 'Write the body paragraphs',            estimatedMinutes: 60 },
-        { label: 'Write the conclusion',                  estimatedMinutes: 15 },
-        { label: 'Add citations and references',          estimatedMinutes: 20 },
-        { label: 'Proofread and submit',                  estimatedMinutes: 20 },
+        { label: 'Research the topic and gather sources', estSubtaskTime: 45 },
+        { label: 'Create a detailed outline',             estSubtaskTime: 20 },
+        { label: 'Write the introduction',                estSubtaskTime: 20 },
+        { label: 'Write the body paragraphs',            estSubtaskTime: 60 },
+        { label: 'Write the conclusion',                  estSubtaskTime: 15 },
+        { label: 'Add citations and references',          estSubtaskTime: 20 },
+        { label: 'Proofread and submit',                  estSubtaskTime: 20 },
     ],
 }
 
@@ -56,7 +56,7 @@ function mockBreakdown(task) {
         label:            item.label,
         done:             false,
         ai:               true,
-        estimatedMinutes: item.estimatedMinutes,
+        estSubtaskTime: item.estSubtaskTime,
     }))
 }
 
@@ -81,8 +81,8 @@ function buildBreakdownPrompt(task, templates = []) {
             const added   = t.diff?.userAdded ?? []
             const removed = t.diff?.removed   ?? []
             lines.push(`"${t.taskName}" (done ${t.timesUsed} time${t.timesUsed !== 1 ? 's' : ''}):`)
-            if (kept.length)    lines.push(`  Kept:    ${kept.map(s => `"${s.label}"${s.estimatedMinutes ? ` (${s.estimatedMinutes}min)` : ''}`).join(', ')}`)
-            if (added.length)   lines.push(`  Added:   ${added.map(s => `"${s.label}"${s.estimatedMinutes ? ` (${s.estimatedMinutes}min)` : ''}`).join(', ')}`)
+            if (kept.length)    lines.push(`  Kept:    ${kept.map(s => `"${s.label}"${s.estSubtaskTime ? ` (${s.estSubtaskTime}min)` : ''}`).join(', ')}`)
+            if (added.length)   lines.push(`  Added:   ${added.map(s => `"${s.label}"${s.estSubtaskTime ? ` (${s.estSubtaskTime}min)` : ''}`).join(', ')}`)
             if (removed.length) lines.push(`  Removed: ${removed.map(s => `"${s.label}"`).join(', ')}`)
         }
         lines.push('Use this to personalise your suggestions — favour subtasks the user kept or added, avoid ones they removed, and match their actual time experience.')
@@ -101,7 +101,7 @@ function parseAIBreakdown(text) {
         label:            String(item.label ?? item.step ?? item.task ?? ''),
         done:             false,
         ai:               true,
-        estimatedMinutes: typeof item.estimatedMinutes === 'number' ? item.estimatedMinutes : null,
+        estSubtaskTime: Number(item.estSubtaskTime) > 0 ? Math.round(Number(item.estSubtaskTime)) : null,
     })).filter(s => s.label)
 }
 
@@ -110,14 +110,14 @@ async function realBreakdown(task, templates) {
 
 Given a task description, return a JSON array of subtasks. Each subtask must have:
 - "label": a short, concrete action starting with a verb (max ~60 characters)
-- "estimatedMinutes": realistic time estimate as a number
+- "estSubtaskTime": realistic time estimate as a number
 
 Return 3–7 subtasks. Output only the JSON array, no explanation.
 
 Example:
 [
-  { "label": "Research available options online", "estimatedMinutes": 20 },
-  { "label": "Make a decision and place order", "estimatedMinutes": 10 }
+  { "label": "Research available options online", "estSubtaskTime": 20 },
+  { "label": "Make a decision and place order", "estSubtaskTime": 10 }
 ]`)
 
     const result = await model.generateContent(buildBreakdownPrompt(task, templates))
@@ -257,7 +257,7 @@ export function createAiRouter(prisma) {
     /**
      * POST /api/ai/breakdown
      * body: { task: { name, due?, time?, priority?, effort?, description?, location? } }
-     * response: { subtasks: [{ id, label, done, ai, estimatedMinutes }] }
+     * response: { subtasks: [{ id, label, done, ai, estSubtaskTime }] }
      */
     r.post('/breakdown', async (req, res, next) => {
         try {

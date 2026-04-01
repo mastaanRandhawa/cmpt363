@@ -122,8 +122,8 @@ function TaskDetail() {
     }
 
     const incompleteSubtasks   = rawSubtasks.filter(s => !s.done)
-    const totalEstimatedMins   = rawSubtasks.reduce((sum, s) => sum + (s.estimatedMinutes ?? 0), 0)
-    const remainingEstimatedMins = incompleteSubtasks.reduce((sum, s) => sum + (s.estimatedMinutes ?? 0), 0)
+    const totalEstimatedMins   = rawSubtasks.reduce((sum, s) => sum + (s.estSubtaskTime ?? 0), 0)
+    const remainingEstimatedMins = incompleteSubtasks.reduce((sum, s) => sum + (s.estSubtaskTime ?? 0), 0)
     const someComplete         = completedCount > 0 && completedCount < rawSubtasks.length
     const shownEstimate        = someComplete ? remainingEstimatedMins : totalEstimatedMins
     const estimateLabel        = someComplete ? 'remaining' : 'estimated'
@@ -438,12 +438,12 @@ function TaskDetail() {
 
                                 {/* 5. Time estimate + AI chip */}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                                    {subtask.estimatedMinutes > 0 && (
+                                    {subtask.estSubtaskTime > 0 && (
                                         <span className="caption" style={{
                                             color: subtask.done ? 'var(--color-text-muted)' : 'var(--color-text-secondary)',
                                             opacity: subtask.done ? 0.5 : 1,
                                         }}>
-                                            {formatMinutes(subtask.estimatedMinutes)}
+                                            {formatMinutes(subtask.estSubtaskTime)}
                                         </span>
                                     )}
                                     {subtask.ai && !subtask.done && (

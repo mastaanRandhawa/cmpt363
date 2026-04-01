@@ -65,9 +65,11 @@ function TaskCreate() {
     const editTask = editId ? tasks.find(t => t.id === editId) ?? null : null
     const isEdit   = !!editTask
 
+    const todayStr = new Date().toISOString().slice(0, 10)
+
     // ─── form state ───────────────────────────────────────────────────────────
     const [name, setName]           = useState(editTask?.name        ?? '')
-    const [date, setDate]           = useState(editTask?.due         ?? '')
+    const [date, setDate]           = useState(editTask?.due         ?? todayStr)
     const [addTime, setAddTime]     = useState(!!(editTask?.time))
     const [time, setTime]           = useState(typeof editTask?.time === 'string' ? editTask.time : '')
     const [priority, setPriority]   = useState(typeof editTask?.priority === 'string' ? editTask.priority : null)
@@ -133,7 +135,7 @@ function TaskCreate() {
             )
         }
         return (
-            name.trim() !== '' || date !== '' || priority !== null ||
+            name.trim() !== '' || date !== todayStr || priority !== null ||
             effort !== null || notes.trim() !== '' || location !== '' ||
             addTime || repeat !== null || subtasks.length > 0
         )
@@ -268,7 +270,6 @@ function TaskCreate() {
     function validate() {
         const e = {}
         if (!name.trim()) e.name     = 'Required'
-        if (!date)        e.date     = 'Required'
         if (!priority)    e.priority = 'Required'
         if (!effort)      e.effort   = 'Required'
         setErrors(e)
@@ -470,13 +471,8 @@ function TaskCreate() {
                         <div style={{ display: 'flex', alignItems: 'center' }}>
                             {/* Header matches the "Notes" style using theme secondary color */}
                             <label className="label-bold" style={{ color: 'var(--color-secondary)' }}>
-                                DATE <span style={{ color: 'var(--color-important)' }}>*</span>
+                                DATE
                             </label>
-                            {errors.date && (
-                                <span className="label-bold" style={{ color: 'var(--color-important)', marginLeft: '8px' }}>
-                    {errors.date}
-                </span>
-                            )}
                         </div>
 
                         <div style={{ display: 'flex', gap: '12px' }}>
