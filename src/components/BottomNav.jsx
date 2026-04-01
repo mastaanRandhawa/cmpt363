@@ -120,6 +120,7 @@ function BottomNav() {
     return (
         <div
             ref={navRef}
+            data-onboarding="bottom-nav"
             style={{
                 position: 'sticky',
                 bottom: 0,
