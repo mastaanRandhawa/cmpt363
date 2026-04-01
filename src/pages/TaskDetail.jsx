@@ -327,7 +327,7 @@ function TaskDetail() {
                 </div>
 
                 {/* notes */}
-                {task.description && (
+                {task.notes && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
                         {/*
                             label-bold = 14px / 700 / uppercase — replaces the old labelStyle
@@ -349,7 +349,7 @@ function TaskDetail() {
                             boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
                             whiteSpace: 'pre-wrap',
                         }}>
-                            {task.description}
+                            {task.notes}
                         </div>
                     </div>
                 )}
