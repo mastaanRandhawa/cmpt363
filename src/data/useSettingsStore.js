@@ -90,6 +90,7 @@ const useSettingsStore = create(
                         userName: value,
                     })
                 },
+
                 aiAssistantName: "",
                 setAiAssistantName(value) {
                     assertType(value, 'string')

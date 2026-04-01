@@ -74,8 +74,8 @@ function TaskCreate() {
     const [time, setTime]           = useState(typeof editTask?.time === 'string' ? editTask.time : '')
     const [priority, setPriority]   = useState(typeof editTask?.priority === 'string' ? editTask.priority : null)
     const [effort, setEffort]       = useState(typeof editTask?.effort === 'number' ? editTask.effort : null)
-    const [notes, setNotes]         = useState(typeof editTask?.description === 'string' ? editTask.description : '')
-    const [notesPrivate, setNotesPrivate] = useState(false)
+    const [notes, setNotes]         = useState(typeof editTask?.note === 'string' ? editTask.note : '')
+    const [privateNotes, setPrivateNotes] = useState(false)
     const [repeat, setRepeat]       = useState(editTask?.repeat      ?? null)
     const [location, setLocation]   = useState(
         typeof editTask?.location === 'string' ? editTask.location :
@@ -114,7 +114,7 @@ function TaskCreate() {
         date      !== aiSnapshot.date     ||
         priority  !== aiSnapshot.priority ||
         effort    !== aiSnapshot.effort   ||
-        (!notesPrivate && notes !== aiSnapshot.notes) ||
+        (!privateNotes && notes !== aiSnapshot.notes) ||
         aiInstructions !== aiSnapshot.aiInstructions
     )
 
@@ -128,7 +128,7 @@ function TaskCreate() {
                 addTime        !== !!(editTask.time)            ||
                 priority       !== (editTask.priority    ?? null) ||
                 effort         !== (editTask.effort      ?? null) ||
-                notes.trim()   !== (editTask.description ?? '') ||
+                notes.trim()   !== (editTask.notes ?? '') ||
                 (location||'') !== (typeof editTask.location === 'string' ? editTask.location : editTask.location?.label ?? '') ||
                 JSON.stringify(repeat) !== JSON.stringify(editTask.repeat ?? null) ||
                 timed          !== (editTask.timed       ?? false)
@@ -200,14 +200,14 @@ function TaskCreate() {
             time:      addTime ? (time || '—') : 'off',
             priority:  priority ?? '—',
             effort:    effort ?? '—',
-            notes:     notesPrivate ? '[private]' : (notes ? `${notes.slice(0, 20)}${notes.length > 20 ? '…' : ''}` : '—'),
+            notes:     privateNotes ? '[private notes that the user has chosen not to share]' : (notes ? `${notes.slice(0, 20)}${notes.length > 20 ? '…' : ''}` : '—'),
             aiSuggest,
             aiLoading,
             formStale,
             subtasks:  subtasks.length > 0 ? `${subtasks.length} confirmed` : '—',
             aiPending: aiPending.length > 0 ? `${aiPending.length} pending` : '—',
         })
-    }, [step, name, date, time, addTime, priority, effort, notes, notesPrivate, aiSuggest, aiLoading, formStale, subtasks, aiPending])
+    }, [step, name, date, time, addTime, priority, effort, notes, privateNotes, aiSuggest, aiLoading, formStale, subtasks, aiPending])
 
     useEffect(() => () => setDebug('TaskCreate', null), [])
 
@@ -215,7 +215,7 @@ function TaskCreate() {
     async function runAISuggestions() {
         setAiLoading(true)
         setAiPending([])
-        const snap = { name, date, priority, effort, notes: notesPrivate ? null : notes, aiInstructions }
+        const snap = { name, date, priority, effort, notes, aiInstructions, privateNotes }
         setAiSnapshot(snap)
         setAiSubmitted(true)
         try {
@@ -225,7 +225,7 @@ function TaskCreate() {
                 time:        addTime ? time : null,
                 priority,
                 effort,
-                description: notesPrivate ? null : notes,
+                notes: privateNotes ? null : notes,
                 location,
             }
             const result = await generateSubtasks(task, aiInstructions || null)
@@ -297,7 +297,7 @@ function TaskCreate() {
             time:        addTime ? time : null,
             priority,
             effort,
-            description: notes.trim(),
+            notes: notes.trim(),
             status:      'todo',
             location:    location || null,
             repeat,
@@ -320,12 +320,13 @@ function TaskCreate() {
         }
 
         updateTask(editId, {
-            name:        name.trim(),
+            name:        name,
             due:         date,
             time:        addTime ? time : null,
             priority,
             effort,
-            description: notes.trim(),
+            notes: notes,
+            privateNotes: privateNotes,
             location:    location || null,
             repeat,
             timed,
@@ -624,7 +625,7 @@ function TaskCreate() {
                         <label  className="label-bold" style={{ color: 'var(--color-secondary)' }}>Notes</label>
                         <button
                             type="button"
-                            onClick={() => setNotesPrivate(!notesPrivate)}
+                            onClick={() => setPrivateNotes(!privateNotes)}
                             className="label-bold"
                             style={{
                                 display: 'flex',
@@ -635,7 +636,7 @@ function TaskCreate() {
                                 cursor: 'pointer',
                                 padding: '0', // Critical: removes internal button spacing
                                 margin: '0',  // Critical: removes external button spacing
-                                color: notesPrivate ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                                color: privateNotes ? 'var(--color-primary)' : 'var(--color-text-secondary)',
                                 transition: 'color 0.2s ease'
                             }}
                         >
@@ -644,14 +645,14 @@ function TaskCreate() {
                                 width: '18px',
                                 height: '18px',
                                 borderRadius: '5px',
-                                border: `1.5px solid ${notesPrivate ? 'var(--color-primary)' : 'var(--color-divider)'}`,
-                                background: notesPrivate ? 'var(--color-primary)' : 'none',
+                                border: `1.5px solid ${privateNotes ? 'var(--color-primary)' : 'var(--color-divider)'}`,
+                                background: privateNotes ? 'var(--color-primary)' : 'none',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 transition: 'all 0.2s ease'
                             }}>
-                                {notesPrivate && (
+                                {privateNotes && (
                                     <div style={{
                                         width: '4px',
                                         height: '8px',

@@ -33,7 +33,7 @@ function Settings() {
                             value={settings.userName}
                             type="text"
                             onChange={evt => {
-                                settings.userName(evt.target.value)
+                                settings.setUserName(evt.target.value)
                             }}
                         />
                     </ListRow>
