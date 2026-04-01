@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import {Pencil, Plus, MapPin, Repeat, Trash2, CheckCircle, X, GripVertical, Gauge} from 'lucide-react'
+import {Pencil, Plus, MapPin, Repeat, Trash2, CheckCircle, X, Gauge} from 'lucide-react'
 import { priority as priorityMap, effort as effortMap } from '../data/chipColors'
 import useTaskStore from '../data/useTaskStore'
 import useToastStore from '../data/useToastStore'
@@ -396,37 +396,20 @@ function TaskDetail() {
                         {subtasks.map((subtask, i) => (
                             <div
                                 key={subtask.id}
-                                {...getDragProps(i)}
                                 style={{
                                     display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px',
                                     borderBottom: i < subtasks.length - 1 ? '1px solid var(--color-divider)' : 'none',
-                                    opacity: dragOverIndex === i ? 0.4 : 1,
-                                    background: dragOverIndex === i ? 'var(--color-bg)' : 'transparent',
-                                    cursor: 'grab',
                                 }}
                             >
-                                {/* 1. Drag Handle */}
-                                <GripVertical size={16} color="var(--color-text-secondary)" style={{ flexShrink: 0, opacity: 0.6 }} />
-
-                                {/* 2. Number — caption (15px / 400) matching the Edit Task view */}
-                                <span className="caption" style={{
-                                    color: 'var(--color-text-secondary)',
-                                    width: '12px',
-                                    flexShrink: 0,
-                                    textAlign: 'right',
-                                    opacity: subtask.done ? 0.4 : 1
-                                }}>
-                                    {i + 1}
-                                </span>
-
-                                {/* 3. Checkbox */}
+                                {/* 1. Checkbox with number inside when unchecked */}
                                 <CircleCheck
                                     checked={subtask.done}
                                     onChange={() => toggleSubtask(task.id, subtask.id)}
-                                    size={24}
+                                    size={28}
+                                    label={i + 1}
                                 />
 
-                                {/* 4. Label — .body = 17px / 400 */}
+                                {/* 3. Label */}
                                 <span className="body" style={{
                                     flex: 1,
                                     fontWeight: 400,
@@ -436,28 +419,27 @@ function TaskDetail() {
                                     {subtask.label}
                                 </span>
 
-                                {/* 5. Time estimate + AI chip */}
+                                {/* 4. [AI badge] [time] — badge reserves space so time always aligns */}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                                    {subtask.estSubtaskTime > 0 && (
-                                        <span className="caption" style={{
-                                            color: subtask.done ? 'var(--color-text-muted)' : 'var(--color-text-secondary)',
-                                            opacity: subtask.done ? 0.5 : 1,
-                                        }}>
-                                            {formatMinutes(subtask.estSubtaskTime)}
-                                        </span>
-                                    )}
-                                    {subtask.ai && !subtask.done && (
-                                        <span className='caption' style={{
-                                            fontWeight: 700,
-                                            color: 'var(--color-primary)',
-                                            background: 'var(--color-primary-soft)',
-                                            padding: '3px 10px',
-                                            borderRadius: '24px',
-                                            border: '1px solid color-mix(in srgb, var(--color-primary) 25%, transparent)'
-                                        }}>
-                                            AI
-                                        </span>
-                                    )}
+                                    <span className='caption' style={{
+                                        visibility: (subtask.ai && !subtask.done) ? 'visible' : 'hidden',
+                                        fontWeight: 700,
+                                        color: 'var(--color-primary)',
+                                        background: 'var(--color-primary-soft)',
+                                        padding: '3px 10px',
+                                        borderRadius: '24px',
+                                        border: '1px solid color-mix(in srgb, var(--color-primary) 25%, transparent)'
+                                    }}>
+                                        AI
+                                    </span>
+                                    <span className="caption" style={{
+                                        minWidth: '32px',
+                                        textAlign: 'right',
+                                        color: subtask.done ? 'var(--color-text-muted)' : 'var(--color-text-secondary)',
+                                        opacity: subtask.done ? 0.5 : 1,
+                                    }}>
+                                        {subtask.estSubtaskTime > 0 ? formatMinutes(subtask.estSubtaskTime) : ''}
+                                    </span>
                                 </div>
                             </div>
                         ))}
