@@ -287,7 +287,7 @@ function OnboardingOverlay() {
             style={{
                 position:      'absolute',
                 inset:         0,
-                zIndex:        900,
+                zIndex:        1001,
                 pointerEvents: 'none',
             }}
         >

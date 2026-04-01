@@ -12,6 +12,7 @@ import { getRecommendedTask } from '../data/taskRecommendation'
 import useSessionStore from '../data/useSessionStore'
 import useSwipeList from '../hooks/useSwipeList.js'
 import useSwipeDelete from '../hooks/useSwipeDelete.jsx'
+import useSettingsStore from '../data/useSettingsStore.js'
 
 function isToday(dateStr) {
     if (!dateStr) return false
@@ -39,6 +40,7 @@ function Home() {
     const { show: showToast, dismiss: dismissToast } = useToastStore()
     const { getSwipeProps, closeAll }        = useSwipeList()
     const { handleSwipeDelete }              = useSwipeDelete({ closeAll })
+    const settings = useSettingsStore()
 
     const streak   = useRoboStore(s => s.streak)
     const mood     = useRoboStore(s => s.mood)

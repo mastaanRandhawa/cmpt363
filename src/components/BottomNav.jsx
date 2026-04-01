@@ -44,11 +44,12 @@ const tabs = [
 ]
 
 const trayItems = [
+    { label: 'Notifications', icon: CircleAlert, path: '/notifications' },
     { label: 'Chat', icon: MessageSquare, path: '/robo/chat' },
     { label: 'Timer', icon: TimerIcon, path: '/timer' },
-    { label: 'Notifications', icon: CircleAlert, path: '/notifications' },
     { label: 'Settings', icon: Settings, path: '/settings' },
     { label: 'Help', icon: HelpCircle, path: '/help' },
+    { label: 'Help', icon: HelpCircle, path: '/help' }, // Quick fix //TODO Proper fix
 ]
 
 function showMoreTray({ bottomTrayStore, navigate }) {
