@@ -1,0 +1,311 @@
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { ChevronRight, ChevronLeft } from 'lucide-react'
+import useOnboardingStore, { ONBOARDING_STEPS } from '../data/useOnboardingStore.js'
+
+// ── Constants ──────────────────────────────────────────────────────────────
+const OVERLAY_BG  = 'rgba(0, 0, 0, 0.80)'
+const CARD_W      = 320
+const CARD_H_EST  = 200   // estimated card height for positioning math
+const SPOTLIGHT_R = 16    // spotlight border-radius
+const PAD         = 8     // extra padding around each spotlight rect
+
+// ── Sub-components ─────────────────────────────────────────────────────────
+
+/** Four dark panels that surround the spotlight cutout */
+function DarkPanels({ sp, phoneH }) {
+    const style = (extra) => ({
+        position:      'absolute',
+        background:    OVERLAY_BG,
+        pointerEvents: 'all',
+        ...extra,
+    })
+
+    if (!sp) {
+        return <div style={style({ inset: 0 })} />
+    }
+
+    return (
+        <>
+            {/* Top */}
+            <div style={style({ top: 0, left: 0, right: 0, height: sp.y })} />
+            {/* Left */}
+            <div style={style({ top: sp.y, left: 0, width: Math.max(0, sp.x), height: sp.h })} />
+            {/* Right */}
+            <div style={style({ top: sp.y, left: sp.x + sp.w, right: 0, height: sp.h })} />
+            {/* Bottom */}
+            <div style={style({ top: sp.y + sp.h, left: 0, right: 0, bottom: 0 })} />
+        </>
+    )
+}
+
+/** Glow border drawn on top of the spotlight area */
+function SpotlightBorder({ sp }) {
+    if (!sp) return null
+    return (
+        <div style={{
+            position:      'absolute',
+            top:           sp.y,
+            left:          sp.x,
+            width:         sp.w,
+            height:        sp.h,
+            borderRadius:  SPOTLIGHT_R,
+            border:        '1.5px solid rgba(255,255,255,0.18)',
+            boxShadow:     `0 0 0 3px color-mix(in srgb, var(--color-primary) 45%, transparent), inset 0 0 24px color-mix(in srgb, var(--color-primary) 6%, transparent)`,
+            pointerEvents: 'none',
+            zIndex:        1,
+        }} />
+    )
+}
+
+/** Progress dots row */
+function StepDots({ current, total }) {
+    return (
+        <div style={{ display: 'flex', gap: '5px', justifyContent: 'center', marginBottom: '14px' }}>
+            {Array.from({ length: total }).map((_, i) => (
+                <div
+                    key={i}
+                    style={{
+                        width:        i === current ? '20px' : '6px',
+                        height:       '6px',
+                        borderRadius: '3px',
+                        background:   i === current ? 'var(--color-primary)'
+                            : i < current  ? 'color-mix(in srgb, var(--color-primary) 40%, transparent)'
+                                : 'var(--color-divider)',
+                        transition:   'width 0.28s ease, background 0.28s ease',
+                    }}
+                />
+            ))}
+        </div>
+    )
+}
+
+/** The floating tooltip/action card */
+function TooltipCard({ step, stepData, total, sp, phoneW, phoneH, onNext, onPrev, onFinish }) {
+    const { tooltipSide, title, body, isLast } = stepData
+
+    // Card x: centred in the phone
+    const cardX = (phoneW - CARD_W) / 2
+
+    // Card y: prefer tooltipSide, clamp to stay on screen
+    let cardY
+    if (!sp || tooltipSide === 'center') {
+        cardY = (phoneH - CARD_H_EST) / 2 - 20
+    } else if (tooltipSide === 'below') {
+        cardY = sp.y + sp.h + 16
+        if (cardY + CARD_H_EST > phoneH - 96) {
+            cardY = sp.y - CARD_H_EST - 16
+        }
+    } else {
+        // above
+        cardY = sp.y - CARD_H_EST - 16
+        if (cardY < 58) {
+            cardY = sp.y + sp.h + 16
+        }
+    }
+
+    // Clamp
+    cardY = Math.max(58, Math.min(phoneH - CARD_H_EST - 16, cardY))
+
+    return (
+        <div style={{
+            position:      'absolute',
+            left:          cardX,
+            top:           cardY,
+            width:         CARD_W,
+            background:    'var(--color-card)',
+            border:        '1px solid color-mix(in srgb, var(--color-primary) 28%, transparent)',
+            borderRadius:  '20px',
+            padding:       '20px 20px 16px',
+            boxShadow:     '0 12px 40px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.04)',
+            zIndex:        2,
+            pointerEvents: 'all',
+        }}>
+            <StepDots current={step} total={total} />
+
+            <h3 style={{
+                margin:        '0 0 8px',
+                fontSize:      '16px',
+                fontWeight:    800,
+                color:         'var(--color-text-main)',
+                letterSpacing: '0.01em',
+                lineHeight:    1.25,
+            }}>
+                {title}
+            </h3>
+
+            <p style={{
+                margin:     '0 0 18px',
+                fontSize:   '13px',
+                color:      'var(--color-text-muted)',
+                lineHeight: 1.55,
+            }}>
+                {body}
+            </p>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {/* Skip */}
+                <button
+                    onClick={onFinish}
+                    style={{
+                        background:    'none',
+                        border:        'none',
+                        color:         'var(--color-text-secondary)',
+                        fontSize:      '12px',
+                        fontWeight:    600,
+                        cursor:        'pointer',
+                        padding:       '8px 6px',
+                        letterSpacing: '0.04em',
+                        flexShrink:    0,
+                    }}
+                >
+                    Skip
+                </button>
+
+                {/* Back */}
+                {step > 0 && (
+                    <button
+                        onClick={onPrev}
+                        style={{
+                            flex:           1,
+                            padding:        '10px 0',
+                            background:     'var(--color-divider)',
+                            border:         '1px solid color-mix(in srgb, var(--color-text-muted) 30%, transparent)',
+                            borderRadius:   '12px',
+                            color:          'var(--color-text-muted)',
+                            fontSize:       '13px',
+                            fontWeight:     700,
+                            cursor:         'pointer',
+                            display:        'flex',
+                            alignItems:     'center',
+                            justifyContent: 'center',
+                            gap:            '2px',
+                        }}
+                    >
+                        <ChevronLeft size={14} />
+                        Back
+                    </button>
+                )}
+
+                {/* Next / Get Started */}
+                <button
+                    onClick={isLast ? onFinish : onNext}
+                    style={{
+                        flex:           step > 0 ? 2 : 3,
+                        padding:        '10px 0',
+                        background:     'var(--color-primary)',
+                        border:         'none',
+                        borderRadius:   '12px',
+                        color:          'white',
+                        fontSize:       '13px',
+                        fontWeight:     700,
+                        cursor:         'pointer',
+                        display:        'flex',
+                        alignItems:     'center',
+                        justifyContent: 'center',
+                        gap:            '4px',
+                        letterSpacing:  '0.02em',
+                    }}
+                >
+                    {isLast    ? '🚀 Get Started'
+                        : step === 0 ? 'Begin Tour'
+                            : 'Next'}
+                    {!isLast && <ChevronRight size={14} />}
+                </button>
+            </div>
+        </div>
+    )
+}
+
+// ── Main component ──────────────────────────────────────────────────────────
+
+function OnboardingOverlay() {
+    const active   = useOnboardingStore(s => s.active)
+    const step     = useOnboardingStore(s => s.step)
+    const next     = useOnboardingStore(s => s.next)
+    const prev     = useOnboardingStore(s => s.prev)
+    const finish   = useOnboardingStore(s => s.finish)
+    const navigate = useNavigate()
+
+    const stepData = ONBOARDING_STEPS[step]
+    const total    = ONBOARDING_STEPS.length
+
+    const [spotlight, setSpotlight] = useState(null)
+    const [phoneDims, setPhoneDims] = useState({ w: 440, h: 956 })
+    const frameRef = useRef(null)
+
+    // Navigate to the correct route when step changes
+    useEffect(() => {
+        if (active && stepData?.route) {
+            navigate(stepData.route)
+        }
+    }, [active, step]) // eslint-disable-line
+
+    // Measure target element after navigation + render settle
+    useEffect(() => {
+        if (!active) return
+        if (!stepData?.selector) {
+            setSpotlight(null)
+            // Still update phone dims
+            const frame = document.querySelector('[data-phone-frame]')
+            if (frame) {
+                setPhoneDims({ w: frame.offsetWidth, h: frame.offsetHeight })
+            }
+            return
+        }
+
+        const id = setTimeout(() => {
+            const frame = document.querySelector('[data-phone-frame]')
+            const el    = document.querySelector(stepData.selector)
+            if (!frame) return
+
+            setPhoneDims({ w: frame.offsetWidth, h: frame.offsetHeight })
+
+            if (!el) { setSpotlight(null); return }
+
+            const fr = frame.getBoundingClientRect()
+            const er = el.getBoundingClientRect()
+
+            setSpotlight({
+                x: er.left - fr.left - PAD,
+                y: er.top  - fr.top  - PAD,
+                w: er.width  + PAD * 2,
+                h: er.height + PAD * 2,
+            })
+        }, 150)
+
+        return () => clearTimeout(id)
+    }, [active, step]) // eslint-disable-line
+
+    if (!active || !stepData) return null
+
+    return (
+        <div
+            aria-modal="true"
+            role="dialog"
+            aria-label={`Onboarding step ${step + 1} of ${total}: ${stepData.title}`}
+            style={{
+                position:      'absolute',
+                inset:         0,
+                zIndex:        900,
+                pointerEvents: 'none',
+            }}
+        >
+            <DarkPanels sp={spotlight} phoneH={phoneDims.h} />
+            <SpotlightBorder sp={spotlight} />
+            <TooltipCard
+                step={step}
+                stepData={stepData}
+                total={total}
+                sp={spotlight}
+                phoneW={phoneDims.w}
+                phoneH={phoneDims.h}
+                onNext={next}
+                onPrev={prev}
+                onFinish={finish}
+            />
+        </div>
+    )
+}
+
+export default OnboardingOverlay
