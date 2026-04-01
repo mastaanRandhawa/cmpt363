@@ -70,7 +70,9 @@ function buildBreakdownPrompt(task, templates = []) {
     if (task.time)        lines.push(`Due time: ${task.time}`)
     if (task.priority)    lines.push(`Priority: ${task.priority}`)
     if (task.effort)      lines.push(`Effort level: ${EFFORT_LABELS[task.effort] ?? task.effort} (1–5 scale)`)
-    if (task.description) lines.push(`Notes: ${task.description}`)
+    if (!task.privateNotes) {
+        if (task.notes) lines.push(`Notes: ${task.notes}`)
+    }
     if (task.location)    lines.push(`Location: ${typeof task.location === 'string' ? task.location : task.location?.label}`)
 
     if (templates.length > 0) {
@@ -108,7 +110,7 @@ function parseAIBreakdown(text) {
 async function realBreakdown(task, templates) {
     const model  = getModel(`You are a productivity assistant that breaks down tasks into clear, actionable subtasks.
 
-Given a task description, return a JSON array of subtasks. Each subtask must have:
+Given a notes on a task, return a JSON array of subtasks. Each subtask must have:
 - "label": a short, concrete action starting with a verb (max ~60 characters)
 - "estSubtaskTime": realistic time estimate as a number
 
@@ -256,7 +258,7 @@ export function createAiRouter(prisma) {
 
     /**
      * POST /api/ai/breakdown
-     * body: { task: { name, due?, time?, priority?, effort?, description?, location? } }
+     * body: { task: { name, due?, time?, priority?, effort?, notes?, location? } }
      * response: { subtasks: [{ id, label, done, ai, estSubtaskTime }] }
      */
     r.post('/breakdown', async (req, res, next) => {
