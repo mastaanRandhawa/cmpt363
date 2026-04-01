@@ -309,6 +309,15 @@ function TaskCreate() {
 
     function handleSaveEdit() {
         if (!validate()) return
+
+        if (aiSuggest && aiOriginal.length > 0) {
+            useTaskTemplateStore.getState().saveTemplate({
+                taskName:      name.trim(),
+                aiSuggested:   aiOriginal,
+                finalSubtasks: subtasks,
+            })
+        }
+
         updateTask(editId, {
             name:        name.trim(),
             due:         date,
@@ -630,7 +639,7 @@ function TaskCreate() {
                                 cursor: 'pointer',
                                 padding: '0', // Critical: removes internal button spacing
                                 margin: '0',  // Critical: removes external button spacing
-                                color: !notesPrivate ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                                color: notesPrivate ? 'var(--color-primary)' : 'var(--color-text-secondary)',
                                 transition: 'color 0.2s ease'
                             }}
                         >
@@ -639,14 +648,14 @@ function TaskCreate() {
                                 width: '18px',
                                 height: '18px',
                                 borderRadius: '5px',
-                                border: `1.5px solid ${!notesPrivate ? 'var(--color-primary)' : 'var(--color-divider)'}`,
-                                background: !notesPrivate ? 'var(--color-primary)' : 'none',
+                                border: `1.5px solid ${notesPrivate ? 'var(--color-primary)' : 'var(--color-divider)'}`,
+                                background: notesPrivate ? 'var(--color-primary)' : 'none',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 transition: 'all 0.2s ease'
                             }}>
-                                {!notesPrivate && (
+                                {notesPrivate && (
                                     <div style={{
                                         width: '4px',
                                         height: '8px',

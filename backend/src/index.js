@@ -52,7 +52,7 @@ api.use('/tasks', createTasksRouter(prisma))
 api.use('/notifications', createNotificationsRouter(prisma))
 api.use('/robo', createRoboRouter(prisma))
 api.use('/task-templates', createTemplatesRouter(prisma))
-api.use('/ai', createAiRouter)
+api.use('/ai', createAiRouter(prisma))
 
 app.use('/api', api)
 

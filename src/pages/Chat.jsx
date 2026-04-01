@@ -4,6 +4,7 @@ import { Send, Command } from 'lucide-react'
 import Header from '../components/Header'
 import useTaskStore from '../data/useTaskStore'
 import useRoboStore from '../data/useRoboStore'
+import { api } from '../data/api'
 
 // ─── System prompt ────────────────────────────────────────────────────────────
 // TODO: wire to real API — pass buildSystemPrompt(tasks, roboName) as the system
@@ -51,45 +52,6 @@ CURRENT ACTIVE TASKS:
 ${taskBlock}`
 }
 
-// ─── Fake AI (replace with real API call) ────────────────────────────────────
-// Returns a promise so the real API swap is a single-line change.
-function fakeAIResponse(userMessage, tasks, roboName) {
-    const lower   = userMessage.toLowerCase()
-    const active  = tasks.filter(t => !t._softDeleted && t.status !== 'completed')
-
-    if (active.length === 0) {
-        return Promise.resolve(
-            "You don't have any active tasks right now! Head over to your task list and add something — I'll be ready to help the moment you do. 🚀"
-        )
-    }
-
-    // Simple relevance check: look for meaningful word overlap between message and task names
-    const isRelated = active.some(task => {
-        const words = task.name.toLowerCase().split(/\s+/).filter(w => w.length > 3)
-        return words.some(word => lower.includes(word)) || lower.includes(task.name.toLowerCase())
-    })
-
-    if (isRelated) {
-        const match = active.find(task => {
-            const words = task.name.toLowerCase().split(/\s+/).filter(w => w.length > 3)
-            return words.some(word => lower.includes(word)) || lower.includes(task.name.toLowerCase())
-        })
-        return Promise.resolve(
-            `That sounds related to "${match.name}" — nice! (Simulated response: once wired to a real API, ${roboName} will give you specific, helpful advice here based on your question and task context.)`
-        )
-    }
-
-    // Not related — redirect with personality
-    const names = active.slice(0, 2).map(t => `"${t.name}"`)
-    const nameStr = names.length === 1 ? names[0] : `${names[0]} or ${names[1]}`
-    const redirects = [
-        `That's a fun question, but it's outside my mission parameters! I'm locked in on your tasks right now — specifically ${nameStr}. Want help tackling any of those?`,
-        `I wish I could help with everything, but my programming keeps me focused on your task list! Right now that means ${nameStr}. Shall we dig in?`,
-        `Interesting territory — but I'm strictly task mode over here! Let's keep the momentum going on ${nameStr} instead. What do you need?`,
-        `That's above my pay grade (task-wise, anyway). I'm best used on ${nameStr} — point me at one and watch me go. 🤖`,
-    ]
-    return Promise.resolve(redirects[Math.floor(Math.random() * redirects.length)])
-}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function formatTime(date) {
@@ -130,18 +92,30 @@ function Chat() {
         setInput('')
         setLoading(true)
 
-        // Simulate network delay (remove when wiring real API)
-        await new Promise(r => setTimeout(r, 900 + Math.random() * 600))
+        // Build conversation history for the API (skip the welcome message)
+        const history = [...messages, userMsg]
+            .filter(m => m.id !== 'welcome')
+            .map(m => ({ role: m.role, content: m.text }))
 
-        const reply = await fakeAIResponse(text, tasks, roboName)
-        setMessages(prev => [...prev, {
-            id:        `a-${Date.now()}`,
-            role:      'assistant',
-            text:      reply,
-            timestamp: new Date(),
-        }])
-        setLoading(false)
-        inputRef.current?.focus()
+        try {
+            const { reply } = await api.chat({ messages: history, tasks, roboName })
+            setMessages(prev => [...prev, {
+                id:        `a-${Date.now()}`,
+                role:      'assistant',
+                text:      reply,
+                timestamp: new Date(),
+            }])
+        } catch {
+            setMessages(prev => [...prev, {
+                id:        `a-${Date.now()}`,
+                role:      'assistant',
+                text:      "Sorry, I couldn't reach the server. Try again in a moment!",
+                timestamp: new Date(),
+            }])
+        } finally {
+            setLoading(false)
+            inputRef.current?.focus()
+        }
     }
 
     function handleKeyDown(e) {

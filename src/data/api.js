@@ -48,4 +48,5 @@ export const api = {
     // ── ai ─────────────────────────────────────────────────────────────────────
     breakdown:            (task)       => req('POST',   '/ai/breakdown', { task }),
     recommend:            (body)       => req('POST',   '/ai/recommend', body),
+    chat:                 (body)       => req('POST',   '/ai/chat', body),
 }
