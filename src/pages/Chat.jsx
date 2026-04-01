@@ -4,6 +4,7 @@ import { Send, Command } from 'lucide-react'
 import Header from '../components/Header'
 import useTaskStore from '../data/useTaskStore'
 import useRoboStore from '../data/useRoboStore'
+import useSettingsStore from '../data/useSettingsStore'
 import { api } from '../data/api'
 
 // ─── System prompt ────────────────────────────────────────────────────────────
@@ -63,7 +64,8 @@ function Chat() {
     const navigate   = useNavigate()
     const allTasks   = useTaskStore(s => s.tasks)
     const tasks      = useMemo(() => allTasks.filter(t => !t._softDeleted), [allTasks])
-    const roboName   = useRoboStore(s => s.roboName) || 'Robo'
+    const aiAssistantName = useSettingsStore(s => s.aiAssistantName)
+    const roboName = aiAssistantName || 'Robo'
 
     const [messages, setMessages] = useState(() => [{
         id:        'welcome',
@@ -77,6 +79,8 @@ function Chat() {
     const bottomRef    = useRef(null)
     const inputRef     = useRef(null)
     const containerRef = useRef(null)
+
+
 
     // Scroll to bottom whenever messages change
     useEffect(() => {
