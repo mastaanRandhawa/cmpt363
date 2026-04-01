@@ -4,13 +4,12 @@ import { Bell, HelpCircle, Plus, RefreshCw, Command } from 'lucide-react'
 import Header from '../components/Header'
 import { Section } from '../components/Section'
 import TaskCard from '../components/TaskCard'
-import useSettingsStore from '../data/useSettingsStore'
-import useSessionStore from '../data/useSessionStore'
 import useTaskStore from '../data/useTaskStore'
 import useRoboStore from '../data/useRoboStore'
 import useToastStore from '../data/useToastStore'
 import useNotificationStore from '../data/useNotificationStore'
 import { getRecommendedTask } from '../data/taskRecommendation'
+import useSessionStore from '../data/useSessionStore'
 import useSwipeList from '../hooks/useSwipeList.js'
 import useSwipeDelete from '../hooks/useSwipeDelete.jsx'
 
@@ -47,7 +46,6 @@ function Home() {
     const unlocked           = useSessionStore(s => s.unlocked)
     const streakToastShown   = useSessionStore(s => s.streakToastShown)
     const setStreakToastShown = useSessionStore(s => s.setStreakToastShown)
-    const settings                   = useSettingsStore()
 
     const notifications = useNotificationStore(s => s.notifications)
     const hasUnread     = notifications.some(n => !n.read)
@@ -165,7 +163,7 @@ function Home() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0', padding: '4px 20px 0' }}>
 
                 {/* ── Recommended Now ────────────────────────────────────── */}
-                <div style={{ marginBottom: '24px' }}>
+                <div data-onboarding="rec-section" style={{ marginBottom: '24px' }}>
                     {!recDismissed ? (
                         <Section
                             header="RECOMMENDED NOW"
@@ -252,50 +250,52 @@ function Home() {
                 </div>
 
                 {/* ── Up Next ────────────────────────────────────────────── */}
-                <Section
-                    header="UP NEXT"
-                    headerColor="var(--color-text-muted)"
-                >
-                    {upNext.length === 0 ? (
-                        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', textAlign: 'center', margin: '24px 0' }}>
-                            You're all caught up 🎉
-                        </p>
-                    ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {upNext.map(task => (
-                                <TaskCard
-                                    key={task.id}
-                                    title={task.name}
-                                    due={task.due}
-                                    time={task.time}
-                                    priority={task.priority}
-                                    subtasks={task.subtasks}
-                                    completed={task.status === 'completed'}
-                                    onComplete={() => handleComplete(task)}
-                                    {...getSwipeProps(task.id)}
-                                    onDelete={() => handleSwipeDelete(task)}
-                                    onEdit={() => navigate('/tasks/create', { state: { editId: task.id } })}
-                                    onClick={() => navigate(`/tasks/${task.id}`)}
-                                />
-                            ))}
-                        </div>
-                    )}
+                <div data-onboarding="up-next-section">
+                    <Section
+                        header="UP NEXT"
+                        headerColor="var(--color-text-muted)"
+                    >
+                        {upNext.length === 0 ? (
+                            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', textAlign: 'center', margin: '24px 0' }}>
+                                You're all caught up 🎉
+                            </p>
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                {upNext.map(task => (
+                                    <TaskCard
+                                        key={task.id}
+                                        title={task.name}
+                                        due={task.due}
+                                        time={task.time}
+                                        priority={task.priority}
+                                        subtasks={task.subtasks}
+                                        completed={task.status === 'completed'}
+                                        onComplete={() => handleComplete(task)}
+                                        {...getSwipeProps(task.id)}
+                                        onDelete={() => handleSwipeDelete(task)}
+                                        onEdit={() => navigate('/tasks/create', { state: { editId: task.id } })}
+                                        onClick={() => navigate(`/tasks/${task.id}`)}
+                                    />
+                                ))}
+                            </div>
+                        )}
 
-                    {incompleteTasks.length > upNext.length + (recTask ? 1 : 0) && (
-                        <button
-                            onClick={() => navigate('/tasks')}
-                            style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                gap: '4px', width: '100%', marginTop: '16px',
-                                background: 'none', border: 'none', cursor: 'pointer',
-                                color: 'var(--color-primary)', fontSize: '12px', fontWeight: 600,
-                                letterSpacing: '0.04em',
-                            }}
-                        >
-                            See all {incompleteTasks.length} tasks
-                        </button>
-                    )}
-                </Section>
+                        {incompleteTasks.length > upNext.length + (recTask ? 1 : 0) && (
+                            <button
+                                onClick={() => navigate('/tasks')}
+                                style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    gap: '4px', width: '100%', marginTop: '16px',
+                                    background: 'none', border: 'none', cursor: 'pointer',
+                                    color: 'var(--color-primary)', fontSize: '12px', fontWeight: 600,
+                                    letterSpacing: '0.04em',
+                                }}
+                            >
+                                See all {incompleteTasks.length} tasks
+                            </button>
+                        )}
+                    </Section>
+                </div>
 
             </div>
 
