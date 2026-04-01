@@ -8,7 +8,6 @@
 //
 //   // Read a setting
 //   const energyLevelCheckInPrompt = useSettingsStore(s => s.energyLevelCheckInPrompt)
-
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import DebugPanel from '../components/DebugPanel'
@@ -83,7 +82,14 @@ const useSettingsStore = create(
                         notificationFrequency: value,
                     })
                 },
-                
+
+                userName: "User",
+                setUserName(value) {
+                    assertType(value, 'string')
+                    update({
+                        userName: value,
+                    })
+                },
                 aiAssistantName: "",
                 setAiAssistantName(value) {
                     assertType(value, 'string')
@@ -107,9 +113,7 @@ const useSettingsStore = create(
                         aiBehaviour: value,
                     })
                 },
-                showDebugPanel: false,
-                setShowDebugPanel: (val) => set({ showDebugPanel: val }),
-            }
+                 }
         }
     )
 )

@@ -4,12 +4,13 @@ import { Bell, HelpCircle, Plus, RefreshCw, Command } from 'lucide-react'
 import Header from '../components/Header'
 import { Section } from '../components/Section'
 import TaskCard from '../components/TaskCard'
+import useSettingsStore from '../data/useSettingsStore'
+import useSessionStore from '../data/useSessionStore'
 import useTaskStore from '../data/useTaskStore'
 import useRoboStore from '../data/useRoboStore'
 import useToastStore from '../data/useToastStore'
 import useNotificationStore from '../data/useNotificationStore'
 import { getRecommendedTask } from '../data/taskRecommendation'
-import useSessionStore from '../data/useSessionStore'
 import useSwipeList from '../hooks/useSwipeList.js'
 import useSwipeDelete from '../hooks/useSwipeDelete.jsx'
 
@@ -46,6 +47,7 @@ function Home() {
     const unlocked           = useSessionStore(s => s.unlocked)
     const streakToastShown   = useSessionStore(s => s.streakToastShown)
     const setStreakToastShown = useSessionStore(s => s.setStreakToastShown)
+    const settings                   = useSettingsStore()
 
     const notifications = useNotificationStore(s => s.notifications)
     const hasUnread     = notifications.some(n => !n.read)
@@ -137,7 +139,7 @@ function Home() {
 
             <Header
                 subtitle={`TODAY · ${dateStr}`}
-                title={`${greeting}, Bob!`}
+                title={`${greeting}, ${settings.userName}`}
                 rightAction={
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         {hasAny && (
@@ -298,7 +300,7 @@ function Home() {
             </div>
 
             {/* ── FAB ────────────────────────────────────────────────────── */}
-            <div style={{ position: 'sticky', bottom: '16px', display: 'flex', justifyContent: 'flex-end', paddingRight: '20px', marginTop: 'auto', pointerEvents: 'none' }}>
+            <div style={{ position: 'sticky', bottom: '16px', display: 'flex', justifyContent: 'flex-end', paddingRight: '20px', marginTop: 'auto', pointerEvents: 'none', zIndex: 500 }}>
                 <button
                     onClick={() => navigate('/tasks/create')}
                     style={{

@@ -25,6 +25,19 @@ function Settings() {
 
                 <Section header="GENERAL" {...sectionProps}>
                     <ListRow
+                        label="User Name"
+                        description="What is your user name?"
+                    >
+                        <Input
+                            placeholder="User"
+                            value={settings.userName}
+                            type="text"
+                            onChange={evt => {
+                                settings.userName(evt.target.value)
+                            }}
+                        />
+                    </ListRow>
+                    <ListRow
                         label="Energy Level Check-in"
                         description="Daily prompt asking you to update your energy level."
                         right={<Toggle checked={settings.enableEnergyLevelCheckIn} onChange={settings.setEnableEnergyLevelCheckIn} />}
