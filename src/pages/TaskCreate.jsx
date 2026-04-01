@@ -147,17 +147,17 @@ function TaskCreate() {
     const clearGuard = useNavGuardStore(s => s.clearGuard)
 
     useEffect(() => {
-        if (isDirty) {
-            setGuard((to, proceed) => {
+        setGuard((to, proceed) => {
+            if (isDirty) {
                 setPendingNav(to)
                 setShowLeaveConfirm(true)
                 setPendingProceed(() => proceed)
-            })
-        } else {
-            clearGuard()
-        }
+            } else {
+                navigate(to, { replace: true })
+            }
+        })
         return () => clearGuard()
-    }, [isDirty, setGuard, clearGuard])
+    }, [isDirty, navigate, setGuard, clearGuard])
 
     useEffect(() => {
         const handler = e => { if (isDirty) { e.preventDefault(); e.returnValue = '' } }
@@ -167,8 +167,8 @@ function TaskCreate() {
 
     const guardedNavigate = useCallback((to) => {
         if (isDirty) { setPendingNav(to); setShowLeaveConfirm(true) }
-        else navigate(to, { replace: isEdit })
-    }, [isDirty, navigate, isEdit])
+        else navigate(to, { replace: true })
+    }, [isDirty, navigate])
 
     // ─── location autocomplete ────────────────────────────────────────────────
     useEffect(() => {
@@ -431,8 +431,8 @@ function TaskCreate() {
                     onConfirm={() => {
                         setShowLeaveConfirm(false)
                         clearGuard()
-                        if (pendingProceed) { pendingProceed(); setPendingProceed(null) }
-                        else navigate(pendingNav ?? (isEdit ? `/tasks/${editId}` : '/tasks'), { replace: isEdit })
+                        navigate(pendingNav ?? (isEdit ? `/tasks/${editId}` : '/tasks'), { replace: true })
+                        setPendingProceed(null)
                     }}
                     onCancel={() => {
                         setShowLeaveConfirm(false)
@@ -1096,18 +1096,41 @@ function TaskCreate() {
                         >
                             Discard
                         </button>
+                        {formStale && (
+                            <button
+                                onClick={runAISuggestions}
+                                className="label-bold"
+                                style={{
+                                    flex: 2,
+                                    height: '56px',
+                                    background: 'none',
+                                    border: '1.5px solid var(--color-primary)',
+                                    borderRadius: '16px',
+                                    color: 'var(--color-primary)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px',
+                                }}
+                            >
+                                <Command size={16} /> Update AI Suggestions
+                            </button>
+                        )}
                         <button
                             onClick={handleCreate}
+                            disabled={formStale}
                             className="h3"
                             style={{
                                 flex: 2,
                                 height: '56px',
-                                background: 'var(--color-primary)',
-                                border: 'none',
+                                background: formStale ? 'var(--color-card)' : 'var(--color-primary)',
+                                border: formStale ? '1px solid var(--color-divider)' : 'none',
                                 borderRadius: '16px',
-                                color: 'white',
+                                color: formStale ? 'var(--color-text-secondary-muted)' : 'white',
                                 fontWeight: 700,
-                                cursor: 'pointer'
+                                cursor: formStale ? 'not-allowed' : 'pointer',
+                                transition: 'all 0.2s',
                             }}
                         >
                             Save Changes

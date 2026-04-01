@@ -10,17 +10,6 @@ import ProgressBar from '../components/ProgressBar'
 import ConfirmDialog from '../components/ConfirmDialog'
 import useDragSort from '../hooks/useDragSort'
 
-// Format seconds → "1h 4m", "23m 10s", "45s"
-function fmtDuration(s) {
-    if (!s || s < 1) return '0s'
-    const h = Math.floor(s / 3600)
-    const m = Math.floor((s % 3600) / 60)
-    const r = s % 60
-    if (h > 0) return `${h}h ${m}m`
-    if (m > 0) return r > 0 ? `${m}m ${r}s` : `${m}m`
-    return `${r}s`
-}
-
 function TaskDetail() {
     const navigate    = useNavigate()
     const { id }      = useParams()
@@ -32,8 +21,6 @@ function TaskDetail() {
         toggleSubtask,
         addSubtask,
         removeSubtask,
-        softDeleteTask,
-        cancelSoftDelete,
     } = useTaskStore()
 
     const [newSubtask, setNewSubtask]               = useState('')
@@ -126,6 +113,21 @@ function TaskDetail() {
         return `${m}m`
     }
 
+    function formatMinutes(mins) {
+        if (!mins || mins <= 0) return null
+        const h = Math.floor(mins / 60)
+        const m = mins % 60
+        if (h > 0) return `${h}h${m > 0 ? ` ${m}m` : ''}`
+        return `${m}m`
+    }
+
+    const incompleteSubtasks   = rawSubtasks.filter(s => !s.done)
+    const totalEstimatedMins   = rawSubtasks.reduce((sum, s) => sum + (s.estimatedMinutes ?? 0), 0)
+    const remainingEstimatedMins = incompleteSubtasks.reduce((sum, s) => sum + (s.estimatedMinutes ?? 0), 0)
+    const someComplete         = completedCount > 0 && completedCount < rawSubtasks.length
+    const shownEstimate        = someComplete ? remainingEstimatedMins : totalEstimatedMins
+    const estimateLabel        = someComplete ? 'remaining' : 'estimated'
+
     // ─── complete ─────────────────────────────────────────────────────────────
     function handleComplete() {
         const allDone = subtasks.length === 0 || completedCount === subtasks.length
@@ -163,32 +165,19 @@ function TaskDetail() {
 
     // ─── delete ───────────────────────────────────────────────────────────────
     function handleDelete() {
+        setShowDeleteConfirm(false)
         const taskId   = task.id
         const taskName = task.name
 
-        softDeleteTask(taskId)
         navigate('/tasks')
 
         showToast({
             message:     `"${taskName}" deleted`,
             icon:        <Trash2 size={16} color="var(--color-important)" />,
             barColor:    'var(--color-important)',
-            actionLabel: 'Undo',
-            onAction:    () => {
-                cancelSoftDelete(taskId)
-                dismissToast()
-            },
             onExpire: () => deleteTask(taskId),
-            duration: 5000,
+            duration: 3000,
         })
-    }
-
-    function handleToggleSubtask(subtaskId) {
-        // Calculate post-toggle state to detect "all done" before committing
-        const afterToggle = subtasks.map(s => s.id === subtaskId ? { ...s, done: !s.done } : s)
-        const allWillBeDone = afterToggle.length > 0 && afterToggle.every(s => s.done)
-        toggleSubtask(task.id, subtaskId)
-        if (allWillBeDone && !isComplete) setShowCompleteConfirm(true)
     }
 
     // ─── subtasks ─────────────────────────────────────────────────────────────
@@ -205,24 +194,8 @@ function TaskDetail() {
 
             <Header
                 title="Task Details"
-                subtitle={""}
+                subtitle={" "}
                 onBack={() => navigate(-1)}
-                rightAction={task.useTimer ? (
-                    <button
-                        onClick={() => navigate('/timer', { state: { taskId: task.id } })}
-                        title="Open in Timer"
-                        style={{
-                            background: 'none', border: 'none',
-                            cursor: 'pointer',
-                            color: 'var(--color-primary)',
-                            display: 'flex', alignItems: 'center',
-                            padding: '4px',
-                        }}
-                        aria-label="Open in Timer"
-                    >
-                        <TimerIcon size={22} />
-                    </button>
-                ) : undefined}
             />
 
             {/* This container handles the scrolling and the side padding */}
@@ -314,6 +287,23 @@ function TaskDetail() {
                         </span>
                     )}
 
+                    {/* Estimated Time Chip */}
+                    {formatMinutes(shownEstimate) && (
+                        <span className="label-bold" style={{
+                            background: 'var(--color-card)',
+                            color: 'var(--color-text-secondary)',
+                            border: '1.5px solid var(--color-divider)',
+                            padding: '6px 14px',
+                            borderRadius: '20px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            letterSpacing: '0.04em',
+                        }}>
+                            ⏱ {formatMinutes(shownEstimate)} {estimateLabel}
+                        </span>
+                    )}
+
                     {/* Location Chip */}
                     {task.location && (
                         <span className="label-bold" style={{
@@ -360,30 +350,6 @@ function TaskDetail() {
                             whiteSpace: 'pre-wrap',
                         }}>
                             {task.description}
-                        </div>
-                    </div>
-                )}
-
-                {/* ── time spent ── only shown once the timer has logged time ── */}
-                {(task.timeSpent ?? 0) > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-                        <p style={{ ...labelStyle, margin: 0 }}>TIME SPENT</p>
-                        <div style={{
-                            background: 'var(--color-surface)', borderRadius: '14px',
-                            padding: '14px 16px',
-                            display: 'flex', alignItems: 'center', gap: '10px',
-                            border: '1.5px solid var(--color-surface-alt)',
-                        }}>
-                            <TimerIcon size={16} color="var(--color-primary)" />
-                            <span style={{ fontSize: '16px', fontWeight: 700 }}>
-                                {fmtDuration(task.timeSpent)}
-                            </span>
-                            <span style={{
-                                fontSize: '11px', fontWeight: 600,
-                                color: 'var(--color-text-muted)', marginLeft: 'auto',
-                            }}>
-                                via Pomodoro Timer
-                            </span>
                         </div>
                     </div>
                 )}
@@ -456,7 +422,7 @@ function TaskDetail() {
                                 {/* 3. Checkbox */}
                                 <CircleCheck
                                     checked={subtask.done}
-                                    onChange={() => handleToggleSubtask(task.id, subtask.id)}
+                                    onChange={() => toggleSubtask(task.id, subtask.id)}
                                     size={24}
                                 />
 
@@ -470,14 +436,22 @@ function TaskDetail() {
                                     {subtask.label}
                                 </span>
 
-                                {/* 5. AI Chip & Delete */}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                                {/* 5. Time estimate + AI chip */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                                    {subtask.estimatedMinutes > 0 && (
+                                        <span className="caption" style={{
+                                            color: subtask.done ? 'var(--color-text-muted)' : 'var(--color-text-secondary)',
+                                            opacity: subtask.done ? 0.5 : 1,
+                                        }}>
+                                            {formatMinutes(subtask.estimatedMinutes)}
+                                        </span>
+                                    )}
                                     {subtask.ai && !subtask.done && (
                                         <span className='caption' style={{
                                             fontWeight: 700,
                                             color: 'var(--color-primary)',
                                             background: 'var(--color-primary-soft)',
-                                            padding: '3px 16px',
+                                            padding: '3px 10px',
                                             borderRadius: '24px',
                                             border: '1px solid color-mix(in srgb, var(--color-primary) 25%, transparent)'
                                         }}>
