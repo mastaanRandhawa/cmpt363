@@ -1,7 +1,7 @@
 // taskBreakdown.js
 // Calls the backend AI breakdown endpoint and returns subtasks.
 
-import useAIStore from './useAIStore'
+import useAIStore from './useAiStore'
 import { api } from './api'
 
 export async function generateSubtasks(task, instructions) {
