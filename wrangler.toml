@@ -1,0 +1,7 @@
+# Cloudflare Pages — deploy after build: npm run build && npx wrangler pages deploy dist
+# First time: create the project in the dashboard or run:
+#   npx wrangler pages project create cmpt363
+name = "cmpt363"
+compatibility_date = "2025-04-01"
+
+pages_build_output_dir = "dist"
