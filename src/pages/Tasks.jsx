@@ -81,6 +81,7 @@ function Tasks() {
                 subtitle={`TODAY · ${today}`}
                 title="Tasks"
                 onBack={() => navigate(-1)}
+                data-onboarding="tasks-header"
             />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '20px'}}>
@@ -167,6 +168,7 @@ function Tasks() {
             {/* ── FAB ──────────────────────────────────────────────────── */}
             <div style={{ position: 'sticky', bottom: '16px', display: 'flex', justifyContent: 'flex-end', paddingRight: '20px', marginTop: 'auto', pointerEvents: 'none', zIndex: 99 }}>
                 <button
+                    data-onboarding="tasks-fab"
                     onClick={e => { e.stopPropagation(); navigate('/tasks/create') }}
                     style={{
                         pointerEvents: 'auto',

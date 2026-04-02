@@ -12,6 +12,7 @@ import { getRecommendedTask } from '../data/taskRecommendation'
 import useSessionStore from '../data/useSessionStore'
 import useSwipeList from '../hooks/useSwipeList.js'
 import useSwipeDelete from '../hooks/useSwipeDelete.jsx'
+import useSettingsStore from '../data/useSettingsStore.js'
 
 function isToday(dateStr) {
     if (!dateStr) return false
@@ -39,6 +40,7 @@ function Home() {
     const { show: showToast, dismiss: dismissToast } = useToastStore()
     const { getSwipeProps, closeAll }        = useSwipeList()
     const { handleSwipeDelete }              = useSwipeDelete({ closeAll })
+    const settings = useSettingsStore()
 
     const streak   = useRoboStore(s => s.streak)
     const mood     = useRoboStore(s => s.mood)
@@ -100,7 +102,7 @@ function Home() {
 
     const recTask = rec ? tasks.find(t => t.id === rec.taskId) : null
 
-    // ── up next (up to 3; prioritised by urgency, backfilled from remaining) ──
+    // ── up next (up to 3; prioritized by urgency, backfilled from remaining) ──
     const scoredPool = incompleteTasks
         .filter(t => t.id !== rec?.taskId)
         .sort((a, b) => {
@@ -137,7 +139,7 @@ function Home() {
 
             <Header
                 subtitle={`TODAY · ${dateStr}`}
-                title={`${greeting}, Bob!`}
+                title={`${greeting}, ${settings.userName}`}
                 rightAction={
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         {hasAny && (
@@ -163,7 +165,7 @@ function Home() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0', padding: '4px 20px 0' }}>
 
                 {/* ── Recommended Now ────────────────────────────────────── */}
-                <div style={{ marginBottom: '24px' }}>
+                <div data-onboarding="rec-section" style={{ marginBottom: '24px' }}>
                     {!recDismissed ? (
                         <Section
                             header="RECOMMENDED NOW"
@@ -250,55 +252,57 @@ function Home() {
                 </div>
 
                 {/* ── Up Next ────────────────────────────────────────────── */}
-                <Section
-                    header="UP NEXT"
-                    headerColor="var(--color-text-muted)"
-                >
-                    {upNext.length === 0 ? (
-                        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', textAlign: 'center', margin: '24px 0' }}>
-                            You're all caught up 🎉
-                        </p>
-                    ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {upNext.map(task => (
-                                <TaskCard
-                                    key={task.id}
-                                    title={task.name}
-                                    due={task.due}
-                                    time={task.time}
-                                    priority={task.priority}
-                                    subtasks={task.subtasks}
-                                    completed={task.status === 'completed'}
-                                    onComplete={() => handleComplete(task)}
-                                    {...getSwipeProps(task.id)}
-                                    onDelete={() => handleSwipeDelete(task)}
-                                    onEdit={() => navigate('/tasks/create', { state: { editId: task.id } })}
-                                    onClick={() => navigate(`/tasks/${task.id}`)}
-                                />
-                            ))}
-                        </div>
-                    )}
+                <div data-onboarding="up-next-section">
+                    <Section
+                        header="UP NEXT"
+                        headerColor="var(--color-text-muted)"
+                    >
+                        {upNext.length === 0 ? (
+                            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', textAlign: 'center', margin: '24px 0' }}>
+                                You're all caught up 🎉
+                            </p>
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                {upNext.map(task => (
+                                    <TaskCard
+                                        key={task.id}
+                                        title={task.name}
+                                        due={task.due}
+                                        time={task.time}
+                                        priority={task.priority}
+                                        subtasks={task.subtasks}
+                                        completed={task.status === 'completed'}
+                                        onComplete={() => handleComplete(task)}
+                                        {...getSwipeProps(task.id)}
+                                        onDelete={() => handleSwipeDelete(task)}
+                                        onEdit={() => navigate('/tasks/create', { state: { editId: task.id } })}
+                                        onClick={() => navigate(`/tasks/${task.id}`)}
+                                    />
+                                ))}
+                            </div>
+                        )}
 
-                    {incompleteTasks.length > upNext.length + (recTask ? 1 : 0) && (
-                        <button
-                            onClick={() => navigate('/tasks')}
-                            style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                gap: '4px', width: '100%', marginTop: '16px',
-                                background: 'none', border: 'none', cursor: 'pointer',
-                                color: 'var(--color-primary)', fontSize: '12px', fontWeight: 600,
-                                letterSpacing: '0.04em',
-                            }}
-                        >
-                            See all {incompleteTasks.length} tasks
-                        </button>
-                    )}
-                </Section>
+                        {incompleteTasks.length > upNext.length + (recTask ? 1 : 0) && (
+                            <button
+                                onClick={() => navigate('/tasks')}
+                                style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    gap: '4px', width: '100%', marginTop: '16px',
+                                    background: 'none', border: 'none', cursor: 'pointer',
+                                    color: 'var(--color-primary)', fontSize: '12px', fontWeight: 600,
+                                    letterSpacing: '0.04em',
+                                }}
+                            >
+                                See all {incompleteTasks.length} tasks
+                            </button>
+                        )}
+                    </Section>
+                </div>
 
             </div>
 
             {/* ── FAB ────────────────────────────────────────────────────── */}
-            <div style={{ position: 'sticky', bottom: '16px', display: 'flex', justifyContent: 'flex-end', paddingRight: '20px', marginTop: 'auto', pointerEvents: 'none' }}>
+            <div style={{ position: 'sticky', bottom: '16px', display: 'flex', justifyContent: 'flex-end', paddingRight: '20px', marginTop: 'auto', pointerEvents: 'none', zIndex: 500 }}>
                 <button
                     onClick={() => navigate('/tasks/create')}
                     style={{

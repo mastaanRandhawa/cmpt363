@@ -6,29 +6,34 @@ export function createTasksRouter(prisma) {
     const r = Router()
 
     function formatSubtask(s) {
-        const out = {
-            id:    s.id,
-            label: s.label,
-            done:  s.done,
-            ai:    s.ai,
+        return {
+            id:            s.id,
+            label:         s.label,
+            done:          s.done,
+            ai:            s.ai,
+            estSubtaskTime: s.estSubtaskTime ?? null,
         }
-        if (s.estimatedMinutes != null) out.estimatedMinutes = s.estimatedMinutes
-        return out
     }
 
     function formatTask(t) {
         return {
-            id:          t.id,
-            name:        t.name,
-            due:         t.due,
-            time:        t.time,
-            priority:    t.priority,
-            effort:      t.effort,
-            description: t.description,
-            status:      t.status,
-            location:    t.location ?? null,
-            repeat:      t.repeat ?? null,
-            subtasks:    [...t.subtasks].sort((a, b) => a.sortOrder - b.sortOrder).map(formatSubtask),
+            id:             t.id,
+            name:           t.name,
+            due:            t.due,
+            time:           t.time,
+            priority:       t.priority,
+            effort:         t.effort,
+            status:         t.status,
+            notes:          t.notes,
+            privateNotes:   t.privateNotes,
+            useTimer:          t.useTimer,
+            useAI:          t.useAI,
+            timeLogged:     t.timeLogged,
+            aiInstructions: t.aiInstructions,
+            totalTimeEst:   t.totalTimeEst ?? null,
+            location:       t.location ?? null,
+            repeat:         t.repeat ?? null,
+            subtasks:       [...t.subtasks].sort((a, b) => a.sortOrder - b.sortOrder).map(formatSubtask),
         }
     }
 
@@ -59,7 +64,8 @@ export function createTasksRouter(prisma) {
     r.post('/', async (req, res, next) => {
         try {
             const {
-                name, due, time, priority, effort, description, status,
+                name, due, time, priority, effort, status,
+                notes, privateNotes, useTimer, useAI, timeLogged, aiInstructions, totalTimeEst,
                 location, repeat, subtasks = [],
             } = req.body
 
@@ -69,25 +75,31 @@ export function createTasksRouter(prisma) {
 
             const task = await prisma.task.create({
                 data: {
-                    id:          req.body.id ?? randomUUID(),
-                    userId:      req.userId,
+                    id:             req.body.id ?? randomUUID(),
+                    userId:         req.userId,
                     name,
-                    due:         due ?? null,
-                    time:        time ?? null,
+                    due:            due ?? null,
+                    time:           time ?? null,
                     priority,
-                    effort:      Number(effort),
-                    description: description ?? '',
-                    status:      status ?? 'todo',
-                    location:    location === undefined ? undefined : location,
-                    repeat:      repeat === undefined ? undefined : repeat,
+                    effort:         Number(effort),
+                    status:         status ?? 'todo',
+                    notes:          notes ?? '',
+                    privateNotes:   privateNotes ?? false,
+                    useTimer:          useTimer ?? false,
+                    useAI:          useAI ?? false,
+                    timeLogged:     timeLogged ?? 0,
+                    aiInstructions: aiInstructions ?? '',
+                    totalTimeEst:   totalTimeEst ?? null,
+                    location:       location === undefined ? undefined : location,
+                    repeat:         repeat === undefined ? undefined : repeat,
                     subtasks: {
                         create: subtasks.map((s, i) => ({
-                            id:               s.id ?? randomUUID(),
-                            label:            s.label,
-                            done:             !!s.done,
-                            ai:               !!s.ai,
-                            estimatedMinutes: s.estimatedMinutes ?? null,
-                            sortOrder:        i,
+                            id:             s.id ?? randomUUID(),
+                            label:          s.label,
+                            done:           !!s.done,
+                            ai:             !!s.ai,
+                            estSubtaskTime: s.estSubtaskTime ?? null,
+                            sortOrder:      i,
                         })),
                     },
                 },
@@ -105,20 +117,27 @@ export function createTasksRouter(prisma) {
             if (!existing) return res.status(404).json({ error: 'Task not found' })
 
             const {
-                name, due, time, priority, effort, description, status,
+                name, due, time, priority, effort, status,
+                notes, privateNotes, useTimer, useAI, timeLogged, aiInstructions, totalTimeEst,
                 location, repeat, subtasks,
             } = req.body
 
             const data = {}
-            if (name !== undefined) data.name = name
-            if (due !== undefined) data.due = due
-            if (time !== undefined) data.time = time
-            if (priority !== undefined) data.priority = priority
-            if (effort !== undefined) data.effort = Number(effort)
-            if (description !== undefined) data.description = description
-            if (status !== undefined) data.status = status
-            if (location !== undefined) data.location = location
-            if (repeat !== undefined) data.repeat = repeat
+            if (name !== undefined)           data.name           = name
+            if (due !== undefined)            data.due            = due
+            if (time !== undefined)           data.time           = time
+            if (priority !== undefined)       data.priority       = priority
+            if (effort !== undefined)         data.effort         = Number(effort)
+            if (status !== undefined)         data.status         = status
+            if (notes !== undefined)          data.notes          = notes
+            if (privateNotes !== undefined)   data.privateNotes   = privateNotes
+            if (useTimer !== undefined)          data.useTimer          = useTimer
+            if (useAI !== undefined)          data.useAI          = useAI
+            if (timeLogged !== undefined)     data.timeLogged     = timeLogged
+            if (aiInstructions !== undefined) data.aiInstructions = aiInstructions
+            if (totalTimeEst !== undefined)   data.totalTimeEst   = totalTimeEst
+            if (location !== undefined)       data.location       = location
+            if (repeat !== undefined)         data.repeat         = repeat
 
             const task = await prisma.$transaction(async (tx) => {
                 await tx.task.update({
@@ -130,13 +149,13 @@ export function createTasksRouter(prisma) {
                     await tx.subtask.deleteMany({ where: { taskId: existing.id } })
                     await tx.subtask.createMany({
                         data: subtasks.map((s, i) => ({
-                            id:               s.id ?? randomUUID(),
-                            taskId:           existing.id,
-                            label:            s.label,
-                            done:             !!s.done,
-                            ai:               !!s.ai,
-                            estimatedMinutes: s.estimatedMinutes ?? null,
-                            sortOrder:        i,
+                            id:             s.id ?? randomUUID(),
+                            taskId:         existing.id,
+                            label:          s.label,
+                            done:           !!s.done,
+                            ai:             !!s.ai,
+                            estSubtaskTime: s.estSubtaskTime ?? null,
+                            sortOrder:      i,
                         })),
                     })
                 }
@@ -252,7 +271,7 @@ export function createTasksRouter(prisma) {
             })
             if (!task) return res.status(404).json({ error: 'Task not found' })
 
-            const { label, ai, estimatedMinutes } = req.body
+            const { label, ai, estSubtaskTime } = req.body
             if (!label || typeof label !== 'string') {
                 return res.status(400).json({ error: 'label required' })
             }
@@ -260,13 +279,13 @@ export function createTasksRouter(prisma) {
             const maxOrder = task.subtasks.reduce((m, s) => Math.max(m, s.sortOrder), -1)
             await prisma.subtask.create({
                 data: {
-                    id:               randomUUID(),
-                    taskId:           task.id,
-                    label:            label.trim(),
-                    done:             false,
-                    ai:               !!ai,
-                    estimatedMinutes: estimatedMinutes ?? null,
-                    sortOrder:        maxOrder + 1,
+                    id:             randomUUID(),
+                    taskId:         task.id,
+                    label:          label.trim(),
+                    done:           false,
+                    ai:             !!ai,
+                    estSubtaskTime: estSubtaskTime ?? null,
+                    sortOrder:      maxOrder + 1,
                 },
             })
 

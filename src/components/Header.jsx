@@ -1,7 +1,7 @@
 import { ChevronLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
-function Header({ title, subtitle, onBack, rightAction }) {
+function Header({ title, subtitle, onBack, rightAction, 'data-onboarding': dataOnboarding }) {
     const navigate = useNavigate()
 
     function handleBack() {
@@ -10,7 +10,7 @@ function Header({ title, subtitle, onBack, rightAction }) {
     }
 
     return (
-        <div style={{
+        <div data-onboarding={dataOnboarding} style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',

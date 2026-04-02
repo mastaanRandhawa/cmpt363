@@ -7,6 +7,7 @@ import useBottomTrayStore from '../data/useBottomTrayStore'
 import useNavGuardStore from '../data/useNavGuardStore'
 import { BottomTrayItem } from './BottomTray'
 import { useRef, useEffect } from 'react'
+import useSettingsStore from "../data/useSettingsStore.js";
 
 // TODO: Update Robo icon
 
@@ -43,11 +44,11 @@ const tabs = [
 ]
 
 const trayItems = [
-    { label: 'Chat', icon: MessageSquare, path: '/robo/chat' },
-    { label: 'Timer', icon: TimerIcon, path: '/timer' },
-    { label: 'Notifications', icon: CircleAlert, path: '/notifications' },
-    { label: 'Settings', icon: Settings, path: '/settings' },
-    { label: 'Help', icon: HelpCircle, path: '/help' },
+    { key: 'notifications', label: 'Notifications', icon: CircleAlert,   path: '/notifications' },
+    { key: 'chat',          label: 'Chat',           icon: MessageSquare, path: '/robo/chat' },
+    { key: 'timer',         label: 'Timer',          icon: TimerIcon,     path: '/timer' },
+    { key: 'settings',      label: 'Settings',       icon: Settings,      path: '/settings' },
+    { key: 'help',          label: 'Help',           icon: HelpCircle,    path: '/help' },
 ]
 
 function showMoreTray({ bottomTrayStore, navigate }) {
@@ -59,7 +60,7 @@ function showMoreTray({ bottomTrayStore, navigate }) {
             <>
                 {trayItems.map(item => (
                     <BottomTrayItem
-                        key={item.label}
+                        key={item.key}
                         label={item.label}
                         icon={item.icon}
                         rightIcon={item.rightIcon ?? ChevronRight}
@@ -75,8 +76,9 @@ function showMoreTray({ bottomTrayStore, navigate }) {
 }
 
 function BottomNav() {
-    const navigate        = useNavigate()
-    const location        = useLocation()
+    const navigate    = useNavigate()
+    const location          = useLocation()
+    const settings                   = useSettingsStore()
     const bottomTrayStore = useBottomTrayStore()
     const bottomTrayID    = useBottomTrayStore(s => s.id)
     const guardFn         = useNavGuardStore(s => s.guardFn)
@@ -118,6 +120,7 @@ function BottomNav() {
     return (
         <div
             ref={navRef}
+            data-onboarding="bottom-nav"
             style={{
                 position: 'sticky',
                 bottom: 0,
@@ -131,7 +134,10 @@ function BottomNav() {
             }}
         >
             {tabs.map(({ label, icon: Icon, path, action }) => {
-                const active = location.pathname === path
+                if (label == "Robo" && settings.aiAssistantName.trim() != '') {
+                    label = settings.aiAssistantName.trim()
+                }
+                    const active = location.pathname === path
                 return (
                     <button
                         key={path ?? label}
@@ -145,6 +151,7 @@ function BottomNav() {
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
+                            width: '12%',
                             gap: '4px',
                             background: 'none',
                             border: 'none',
@@ -156,6 +163,12 @@ function BottomNav() {
                         <span style={{
                             fontSize: '10px',
                             fontWeight: active ? '600' : '400',
+                            // Hide text if too long
+                            width: '100%', // of parent button
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            wordBreak: 'break-all',
+                            overflow: 'clip',
                         }}>
                             {label}
                         </span>

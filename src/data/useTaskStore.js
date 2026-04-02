@@ -2,19 +2,25 @@
 // Zustand store for all task state. Backed by the REST API.
 // The local `tasks` array is kept in sync after every API call so all
 // existing selectors (s => s.tasks, etc.) continue to work unchanged.
-//
 // Task shape (matches API response):
-//   id          – string UUID
-//   name        – string
-//   due         – string 'YYYY-MM-DD' | null
-//   time        – string 'HH:MM' | null
-//   priority    – 'low' | 'med' | 'high'
-//   effort      – 1–5
-//   description – string
-//   status      – 'todo' | 'in-progress' | 'completed'
-//   location    – { type, label } | null
-//   repeat      – { frequency, days? } | null
-//   subtasks    – { id, label, done, ai }[]
+//   id             – string UUID
+//   name           – string
+//   due            – string 'YYYY-MM-DD' | null
+//   time           – string 'HH:MM' | null
+//   priority       – 'low' | 'med' | 'high'
+//   effort         – 1–5
+//   status         – 'todo' | 'in-progress' | 'completed'
+//   notes          – string  (visible to AI unless privateNotes is true)
+//   privateNotes   – boolean (if true, notes are not sent to AI)
+//   timer          – boolean (whether timer UI is shown on task page)
+//   useAI          – boolean (whether AI breakdown is enabled)
+//   timeLogged     – number  (cumulative seconds logged via timer)
+//   aiInstructions – string  (extra context sent to AI when useAI is true)
+//   totalTimeEst   – number | null (AI-estimated total seconds)
+//   location       – { type, label } | null
+//   repeat         – { frequency, days? } | null
+//   subtasks       – { id, label, done, ai, estSubtaskTime }[]
+//                      estSubtaskTime: number | null  (seconds)
 
 import { create } from 'zustand'
 import { api } from './api'

@@ -59,11 +59,11 @@ function Toast({ message, icon, progress, barColor = 'var(--color-accent)', acti
             zIndex: 500,
             whiteSpace: 'nowrap',
             border: '1px solid var(--color-divider)',
-            minWidth: '260px',
+            minWidth: '300px',
         }}>
             {/* progress bar */}
             {showBar && (
-                <div style={{ height: '3px', background: 'var(--color-divider)' }}>
+                <div style={{ height: '4px', background: 'var(--color-divider)' }}>
                     <div style={{
                         height: '100%',
                         width: `${progress}%`,

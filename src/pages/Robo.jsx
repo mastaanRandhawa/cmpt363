@@ -3,6 +3,7 @@ import { Command, Lock, Unlock } from 'lucide-react'
 import Header from '../components/Header'
 import useRoboStore, { xpProgressInLevel, levelFromXp } from '../data/useRoboStore'
 import Section from "../components/Section.jsx";
+import useSettingsStore from '../data/useSettingsStore'
 
 const moods = [
     { label: 'Energized', emoji: '🚀' },
@@ -20,17 +21,17 @@ const xpSources = [
     { label: 'Mood Check-in',      xp:  5 },
 ]
 
-const upgrades = [
-    { label: 'Identity Chip',            level: 1,  description: "Give your Robo a name. They've earned it!" },
-    { label: 'Priority Radar',           level: 2,  description: 'Robo scans your task list and points you toward the one that actually needs doing right now. Less scrolling, less second-guessing, more doing.' },
-    { label: 'Big Task Destroyer',       level: 3,  description: "Scary task? Robo chops it into bite-sized pieces. Accept the whole plan, tweak a few steps, or toss what doesn't fit." },
-    { label: 'Personal Scheduling Chip', level: 4,  description: "Tell Robo when you actually work and they'll stop suggesting things at 11pm. Revolutionary concept, honestly." },
-    { label: 'Energy Calibrator',        level: 5,  description: 'Robo checks your energy level before making suggestions. Beast mode? Big tasks. Survival mode? Easy wins.' },
-    { label: 'Habit Scanner',            level: 6,  description: 'Robo quietly notices your patterns and starts planning around them. Less "why is this scheduled then?" and more "oh wow, Robo actually gets me."' },
-    { label: 'Celebration Unit',         level: 7,  description: 'Hit a personal best? Robo goes full confetti mode. Every win counts, and Robo will make sure you know it.' },
-    { label: 'Mid-Week Pulse',           level: 8,  description: 'Once a week, Robo checks in with a quick progress update. A friendly tap on the shoulder, not a performance review.' },
-    { label: 'Victory Log',              level: 9,  description: "A running record of everything you've completed. Open it on a hard day and remember — past you was pretty capable." },
-    { label: 'CBT Chip',                 level: 10, description: "Robo's most powerful upgrade. Gentle, evidence-based prompts to help you reflect, reframe, and build better habits over time." },
+const getUpgrades = (name) => [
+    { label: 'Identity Chip',            level: 1,  description: `Give your Robo a name. They've earned it!` },
+    { label: 'Priority Radar',           level: 2,  description: `${name} scans your task list and points you toward the one that actually needs doing right now. Less scrolling, less second-guessing, more doing.` },
+    { label: 'Big Task Destroyer',       level: 3,  description: `Scary task? ${name} chops it into bite-sized pieces. Accept the whole plan, tweak a few steps, or toss what doesn't fit.` },
+    { label: 'Personal Scheduling Chip', level: 4,  description: `Tell ${name} when you actually work and they'll stop suggesting things at 11pm. Revolutionary concept, honestly.` },
+    { label: 'Energy Calibrator',        level: 5,  description: `${name} checks your energy level before making suggestions. Beast mode? Big tasks. Survival mode? Easy wins.` },
+    { label: 'Habit Scanner',            level: 6,  description: `${name} quietly notices your patterns and starts planning around them. Less "why is this scheduled then?" and more "oh wow, ${name} actually gets me."` },
+    { label: 'Celebration Unit',         level: 7,  description: `Hit a personal best? ${name} goes full confetti mode. Every win counts, and ${name} will make sure you know it.` },
+    { label: 'Mid-Week Pulse',           level: 8,  description: `Once a week, ${name} checks in with a quick progress update. A friendly tap on the shoulder, not a performance review.` },
+    { label: 'Victory Log',              level: 9,  description: `A running record of everything you've completed. Open it on a hard day and remember — past you was pretty capable."` },
+    { label: 'CBT Chip',                 level: 10, description: `${name}'s most powerful upgrade. Gentle, evidence-based prompts to help you reflect, reframe, and build better habits over time.` },
 ]
 
 function Robo() {
@@ -41,21 +42,21 @@ function Robo() {
     const moodDate   = useRoboStore(s => s.moodDate)
     const xpLog      = useRoboStore(s => s.xpLog)
     const setMood    = useRoboStore(s => s.setMood)
-
+    const aiAssistantName = useSettingsStore(s => s.aiAssistantName)
     const level    = levelFromXp(xp)
     const progress = xpProgressInLevel(xp)
     const today    = new Date().toISOString().slice(0, 10)
     const moodToday = moodDate === today ? mood : null
-
+    const roboName = aiAssistantName || 'Robo'
+    const upgrades = getUpgrades(roboName)
     const unlockedUpgrades = upgrades.filter(u => u.level <= level)
     const lockedUpgrades   = upgrades.filter(u => u.level >  level)
 
     return (
         <div style={{ color: 'var(--color-text-main)', paddingBottom: '96px' }}>
-
             <Header
                 subtitle="YOUR COMPANION"
-                title="Robo"
+                title={roboName}
                 onBack={() => navigate(-1)}
                 rightAction={
                     <button
@@ -128,7 +129,7 @@ function Robo() {
                             }}>
                                 <Command size={26} color="white" />
                             </div>
-                            <span style={{ color: 'white', fontWeight: 700, fontSize: '18px', letterSpacing: '0.04em' }}>ROBO</span>
+                            <span style={{ color: 'white', fontWeight: 700, fontSize: '18px', letterSpacing: '0.04em' }}>{roboName.toUpperCase()}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span style={{ color: 'white', fontWeight: 700, fontSize: '17px' }}>Level {level}</span>

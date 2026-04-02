@@ -72,8 +72,8 @@ function TaskCreate() {
     const [time, setTime]           = useState(typeof editTask?.time === 'string' ? editTask.time : '')
     const [priority, setPriority]   = useState(typeof editTask?.priority === 'string' ? editTask.priority : null)
     const [effort, setEffort]       = useState(typeof editTask?.effort === 'number' ? editTask.effort : null)
-    const [notes, setNotes]         = useState(typeof editTask?.description === 'string' ? editTask.description : '')
-    const [notesPrivate, setNotesPrivate] = useState(false)
+    const [notes, setNotes]         = useState(typeof editTask?.notes === 'string' ? editTask.notes : '')
+    const [privateNotes, setNotesPrivate] = useState(editTask?.privateNotes ?? false)
     const [repeat, setRepeat]       = useState(editTask?.repeat      ?? null)
     const [location, setLocation]   = useState(
         typeof editTask?.location === 'string' ? editTask.location :
@@ -87,7 +87,7 @@ function TaskCreate() {
     const [errors, setErrors]         = useState({})
 
     // ─── subtasks ─────────────────────────────────────────────────────────────
-    const [subtasks, setSubtasks]     = useState([])
+    const [subtasks, setSubtasks]     = useState(editTask?.subtasks ?? [])
     const [editingId, setEditingId]   = useState(null)
     const [editLabel, setEditLabel]   = useState('')
     const [newSubtask, setNewSubtask] = useState('')
@@ -100,7 +100,8 @@ function TaskCreate() {
     const [aiSnapshot, setAiSnapshot]   = useState(null)    // form values at time of last AI call
     const [aiPending, setAiPending]     = useState([])      // suggestions awaiting user decision
     const [aiOriginal, setAiOriginal]   = useState([])      // raw AI output for template saving
-    const [aiInstructions, setAiInstructions] = useState('')      // user directions to the AI
+    const [aiInstructions, setAiInstructions] = useState(editTask?.aiInstructions ?? '')      // user directions to the AI
+    const [useAI, setUseAI]               = useState(editTask?.useAI ?? false)              // edit mode: AI on/off for this task
 
     // ─── confirm step ─────────────────────────────────────────────────────────
     const [step, setStep]           = useState('form')
@@ -108,11 +109,12 @@ function TaskCreate() {
 
     // ─── formStale: form changed after last AI submission ─────────────────────
     const formStale = aiSubmitted && aiSnapshot !== null && (
-        name      !== aiSnapshot.name     ||
-        date      !== aiSnapshot.date     ||
-        priority  !== aiSnapshot.priority ||
-        effort    !== aiSnapshot.effort   ||
-        (!notesPrivate && notes !== aiSnapshot.notes) ||
+        name         !== aiSnapshot.name         ||
+        date         !== aiSnapshot.date         ||
+        priority     !== aiSnapshot.priority     ||
+        effort       !== aiSnapshot.effort       ||
+        privateNotes !== aiSnapshot.privateNotes ||
+        (!privateNotes && notes !== aiSnapshot.notes) ||
         aiInstructions !== aiSnapshot.aiInstructions
     )
 
@@ -120,16 +122,18 @@ function TaskCreate() {
     const isDirty = step === 'form' && (() => {
         if (isEdit && editTask) {
             return (
-                name.trim()    !== (editTask.name        ?? '') ||
-                date           !== (editTask.due         ?? '') ||
-                time           !== (editTask.time        ?? '') ||
-                addTime        !== !!(editTask.time)            ||
-                priority       !== (editTask.priority    ?? null) ||
-                effort         !== (editTask.effort      ?? null) ||
-                notes.trim()   !== (editTask.description ?? '') ||
-                (location||'') !== (typeof editTask.location === 'string' ? editTask.location : editTask.location?.label ?? '') ||
+                name.trim()       !== (editTask.name           ?? '') ||
+                date              !== (editTask.due            ?? '') ||
+                time              !== (editTask.time           ?? '') ||
+                addTime           !== !!(editTask.time)               ||
+                priority          !== (editTask.priority       ?? null) ||
+                effort            !== (editTask.effort         ?? null) ||
+                notes.trim()      !== (editTask.notes    ?? '') ||
+                privateNotes      !== (editTask.privateNotes   ?? false) ||
+                aiInstructions.trim() !== (editTask.aiInstructions ?? '') ||
+                (location||'')    !== (typeof editTask.location === 'string' ? editTask.location : editTask.location?.label ?? '') ||
                 JSON.stringify(repeat) !== JSON.stringify(editTask.repeat ?? null) ||
-                timed          !== (editTask.timed       ?? false)
+                timed             !== (editTask.timed          ?? false)
             )
         }
         return (
@@ -198,14 +202,14 @@ function TaskCreate() {
             time:      addTime ? (time || '—') : 'off',
             priority:  priority ?? '—',
             effort:    effort ?? '—',
-            notes:     notesPrivate ? '[private]' : (notes ? `${notes.slice(0, 20)}${notes.length > 20 ? '…' : ''}` : '—'),
+            notes:     privateNotes ? '[private]' : (notes ? `${notes.slice(0, 20)}${notes.length > 20 ? '…' : ''}` : '—'),
             aiSuggest,
             aiLoading,
             formStale,
             subtasks:  subtasks.length > 0 ? `${subtasks.length} confirmed` : '—',
             aiPending: aiPending.length > 0 ? `${aiPending.length} pending` : '—',
         })
-    }, [step, name, date, time, addTime, priority, effort, notes, notesPrivate, aiSuggest, aiLoading, formStale, subtasks, aiPending])
+    }, [step, name, date, time, addTime, priority, effort, notes, privateNotes, aiSuggest, aiLoading, formStale, subtasks, aiPending])
 
     useEffect(() => () => setDebug('TaskCreate', null), [])
 
@@ -213,17 +217,18 @@ function TaskCreate() {
     async function runAISuggestions() {
         setAiLoading(true)
         setAiPending([])
-        const snap = { name, date, priority, effort, notes: notesPrivate ? null : notes, aiInstructions }
+        const snap = { name, date, priority, effort, privateNotes, notes: privateNotes ? null : notes, aiInstructions }
         setAiSnapshot(snap)
         setAiSubmitted(true)
         try {
             const task = {
                 name,
-                due:         date,
-                time:        addTime ? time : null,
+                due:             date,
+                time:            addTime ? time : null,
                 priority,
                 effort,
-                description: notesPrivate ? null : notes,
+                notes:     privateNotes ? null : notes,
+                notesArePrivate: privateNotes || undefined,
                 location,
             }
             const result = await generateSubtasks(task, aiInstructions || null)
@@ -291,14 +296,16 @@ function TaskCreate() {
         const id = crypto.randomUUID()
         addTask({
             id,
-            name:        name.trim(),
-            due:         date,
-            time:        addTime ? time : null,
+            name:           name.trim(),
+            due:            date,
+            time:           addTime ? time : null,
             priority,
             effort,
-            description: notes.trim(),
-            status:      'todo',
-            location:    location || null,
+            notes:    notes.trim(),
+            privateNotes,
+            aiInstructions: aiInstructions.trim() ||'',
+            status:         'todo',
+            location:       location || null,
             repeat,
             timed,
             subtasks,
@@ -307,18 +314,26 @@ function TaskCreate() {
         setStep('confirm')
     }
 
-    function handleSaveEdit() {
+    async function handleSaveEdit() {
         if (!validate()) return
-        updateTask(editId, {
-            name:        name.trim(),
-            due:         date,
-            time:        addTime ? time : null,
+        // When AI is toggled off, strip the AI badge from all existing subtasks
+        const subtasksPayload = !useAI
+            ? subtasks.map(s => ({ ...s, ai: false }))
+            : undefined
+        await updateTask(editId, {
+            name:           name.trim(),
+            due:            date,
+            time:           addTime ? time : null,
             priority,
             effort,
-            description: notes.trim(),
-            location:    location || null,
+            notes:          notes.trim(),
+            privateNotes,
+            aiInstructions: aiInstructions.trim() || '',
+            location:       location || null,
             repeat,
             timed,
+            useAI,
+            ...(subtasksPayload !== undefined && { subtasks: subtasksPayload }),
         })
         navigate(`/tasks/${editId}`, { replace: true })
     }
@@ -619,7 +634,7 @@ function TaskCreate() {
                         <label  className="label-bold" style={{ color: 'var(--color-secondary)' }}>Notes</label>
                         <button
                             type="button"
-                            onClick={() => setNotesPrivate(!notesPrivate)}
+                            onClick={() => setNotesPrivate(!privateNotes)}
                             className="label-bold"
                             style={{
                                 display: 'flex',
@@ -630,7 +645,7 @@ function TaskCreate() {
                                 cursor: 'pointer',
                                 padding: '0', // Critical: removes internal button spacing
                                 margin: '0',  // Critical: removes external button spacing
-                                color: !notesPrivate ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                                color: privateNotes ? 'var(--color-primary)' : 'var(--color-text-secondary)',
                                 transition: 'color 0.2s ease'
                             }}
                         >
@@ -639,14 +654,14 @@ function TaskCreate() {
                                 width: '18px',
                                 height: '18px',
                                 borderRadius: '5px',
-                                border: `1.5px solid ${!notesPrivate ? 'var(--color-primary)' : 'var(--color-divider)'}`,
-                                background: !notesPrivate ? 'var(--color-primary)' : 'none',
+                                border: `1.5px solid ${privateNotes ? 'var(--color-primary)' : 'var(--color-divider)'}`,
+                                background: privateNotes ? 'var(--color-primary)' : 'none',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 transition: 'all 0.2s ease'
                             }}>
-                                {!notesPrivate && (
+                                {privateNotes && (
                                     <div style={{
                                         width: '4px',
                                         height: '8px',
@@ -965,6 +980,79 @@ function TaskCreate() {
                     </button>
                 </div>
 
+                {/* AI suggestions toggle — edit mode, Level 3+ */}
+                {isEdit && level >= 3 && (
+                    <div style={{
+                        background: 'var(--color-card)',
+                        borderRadius: '16px',
+                        padding: '16px',
+                        border: '1px solid var(--color-divider)',
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                            <div style={{
+                                background: useAI ? 'var(--color-primary-soft)' : 'var(--color-divider)',
+                                borderRadius: '12px',
+                                width: '44px',
+                                height: '44px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                                transition: 'background 0.2s',
+                            }}>
+                                <Command size={22} color={useAI ? 'var(--color-primary)' : 'var(--color-text-secondary)'} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <p className="label-bold" style={{ margin: 0, color: 'var(--color-text-main)' }}>AI SUGGESTIONS</p>
+                                <p className="caption" style={{ margin: 0, color: 'var(--color-text-secondary)' }}>Breakdown and Time Estimate</p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    const next = !useAI
+                                    setUseAI(next)
+                                    if (next) {
+                                        setAiSuggest(true)
+                                        runAISuggestions()
+                                    } else {
+                                        setAiSuggest(false)
+                                        setAiPending([])
+                                        setAiSubmitted(false)
+                                        setAiSnapshot(null)
+                                    }
+                                }}
+                                style={{
+                                    width: '48px',
+                                    height: '26px',
+                                    borderRadius: '999px',
+                                    border: 'none',
+                                    flexShrink: 0,
+                                    cursor: 'pointer',
+                                    background: useAI ? 'var(--color-primary)' : 'var(--color-divider)',
+                                    position: 'relative',
+                                    transition: 'background 0.2s',
+                                }}
+                            >
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '3px',
+                                    left: useAI ? '25px' : '3px',
+                                    width: '20px',
+                                    height: '20px',
+                                    borderRadius: '50%',
+                                    background: 'white',
+                                    transition: 'left 0.2s',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                                }} />
+                            </button>
+                        </div>
+                        {!useAI && subtasks.some(s => s.ai) && (
+                            <p className="caption" style={{ margin: '10px 0 0', color: 'var(--color-text-secondary)' }}>
+                                AI badges will be removed from existing subtasks when saved.
+                            </p>
+                        )}
+                    </div>
+                )}
+
                 {/* AI suggestions toggle — create mode only, Level 3+ */}
                 {!isEdit && (
                     level >= 3 ? (
@@ -1052,8 +1140,8 @@ function TaskCreate() {
                     )
                 )}
 
-                {/* Instructions for AI — only visible when AI Suggestions is on */}
-                {!isEdit && aiSuggest && level >= 3 && (
+                {/* Instructions for AI — visible when AI Suggestions is on (create) or AI is enabled in edit */}
+                {((isEdit && useAI) || (aiSuggest && level >= 3)) && (
                     <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                             <Command size={11} color="var(--color-primary)" />
@@ -1065,44 +1153,71 @@ function TaskCreate() {
                             onChange={e => setAiInstructions(e.target.value)}
                             placeholder="Optional: guide the AI — e.g. 'Focus on research steps only' or 'Keep it under 3 subtasks'. Your notes above won't be shared if marked private."
                         />
-
                     </div>
                 )}
 
                 {/* submit buttons */}
                 {isEdit ? (
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                        <button
-                            onClick={() => setShowLeaveConfirm(true)}
-                            className="label-bold"
-                            style={{
-                                flex: 1,
-                                height: '56px',
-                                background: 'none',
-                                border: '1px solid var(--color-divider)',
-                                borderRadius: '16px',
-                                color: 'var(--color-text-secondary)',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Discard
-                        </button>
-                        <button
-                            onClick={handleCreate}
-                            className="h3"
-                            style={{
-                                flex: 2,
-                                height: '56px',
-                                background: 'var(--color-primary)',
-                                border: 'none',
-                                borderRadius: '16px',
-                                color: 'white',
-                                fontWeight: 700,
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Save Changes
-                        </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {/* resubmit — only visible when form changed after an AI call in edit mode */}
+                        {formStale && useAI && (
+                            <button
+                                onClick={runAISuggestions}
+                                className="label-bold"
+                                style={{
+                                    width: '100%',
+                                    height: '52px',
+                                    background: 'none',
+                                    border: '1.5px solid var(--color-primary)',
+                                    borderRadius: '16px',
+                                    color: 'var(--color-primary)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px',
+                                    boxSizing: 'border-box'
+                                }}
+                            >
+                                <Command size={16} /> Update AI Suggestions
+                            </button>
+                        )}
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button
+                                onClick={() => setShowLeaveConfirm(true)}
+                                className="label-bold"
+                                style={{
+                                    flex: 1,
+                                    height: '56px',
+                                    background: 'none',
+                                    border: '1px solid var(--color-divider)',
+                                    borderRadius: '16px',
+                                    color: 'var(--color-text-secondary)',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Discard
+                            </button>
+                            <button
+                                onClick={handleCreate}
+                                disabled={formStale && useAI}
+                                className="h3"
+                                style={{
+                                    flex: 2,
+                                    height: '56px',
+                                    background: (formStale && useAI) ? 'var(--color-card)' : 'var(--color-primary)',
+                                    border: (formStale && useAI) ? '1px solid var(--color-divider)' : 'none',
+                                    borderRadius: '16px',
+                                    color: (formStale && useAI) ? 'var(--color-text-secondary-muted)' : 'white',
+                                    fontWeight: 700,
+                                    cursor: (formStale && useAI) ? 'not-allowed' : 'pointer',
+                                    transition: 'all 0.2s',
+                                    boxSizing: 'border-box'
+                                }}
+                            >
+                                Save Changes
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

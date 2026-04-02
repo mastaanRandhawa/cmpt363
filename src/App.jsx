@@ -22,8 +22,8 @@ import useBottomTrayStore from './data/useBottomTrayStore'
 import useSessionStore from './data/useSessionStore'
 //import DebugPanel from './components/DebugPanel'
 import Chat from "./pages/Chat.jsx";
-import useSettingsStore from './data/useSettingsStore'
 import { useDeviceProfile } from './hooks/useDeviceProfile'
+import OnboardingOverlay from './components/OnboardingOverlay'
 
 const themes = [
     { value: 'lavender', label: 'Lavender Mist' },
@@ -145,7 +145,7 @@ function App() {
     }
 
     const { isRealDevice, match, sw, sh } = useDeviceProfile()
-    const bottomTrayAboveNav = useBottomTrayStore(s => s.aboveNav)
+    const bottomTrayAboveNav = useBottomTrayStore(s => s.aboveNav ?? false)
     const bottomTrayID       = useBottomTrayStore(s => s.id)
     const bottomTray         = useBottomTrayStore(s => s.contents)
     const toast              = useToastStore(s => s.toast)
@@ -206,6 +206,17 @@ function App() {
                     overflow: 'hidden',
                     position: 'relative',
                 }}
+                ref={el => {
+                    if (!el) return
+                    el._swipeGuard = el._swipeGuard || (() => {
+                        function handler(e) {
+                            const x = e.touches[0].clientX
+                            if (x < 24 || x > window.innerWidth - 24) e.preventDefault()
+                        }
+                        el.addEventListener('touchstart', handler, { passive: false })
+                        el._swipeGuardCleanup = () => el.removeEventListener('touchstart', handler)
+                    })()
+                }}
             >
                 {locked && <LockScreen onUnlock={handleUnlock} />}
 
@@ -235,12 +246,13 @@ function App() {
                     )}
 
                     {bottomTray && (
-                        <BottomTray id={bottomTrayID} style={bottomTrayAboveNav}>
+                        <BottomTray id={bottomTrayID} aboveNav={bottomTrayAboveNav}>
                             {bottomTray}
                         </BottomTray>
                     )}
 
                     <BottomNav />
+                    <OnboardingOverlay />
                 </BrowserRouter>
             </div>
         )
@@ -342,14 +354,15 @@ function App() {
                         />
                     )}
 
-                        {/* Bottom tray */}
-                        {bottomTray && (
-                            <BottomTray id={bottomTrayID} style={bottomTrayAboveNav}>
-                                {bottomTray}
-                            </BottomTray>
-                        )}
+                    {/* Bottom tray */}
+                    {bottomTray && (
+                        <BottomTray id={bottomTrayID} aboveNav={bottomTrayAboveNav}>
+                            {bottomTray}
+                        </BottomTray>
+                    )}
 
                     <BottomNav />
+                    <OnboardingOverlay />
                 </BrowserRouter>
             </div>
         </div>
