@@ -138,50 +138,6 @@ function Settings() {
             </div>
         </>
     )
-/* //   // Toggle row (e.g. Push Notifications)
-//   <ListRow
-//     label="Push Notifications"
-//     description="Remind you of tasks while outside the app."
-//     right={<Toggle defaultOn onChange={val => setSetting('push', val)} />}
-//   />
-//
-//   // Chevron row (e.g. More screen → Settings)
-//   <ListRow
-//     label="Settings"
-//     right={<ChevronRight size={18} color="var(--color-text-muted)" />}
-//     onPress={() => navigate('/settings')}
-//   />
-//
-//   // Chip row (e.g. Smart Notifications)
-//   <ListRow
-//     label="Smart Notifications"
-//     description="Tailored notifications based on context."
-//     right={<Chip label="COMING SOON" color="muted" />}
-//   />
-//
-//   // Control row — SegmentedControl below the label
-//   <ListRow label="Involvement Level" description="How the AI will help you with your task management.">
-//     <SegmentedControl
-//       options={[{ value: 'off', label: 'Off' }, { value: 'suggestive', label: 'Suggestive' }, { value: 'collaborative', label: 'Collaborative' }]}
-//       value={involvement}
-//       onChange={setInvolvement}
-//       fullWidth
-//     />
-//   </ListRow>
-//
-//   // Control row — Input below the label (e.g. AI Assistant Name)
-//   <ListRow label="AI Assistant Name" description="Change the name of your AI buddy.">
-//     <Input value={name} onChange={e => setName(e.target.value)} placeholder="Robo" />
-//   </ListRow> }
-            <SegmentedControl
-                options={[{ value: 'off', label: 'Off' }, { value: 'suggestive', label: 'Suggestive' }, { value: 'collaborative', label: 'Collaborative' }]}
-                value={"off"}
-                onChange={() => {}}
-                fullWidth
-            />
-        </div>
-        </>
-    )*/
 }
 
 export default Settings
