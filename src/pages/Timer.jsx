@@ -4,6 +4,8 @@ import { Play, Pause, RotateCcw, ChevronDown, CheckCircle } from 'lucide-react'
 import useTimerStore, { MODES } from '../data/useTimerStore'
 import useTaskStore from '../data/useTaskStore'
 import CircleCheck from '../components/CircleCheck'
+import ConfirmDialog from '../components/ConfirmDialog'
+import FadeOverlay from '../components/FadeOverlay'
 import Header from '../components/Header'
 
 // ─── Module-level interval ─────────────────────────────────────────────────────
@@ -32,7 +34,17 @@ function _tick() {
     if (seconds <= 1) {
         _stopInterval()
         _flushTime()
-        useTimerStore.setState({ seconds: 0, running: false, sessions: sessions + 1, startedAt: null })
+        playDing()
+        const newSessions = isWork ? sessions + 1 : sessions
+        const nextModeIdx = _nextModeIdx(modeIdx, newSessions)
+        useTimerStore.setState({
+            seconds:        MODES[nextModeIdx].minutes * 60,
+            modeIdx:        nextModeIdx,
+            running:        false,
+            sessions:       newSessions,
+            startedAt:      null,
+            waitingForUser: true,
+        })
         return
     }
 
@@ -53,6 +65,31 @@ function _stopInterval() {
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
+function playDing() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)()
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        osc.frequency.value = 880
+        osc.type = 'sine'
+        gain.gain.setValueAtTime(0.4, ctx.currentTime)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 1.2)
+    } catch { /* AudioContext not available */ }
+}
+
+// After a focus session: long break every 4, otherwise short break.
+// After any break: back to focus.
+function _nextModeIdx(currentModeIdx, sessionsAfter) {
+    if (currentModeIdx === 0) {
+        return sessionsAfter > 0 && sessionsAfter % 4 === 0 ? 2 : 1
+    }
+    return 0
+}
+
 function formatTime(s) {
     const m = Math.floor(s / 60).toString().padStart(2, '0')
     const r = (s % 60).toString().padStart(2, '0')
@@ -71,10 +108,11 @@ export default function Timer() {
     const toggleSubtask = useTaskStore(s => s.toggleSubtask)
 
     // All timer state lives in the store — survives navigation
-    const { modeIdx, seconds, running, sessions, taskId } = useTimerStore()
+    const { modeIdx, seconds, running, sessions, taskId, waitingForUser } = useTimerStore()
 
     // showTaskDrop is intentionally local — no reason to persist a dropdown's open state
     const [showTaskDrop, setShowTaskDrop] = useState(false)
+    const [pendingTaskId, setPendingTaskId] = useState(null)  // task switch awaiting confirmation
 
     // On mount: resume interval if the timer was running, and pre-select any task
     // passed via router state (e.g. tapping the timer icon from TaskDetail).
@@ -114,7 +152,7 @@ export default function Timer() {
             _flushTime()
             useTimerStore.setState({ running: false, startedAt: null })
         } else {
-            useTimerStore.setState({ running: true, startedAt: Date.now() })
+            useTimerStore.setState({ running: true, startedAt: Date.now(), waitingForUser: false })
             _startInterval()
         }
     }
@@ -123,7 +161,7 @@ export default function Timer() {
         _stopInterval()
         _flushTime()
         useTimerStore.setState({
-            running: false, startedAt: null,
+            running: false, startedAt: null, waitingForUser: false,
             seconds: MODES[modeIdx].minutes * 60,
         })
     }
@@ -132,16 +170,41 @@ export default function Timer() {
         _stopInterval()
         _flushTime()
         useTimerStore.setState({
-            running: false, startedAt: null,
+            running: false, startedAt: null, waitingForUser: false,
             modeIdx: i, seconds: MODES[i].minutes * 60,
         })
     }
 
+    // ─── task switching ───────────────────────────────────────────────────────
     function handleTaskSelect(id) {
         setShowTaskDrop(false)
         if (id === taskId) return
+        // If a focus session is actively running, ask what to do
+        if (running && MODES[modeIdx].key === 'focus') {
+            setPendingTaskId(id || null)
+        } else {
+            _flushTime()
+            useTimerStore.setState({ taskId: id || null, sessionSec: 0 })
+        }
+    }
+
+    function handleSwitchAndReset(newId) {
+        // Log elapsed time to the old task, reset timer, switch task
+        _stopInterval()
         _flushTime()
-        useTimerStore.setState({ taskId: id || null, sessionSec: 0 })
+        useTimerStore.setState({
+            running: false, startedAt: null, waitingForUser: false,
+            seconds: MODES[0].minutes * 60, modeIdx: 0,
+            taskId: newId, sessionSec: 0,
+        })
+        setPendingTaskId(null)
+    }
+
+    function handleSwitchAndSplit(newId) {
+        // Log elapsed time to old task, continue timer, switch task
+        _flushTime()
+        useTimerStore.setState({ taskId: newId, sessionSec: 0, startedAt: Date.now() })
+        setPendingTaskId(null)
     }
 
     // ─── render ───────────────────────────────────────────────────────────────
@@ -239,7 +302,8 @@ export default function Timer() {
                                 fontSize: '52px',
                                 fontWeight: 700,
                                 letterSpacing: '-2px',
-                                color: 'var(--color-text-main)',
+                                color: waitingForUser ? 'var(--color-text-secondary)' : 'var(--color-text-main)',
+                                transition: 'color 0.3s',
                                 fontVariantNumeric: 'tabular-nums',
                             }}>
                                 {formatTime(seconds)}
@@ -248,7 +312,7 @@ export default function Timer() {
                                 color: currentPhase.color,
                                 letterSpacing: '0.12em',
                             }}>
-                                {currentPhase.label}
+                                {waitingForUser ? 'Ready when you are' : currentPhase.label}
                             </span>
                         </div>
                     </div>
@@ -483,6 +547,23 @@ export default function Timer() {
                 )}
 
             </div>
+
+            {/* Task-switch confirmation — only shown when timer is running */}
+            {pendingTaskId !== null && (
+                <>
+                    <FadeOverlay visible={true} />
+                    <ConfirmDialog
+                        icon={<RotateCcw size={24} color="var(--color-accent)" />}
+                        title="Switch Task?"
+                        message={`Timer is running. Log ${formatTime(useTimerStore.getState().sessionSec)} to the current task, then…`}
+                        confirmLabel="Reset Timer"
+                        cancelLabel="Keep Going"
+                        confirmVariant="primary"
+                        onConfirm={() => handleSwitchAndReset(pendingTaskId)}
+                        onCancel={() => handleSwitchAndSplit(pendingTaskId)}
+                    />
+                </>
+            )}
         </div>
     )
 }

@@ -27,7 +27,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 export const MODES = [
-    { key: 'work',  label: 'Focus Time',       minutes: 25, color: 'var(--color-primary)' },
+    { key: 'focus', label: 'Focus Time',  minutes: 25, color: 'var(--color-primary)' },
     { key: 'short', label: 'Short Break', minutes: 5,  color: 'var(--color-success)' },
     { key: 'long',  label: 'Long Break',  minutes: 15, color: 'var(--color-accent)'  },
 ]
@@ -35,13 +35,14 @@ export const MODES = [
 const useTimerStore = create(
     persist(
         () => ({
-            modeIdx:    0,
-            seconds:    MODES[0].minutes * 60,
-            running:    false,
-            sessions:   0,
-            taskId:     null,
-            sessionSec: 0,
-            startedAt:  null,
+            modeIdx:        0,
+            seconds:        MODES[0].minutes * 60,
+            running:        false,
+            sessions:       0,
+            taskId:         null,
+            sessionSec:     0,
+            startedAt:      null,
+            waitingForUser: false,
         }),
         { name: 'robo-timer' }
     )
