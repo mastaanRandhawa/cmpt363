@@ -335,6 +335,7 @@ function TaskCreate() {
             useAI,
             ...(subtasksPayload !== undefined && { subtasks: subtasksPayload }),
         })
+        clearGuard()
         navigate(`/tasks/${editId}`, { replace: true })
     }
 
