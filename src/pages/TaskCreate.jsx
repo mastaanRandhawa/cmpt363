@@ -101,6 +101,7 @@ function TaskCreate() {
     const [aiPending, setAiPending]     = useState([])      // suggestions awaiting user decision
     const [aiOriginal, setAiOriginal]   = useState([])      // raw AI output for template saving
     const [aiInstructions, setAiInstructions] = useState(editTask?.aiInstructions ?? '')      // user directions to the AI
+    const [useAI, setUseAI]               = useState(editTask?.useAI ?? false)              // edit mode: AI on/off for this task
 
     // ─── confirm step ─────────────────────────────────────────────────────────
     const [step, setStep]           = useState('form')
@@ -315,18 +316,24 @@ function TaskCreate() {
 
     async function handleSaveEdit() {
         if (!validate()) return
+        // When AI is toggled off, strip the AI badge from all existing subtasks
+        const subtasksPayload = !useAI
+            ? subtasks.map(s => ({ ...s, ai: false }))
+            : undefined
         await updateTask(editId, {
             name:           name.trim(),
             due:            date,
             time:           addTime ? time : null,
             priority,
             effort,
-            notes:    notes.trim(),
+            notes:          notes.trim(),
             privateNotes,
             aiInstructions: aiInstructions.trim() || '',
             location:       location || null,
             repeat,
             timed,
+            useAI,
+            ...(subtasksPayload !== undefined && { subtasks: subtasksPayload }),
         })
         navigate(`/tasks/${editId}`, { replace: true })
     }
@@ -973,6 +980,79 @@ function TaskCreate() {
                     </button>
                 </div>
 
+                {/* AI suggestions toggle — edit mode, Level 3+ */}
+                {isEdit && level >= 3 && (
+                    <div style={{
+                        background: 'var(--color-card)',
+                        borderRadius: '16px',
+                        padding: '16px',
+                        border: '1px solid var(--color-divider)',
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                            <div style={{
+                                background: useAI ? 'var(--color-primary-soft)' : 'var(--color-divider)',
+                                borderRadius: '12px',
+                                width: '44px',
+                                height: '44px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                                transition: 'background 0.2s',
+                            }}>
+                                <Command size={22} color={useAI ? 'var(--color-primary)' : 'var(--color-text-secondary)'} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <p className="label-bold" style={{ margin: 0, color: 'var(--color-text-main)' }}>AI SUGGESTIONS</p>
+                                <p className="caption" style={{ margin: 0, color: 'var(--color-text-secondary)' }}>Breakdown and Time Estimate</p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    const next = !useAI
+                                    setUseAI(next)
+                                    if (next) {
+                                        setAiSuggest(true)
+                                        runAISuggestions()
+                                    } else {
+                                        setAiSuggest(false)
+                                        setAiPending([])
+                                        setAiSubmitted(false)
+                                        setAiSnapshot(null)
+                                    }
+                                }}
+                                style={{
+                                    width: '48px',
+                                    height: '26px',
+                                    borderRadius: '999px',
+                                    border: 'none',
+                                    flexShrink: 0,
+                                    cursor: 'pointer',
+                                    background: useAI ? 'var(--color-primary)' : 'var(--color-divider)',
+                                    position: 'relative',
+                                    transition: 'background 0.2s',
+                                }}
+                            >
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '3px',
+                                    left: useAI ? '25px' : '3px',
+                                    width: '20px',
+                                    height: '20px',
+                                    borderRadius: '50%',
+                                    background: 'white',
+                                    transition: 'left 0.2s',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                                }} />
+                            </button>
+                        </div>
+                        {!useAI && subtasks.some(s => s.ai) && (
+                            <p className="caption" style={{ margin: '10px 0 0', color: 'var(--color-text-secondary)' }}>
+                                AI badges will be removed from existing subtasks when saved.
+                            </p>
+                        )}
+                    </div>
+                )}
+
                 {/* AI suggestions toggle — create mode only, Level 3+ */}
                 {!isEdit && (
                     level >= 3 ? (
@@ -1060,8 +1140,8 @@ function TaskCreate() {
                     )
                 )}
 
-                {/* Instructions for AI — visible when AI Suggestions is on (create) or always in edit */}
-                {(isEdit || (aiSuggest && level >= 3)) && (
+                {/* Instructions for AI — visible when AI Suggestions is on (create) or AI is enabled in edit */}
+                {((isEdit && useAI) || (aiSuggest && level >= 3)) && (
                     <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                             <Command size={11} color="var(--color-primary)" />
@@ -1078,38 +1158,66 @@ function TaskCreate() {
 
                 {/* submit buttons */}
                 {isEdit ? (
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                        <button
-                            onClick={() => setShowLeaveConfirm(true)}
-                            className="label-bold"
-                            style={{
-                                flex: 1,
-                                height: '56px',
-                                background: 'none',
-                                border: '1px solid var(--color-divider)',
-                                borderRadius: '16px',
-                                color: 'var(--color-text-secondary)',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Discard
-                        </button>
-                        <button
-                            onClick={handleCreate}
-                            className="h3"
-                            style={{
-                                flex: 2,
-                                height: '56px',
-                                background: 'var(--color-primary)',
-                                border: 'none',
-                                borderRadius: '16px',
-                                color: 'white',
-                                fontWeight: 700,
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Save Changes
-                        </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {/* resubmit — only visible when form changed after an AI call in edit mode */}
+                        {formStale && useAI && (
+                            <button
+                                onClick={runAISuggestions}
+                                className="label-bold"
+                                style={{
+                                    width: '100%',
+                                    height: '52px',
+                                    background: 'none',
+                                    border: '1.5px solid var(--color-primary)',
+                                    borderRadius: '16px',
+                                    color: 'var(--color-primary)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px',
+                                    boxSizing: 'border-box'
+                                }}
+                            >
+                                <Command size={16} /> Update AI Suggestions
+                            </button>
+                        )}
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button
+                                onClick={() => setShowLeaveConfirm(true)}
+                                className="label-bold"
+                                style={{
+                                    flex: 1,
+                                    height: '56px',
+                                    background: 'none',
+                                    border: '1px solid var(--color-divider)',
+                                    borderRadius: '16px',
+                                    color: 'var(--color-text-secondary)',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Discard
+                            </button>
+                            <button
+                                onClick={handleCreate}
+                                disabled={formStale && useAI}
+                                className="h3"
+                                style={{
+                                    flex: 2,
+                                    height: '56px',
+                                    background: (formStale && useAI) ? 'var(--color-card)' : 'var(--color-primary)',
+                                    border: (formStale && useAI) ? '1px solid var(--color-divider)' : 'none',
+                                    borderRadius: '16px',
+                                    color: (formStale && useAI) ? 'var(--color-text-secondary-muted)' : 'white',
+                                    fontWeight: 700,
+                                    cursor: (formStale && useAI) ? 'not-allowed' : 'pointer',
+                                    transition: 'all 0.2s',
+                                    boxSizing: 'border-box'
+                                }}
+                            >
+                                Save Changes
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
