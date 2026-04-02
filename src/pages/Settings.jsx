@@ -32,8 +32,9 @@ function Settings() {
                             placeholder="User"
                             value={settings.userName}
                             type="text"
-                            onChange={evt => {
-                                settings.setUserName(evt.target.value)
+                            onChange={evt => settings.setUserName(evt.target.value)}
+                            onBlur={evt => {
+                                if (!evt.target.value.trim()) settings.setUserName('')
                             }}
                         />
                     </ListRow>

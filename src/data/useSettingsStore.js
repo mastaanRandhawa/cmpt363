@@ -87,7 +87,7 @@ const useSettingsStore = create(
                 setUserName(value) {
                     assertType(value, 'string')
                     update({
-                        userName: value,
+                        userName: value.trim() || 'User',
                     })
                 },
 
