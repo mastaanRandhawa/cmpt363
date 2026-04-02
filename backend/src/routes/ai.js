@@ -174,20 +174,23 @@ function mockRecommend(tasks, moodIndex) {
     const pick = sorted[0]
     if (!pick) return null
 
-    let reason = ''
+    const reasons = []
     if (pick.priority === 'high' && pick.due && pick.due <= today) {
-        reason = `This is high priority and already overdue — tackle it first.`
+        reasons.push('High priority + overdue')
+        reasons.push('Tackle this one first')
     } else if (pick.priority === 'high') {
-        reason = `Highest priority task on your list — best handled while you have energy.`
-    } else if (moodLabel === 'Energized' || moodLabel === 'Good') {
-        reason = `You're in a good headspace — perfect time for this task.`
+        reasons.push('Highest priority on your list')
+        if (moodLabel === 'Energized' || moodLabel === 'Good') reasons.push('Good energy right now')
     } else if (moodLabel === 'Tired' || moodLabel === 'Meh') {
-        reason = `Low effort required — manageable even when energy is low.`
+        reasons.push('Low effort — doable even on low energy')
+    } else if (moodLabel === 'Energized' || moodLabel === 'Good') {
+        reasons.push('Good headspace to tackle this')
     } else {
-        reason = `Due soon and fits your current schedule well.`
+        reasons.push('Due soon')
+        reasons.push('Fits your current schedule')
     }
 
-    return { taskId: pick.id, reason }
+    return { taskId: pick.id, reasons }
 }
 
 async function realRecommend(tasks, moodIndex, streak) {
@@ -197,16 +200,18 @@ Pick the single best task given their mood, energy level, streak, due dates, and
 Consider: high priority + overdue = most urgent; tired/stressed = prefer lower effort tasks; morning = good for focused work; streak = keep momentum.
 
 Respond with only a JSON object — no explanation outside it:
-{ "taskId": "<exact id from the list>", "reason": "<1–2 warm, direct sentences>" }`)
+{ "taskId": "<exact id from the list>", "reasons": ["<short bullet point>", "<short bullet point>"] }
+
+Each reason should be a short, direct phrase (not a full sentence). 2–3 bullets max.`)
 
     const result = await model.generateContent(buildRecommendPrompt(tasks, moodIndex, streak))
     const text   = result.response.text()
     const match  = text.match(/\{[\s\S]*\}/)
     if (!match) throw new Error('No JSON object in AI response')
     const parsed = JSON.parse(match[0])
-    if (!parsed.taskId || !parsed.reason) throw new Error('Missing taskId or reason')
+    if (!parsed.taskId || !parsed.reasons) throw new Error('Missing taskId or reasons')
     if (!tasks.find(t => t.id === parsed.taskId)) throw new Error(`Unknown taskId: ${parsed.taskId}`)
-    return { taskId: parsed.taskId, reason: parsed.reason }
+    return { taskId: parsed.taskId, reasons: Array.isArray(parsed.reasons) ? parsed.reasons : [parsed.reasons] }
 }
 
 // ── chat helpers ──────────────────────────────────────────────────────────────
@@ -220,31 +225,13 @@ function buildChatSystemPrompt(tasks, roboName = 'Robo') {
         ).join('\n')
         : 'No active tasks.'
 
-    return `You are ${roboName}, a witty and encouraging AI task companion inside RoboPlan — a personal productivity app.
+    return `You are ${roboName}, a task companion in RoboPlan. You're sharp, brief, and a little witty — like a clever friend who keeps you on track.
 
-YOUR ROLE:
-Help the user manage and accomplish their active tasks. You have access to their current task list below.
-
-CORE RULES:
-1. Only help with topics that relate to the user's current tasks.
-2. If the message has no reasonable connection to any task, redirect them back to their list with personality — never bluntly or rudely.
-3. Keep replies concise and friendly. You are a companion, not an encyclopedia.
-4. Reference the user's actual task names when possible to feel personal.
-
-TASK RELEVANCE CHECK:
-Before responding, ask yourself: "Does this question connect to any task the user currently has?"
-- Direct match: question is literally about a task → help fully
-- Indirect match: question supports completing a task → help
-- No connection: question has nothing to do with any task → redirect with wit
-
-REDIRECT TONE:
-Be warm and funny, never dismissive. Reference their actual tasks so the redirect feels personal, not robotic.
-
-PERSONALITY:
-- Upbeat and encouraging
-- Witty but not exhausting
-- Direct and clear
-- Casual language — contractions, light humour
+RULES:
+- Only discuss topics connected to the user's tasks (direct help or indirect support counts).
+- Off-topic? Redirect with a quip that references their actual tasks. Never be blunt or preachy about it.
+- Keep replies short. No bullet walls, no essays. One or two punchy lines is ideal.
+- Use the user's actual task names to feel personal, not generic.
 
 CURRENT ACTIVE TASKS:
 ${taskBlock}`
