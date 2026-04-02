@@ -1,6 +1,13 @@
-# Cloudflare Pages — deploy after build: npm run build && npx wrangler pages deploy dist
-# First time: create the project in the dashboard or run:
-#   npx wrangler pages project create cmpt363
+# Cloudflare Pages (static Vite build → dist/)
+#
+# Git integration — pick ONE:
+#   A) Recommended: Build command = "npm run build", Build output directory = "dist",
+#      leave "Deploy command" EMPTY (Pages uploads dist automatically).
+#   B) If you use a Deploy command, it must be Pages, NOT Workers:
+#        npx wrangler pages deploy dist --project-name=cmpt363
+#      Do NOT use: npx wrangler deploy  (that targets Workers and will fail).
+#
+# Manual: npm run pages:deploy
 name = "cmpt363"
 compatibility_date = "2025-04-01"
 
