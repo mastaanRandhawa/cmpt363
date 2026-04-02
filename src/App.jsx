@@ -145,7 +145,7 @@ function App() {
     }
 
     const { isRealDevice, match, sw, sh } = useDeviceProfile()
-    const bottomTrayAboveNav = useBottomTrayStore(s => s.aboveNav)
+    const bottomTrayAboveNav = useBottomTrayStore(s => s.aboveNav ?? false)
     const bottomTrayID       = useBottomTrayStore(s => s.id)
     const bottomTray         = useBottomTrayStore(s => s.contents)
     const toast              = useToastStore(s => s.toast)
@@ -246,7 +246,7 @@ function App() {
                     )}
 
                     {bottomTray && (
-                        <BottomTray id={bottomTrayID} style={bottomTrayAboveNav}>
+                        <BottomTray id={bottomTrayID} aboveNav={bottomTrayAboveNav}>
                             {bottomTray}
                         </BottomTray>
                     )}
@@ -356,7 +356,7 @@ function App() {
 
                     {/* Bottom tray */}
                     {bottomTray && (
-                        <BottomTray id={bottomTrayID} style={bottomTrayAboveNav}>
+                        <BottomTray id={bottomTrayID} aboveNav={bottomTrayAboveNav}>
                             {bottomTray}
                         </BottomTray>
                     )}

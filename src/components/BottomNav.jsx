@@ -44,12 +44,11 @@ const tabs = [
 ]
 
 const trayItems = [
-    { label: 'Notifications', icon: CircleAlert, path: '/notifications' },
-    { label: 'Chat', icon: MessageSquare, path: '/robo/chat' },
-    { label: 'Timer', icon: TimerIcon, path: '/timer' },
-    { label: 'Settings', icon: Settings, path: '/settings' },
-    { label: 'Help', icon: HelpCircle, path: '/help' },
-    { label: 'Help', icon: HelpCircle, path: '/help' }, // Quick fix //TODO Proper fix
+    { key: 'notifications', label: 'Notifications', icon: CircleAlert,   path: '/notifications' },
+    { key: 'chat',          label: 'Chat',           icon: MessageSquare, path: '/robo/chat' },
+    { key: 'timer',         label: 'Timer',          icon: TimerIcon,     path: '/timer' },
+    { key: 'settings',      label: 'Settings',       icon: Settings,      path: '/settings' },
+    { key: 'help',          label: 'Help',           icon: HelpCircle,    path: '/help' },
 ]
 
 function showMoreTray({ bottomTrayStore, navigate }) {
@@ -61,7 +60,7 @@ function showMoreTray({ bottomTrayStore, navigate }) {
             <>
                 {trayItems.map(item => (
                     <BottomTrayItem
-                        key={item.label}
+                        key={item.key}
                         label={item.label}
                         icon={item.icon}
                         rightIcon={item.rightIcon ?? ChevronRight}
