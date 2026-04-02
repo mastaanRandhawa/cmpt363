@@ -3,7 +3,7 @@
 // so other files that import them directly continue to work.
 
 import { create } from 'zustand'
-import { api } from './api'
+import { api, API_BASE } from './api'
 
 // ── pure helpers (still exported for direct use) ──────────────────────────────
 
@@ -94,7 +94,7 @@ const useRoboStore = create((set, get) => ({
     },
 
     resetRobo: async () => {
-        const data = await fetch('/api/robo/reset', { method: 'POST' }).then(r => r.json())
+        const data = await fetch(`${API_BASE}/robo/reset`, { method: 'POST' }).then(r => r.json())
         set(applyPayload(data))
     },
 }))
