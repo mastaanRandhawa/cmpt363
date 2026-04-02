@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "deploy": "npx wrangler pages deploy dist --project-name=cmpt363",
     "pages:deploy": "vite build && npx wrangler pages deploy dist --project-name=cmpt363",
     "cf:pages": "npx wrangler pages deploy dist --project-name=cmpt363"
   },

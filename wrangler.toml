@@ -1,13 +1,13 @@
 # Cloudflare Pages (static Vite build → dist/)
 #
-# Git integration — pick ONE:
-#   A) Recommended: Build command = "npm run build", Build output directory = "dist",
-#      leave "Deploy command" EMPTY (Pages uploads dist automatically).
-#   B) If you use a Deploy command, it must be Pages, NOT Workers:
-#        npx wrangler pages deploy dist --project-name=cmpt363
-#      Do NOT use: npx wrangler deploy  (that targets Workers and will fail).
+# DASHBOARD (Workers & Pages → cmpt363 → Settings → Builds):
+#   Build command:        npm run build
+#   Build output:         dist
+#   Deploy command:       npm run deploy
+#     OR leave Deploy command EMPTY (Pages publishes "dist" on its own — preferred).
+#   WRONG (will fail):    npx wrangler deploy   ← Workers only, not Pages
 #
-# Manual: npm run pages:deploy
+# Local: npm run pages:deploy
 name = "cmpt363"
 compatibility_date = "2025-04-01"
 
