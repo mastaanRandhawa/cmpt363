@@ -114,6 +114,14 @@ const useSettingsStore = create(
                         aiBehaviour: value,
                     })
                 },
+
+                aiPersonalities: [],
+                setAiPersonalities(value) {
+                    if (!Array.isArray(value)) {
+                        throw new Error('Invalid setting value: expected array')
+                    }
+                    update({ aiPersonalities: value })
+                },
                  }
         }
     )
