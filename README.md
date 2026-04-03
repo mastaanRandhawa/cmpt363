@@ -1,55 +1,84 @@
-# CMPT363 - Group6
+## Dr. Parmit Chilana | Simon Fraser University | Spring 2026 | Group 6
+### Tasha Gandevia · Azhy Hama Gharib · Mastaan Singh Randhawa
 
-**Dr. Parmit Chilana | Simon Fraser University | Spring 2026**
+# RoboPlan: An AI Task Assistant for ADHD-Friendly Productivity
 
-*Tasha Gandevia, Azhy Hama Gharib, Mastaan Singh Randhawa*
+> A low-friction, transparent, and flexible task planning app designed for adults with ADHD.
 
-## Problem Statement
+## Overview
 
-*From Project Part 2*
+RoboPlan is an AI-powered mobile productivity app built to address the unique cognitive challenges faced by adults with ADHD — including difficulty with task initiation, prioritization, and time estimation. Unlike rigid, conventional productivity tools, RoboPlan is designed around how ADHD brains actually work.
 
-Studies suggest that adults with Attention-Deficit Hyperactivity Disorder (ADHD) are persistently impacted by executive function deficits in time management, task organization, and planning (Roselló et al., 2020; Rincón et al., 2024); these deficits account for roughly two-thirds of the elevated burnout experienced by employees with ADHD (Turjeman-Levi et al., 2024), and pharmacological treatment combined with psychosocial intervention strategies is recommended to address them (Rincón et al., 2024). Among psychosocial strategies, digital interventions grounded in cognitive-behavioural approaches have shown promise in improving organization, time management, and planning in adults with ADHD (Guy-Evans, 2026). In particular, emerging research exploring the use of artificial intelligence shows potential for addressing executive function deficits for users dealing with ADHD symptoms (Beg & Verma, 2024), with some users already adapting AI tools for task organization and daily productivity assistance (Carik et al., 2025). 
+## Problem
 
-Leveraging the outlined research findings, we propose an AI-powered task management app targeting users experiencing ADHD symptoms who would benefit from task breakdown, time management, organization, and planning. The interface would present AI-generated task suggestions with transparent reasoning, including task urgency, deadlines, user scheduling conflicts, and workload balance. Users would have autonomy to adjust the level of AI involvement, including the ability to review, modify, or dismiss recommendations and turn off features, to support collaborative interaction and Cognitive Behavioural Therapy (CBT) skill development, such as self-monitoring and structured planning (Guy-Evans, 2026). Our design approach will incorporate step-by-step task breakdowns, smart reminders, and progress tracking to directly address the executive function deficits identified in the literature, with additional user pain points to be identified through targeted user interviews and usability testing. 
+Most productivity tools are opaque, inflexible, and cognitively overwhelming for users with ADHD. Key pain points include:
+- Difficulty starting and prioritizing tasks
+- Cognitive overload from large or unclear task lists
+- Task anxiety leading to avoidance
+- Lack of transparency and control over AI-driven suggestions
+
+## Research
+
+Our methods were based on three important pillars:
+- Existing research and studies surrounding individuals with ADHD
+- Semi-structured interviews conducted with four adults with ADHD (diagnosed or self-diagnosed), exploring task planning workflows, pain points, and attitudes toward AI tools.
+- Two cognitive walkthroughs of the iterative prototype by two group members who have been diagnosed with ADHD
+
+## Design Principles
+
+| Principle | Description |
+|---|---|
+| **Transparency** | Users always know what the AI is doing and why |
+| **Low Effort** | Every interaction is fast and requires minimal decision-making |
+| **Flexibility** | AI involvement is adjustable, not fixed |
+
+
+## Core Features
+
+- **Smart Prioritization**: Robo surfaces one task at a time based on priority, due date, and calendar
+- **AI Task Breakdown**: Generates editable subtasks tailored to user input
+- **Transparent AI**: Users can tap to see why Robo made a suggestion
+- **Built-in Timer**" Focus mode lives inside the app to prevent tab-switching
+- **Collaborative AI**: Subtasks are visually marked as AI-generated
+- **XP & Gamification**: Earn points and level up Robo to stay motivated
+- **Contextual Reminders**: Gentle, location-aware nudges to keep users on track
+- **User-Controlled AI Levels**: Choose between collaborative, supportive, or off
+
+## Design Impact
+
+RoboPlan doesn't just help users get things done — it helps them **get better at getting things done** by reducing cognitive load, minimizing planning friction, and building executive functioning skills through CBT-based gamification.
 
 
 ## To Run:
+*Note* This requires both private database and API variables that are not provided in this repo.
 
 **Getting the Database seeded with existing tasks for demo**
+
+*In Terminal 1*
 ```bash
 cd backend
 ```
-
 ```bash
 npm run db:generate
 ```
-
 ```bash
 npm run db:push
 ```
-
 ```bash
 npx prisma db seed
 ```
-
-**Run database** 
-
-(*from within* `/backend/`)
+**Run database**
 ```bash
 npm run start
 ```
 
 **Start frontend**
 
-(*in* `/root/`)
+*In Terminal 2*
 ```bash
 npm run dev
 ```
-
-
+*In web-browser*
+```
 http://localhost:5173
-
-
-Note: 
-- You need to enter your Gemini API key in the `/backend/.env`
-- 
+```
