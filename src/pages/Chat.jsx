@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Send, Command } from 'lucide-react'
 import Header from '../components/Header'
 import useTaskStore from '../data/useTaskStore'
@@ -20,34 +20,13 @@ export function buildSystemPrompt(tasks, roboName = 'Robo') {
         ).join('\n')
         : 'No active tasks.'
 
-    return `You are ${roboName}, a witty and encouraging AI task companion inside RoboPlan — a personal productivity app.
+    return `You are ${roboName}, a task companion in RoboPlan. You're sharp, brief, and a little witty — like a clever friend who keeps you on track.
 
-YOUR ROLE:
-Help the user manage and accomplish their active tasks. You have access to their current task list below.
-
-CORE RULES:
-1. Only help with topics that relate to the user's current tasks.
-2. If the message has no reasonable connection to any task, redirect them back to their list with personality — never bluntly or rudely.
-3. Keep replies concise and friendly. You are a companion, not an encyclopedia.
-4. Reference the user's actual task names when possible to feel personal.
-
-TASK RELEVANCE CHECK:
-Before responding, ask yourself: "Does this question connect to any task the user currently has?"
-- Direct match: question is literally about a task (e.g., they have "Bake a cake" → ask about cake recipes) → help fully
-- Indirect match: question supports completing a task (e.g., they have "Write essay" → ask about thesis structure) → help
-- No connection: question has nothing to do with any task → redirect with wit
-
-REDIRECT TONE:
-Be warm and funny, never dismissive. Reference their actual tasks so the redirect feels personal, not robotic.
-Good example: "Cookies sound delicious, but I'm only equipped to handle what's on your plate — and right now that's 'Clean the house'. Want a hand with that instead?"
-Bad example: "Sorry, I can only discuss your tasks."
-
-PERSONALITY:
-- Upbeat and encouraging
-- Witty but not exhausting
-- Direct and clear
-- Casual language — contractions, light humour
-- Occasionally uses productivity metaphors (mission, quest, unlocking, etc.)
+RULES:
+- Only discuss topics connected to the user's tasks (direct help or indirect support counts).
+- Off-topic? Redirect with a quip that references their actual tasks. Never be blunt or preachy about it.
+- Keep replies short. No bullet walls, no essays. One or two punchy lines is ideal.
+- Use the user's actual task names to feel personal, not generic.
 
 CURRENT ACTIVE TASKS:
 ${taskBlock}`
@@ -65,12 +44,16 @@ function Chat() {
     const allTasks   = useTaskStore(s => s.tasks)
     const tasks      = useMemo(() => allTasks.filter(t => !t._softDeleted), [allTasks])
     const aiAssistantName = useSettingsStore(s => s.aiAssistantName)
-    const roboName = aiAssistantName || 'Robo'
+    const roboName  = aiAssistantName || 'Robo'
+    const location  = useLocation()
+    const taskName  = location.state?.taskName ?? null
 
     const [messages, setMessages] = useState(() => [{
         id:        'welcome',
         role:      'assistant',
-        text:      `Hey there! I'm ${roboName} — your task companion. Ask me anything about your current tasks and I'll do my best to help. 🤖`,
+        text:      taskName
+            ? `Hey! I'm ${roboName} — locked, loaded, and ready to help you tackle **${taskName}**. What do you need?`
+            : `Hey there! I'm ${roboName} — your task companion. Ask me anything about your current tasks and I'll do my best to help.`,
         timestamp: new Date(),
     }])
     const [input,   setInput]   = useState('')
@@ -258,6 +241,28 @@ function RoboAvatar() {
     )
 }
 
+function renderMarkdown(text) {
+    return text.split('\n').map((line, i) => {
+        const isBullet = /^\s*[*-] /.test(line)
+        const content  = isBullet ? line.replace(/^\s*[*-] /, '') : line
+
+        const parts = []
+        const inlineRe = /(\*\*(.+?)\*\*|\*(.+?)\*)/g
+        let last = 0, match
+        while ((match = inlineRe.exec(content)) !== null) {
+            if (match.index > last) parts.push(content.slice(last, match.index))
+            if (match[2]) parts.push(<strong key={match.index}>{match[2]}</strong>)
+            else if (match[3]) parts.push(<em key={match.index}>{match[3]}</em>)
+            last = match.index + match[0].length
+        }
+        if (last < content.length) parts.push(content.slice(last))
+
+        if (isBullet) return <div key={i} style={{ display: 'flex', gap: '6px', marginTop: '2px' }}><span>•</span><span>{parts}</span></div>
+        if (line.trim() === '') return <div key={i} style={{ height: '6px' }} />
+        return <div key={i}>{parts}</div>
+    })
+}
+
 function MessageBubble({ msg, roboName }) {
     const isUser = msg.role === 'user'
     return (
@@ -286,7 +291,7 @@ function MessageBubble({ msg, roboName }) {
                     lineHeight: '1.5',
                     wordBreak: 'break-word',
                 }}>
-                    {msg.text}
+                    {isUser ? msg.text : renderMarkdown(msg.text)}
                 </div>
             </div>
             <span style={{

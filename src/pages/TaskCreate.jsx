@@ -335,7 +335,8 @@ function TaskCreate() {
             useAI,
             ...(subtasksPayload !== undefined && { subtasks: subtasksPayload }),
         })
-        navigate(`/tasks/${editId}`, { replace: true })
+        clearGuard()
+        navigate('/tasks', { replace: true })
     }
 
     // ─── subtask actions ──────────────────────────────────────────────────────
@@ -421,7 +422,7 @@ function TaskCreate() {
 
             <Header
                 title={isEdit ? 'Edit Task' : 'Add A New Task'}
-                onBack={() => guardedNavigate(isEdit ? `/tasks/${editId}` : '/tasks')}
+                onBack={() => guardedNavigate('/tasks')}
             />
 
             <FadeOverlay visible={showLeaveConfirm} />
@@ -438,7 +439,7 @@ function TaskCreate() {
                         setShowLeaveConfirm(false)
                         clearGuard()
                         if (pendingProceed) { pendingProceed(); setPendingProceed(null) }
-                        else navigate(pendingNav ?? (isEdit ? `/tasks/${editId}` : '/tasks'), { replace: isEdit })
+                        else navigate(pendingNav ?? '/tasks', { replace: isEdit })
                     }}
                     onCancel={() => {
                         setShowLeaveConfirm(false)

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import {Pencil, Plus, MapPin, Repeat, Trash2, CheckCircle, X, Gauge} from 'lucide-react'
+import { Pencil, Plus, MapPin, Repeat, Trash2, CheckCircle, X, Gauge, MessageCircle, Timer as TimerIcon } from 'lucide-react'
 import { priority as priorityMap, effort as effortMap } from '../data/chipColors'
 import useTaskStore from '../data/useTaskStore'
 import useToastStore from '../data/useToastStore'
@@ -175,8 +175,10 @@ function TaskDetail() {
             message:     `"${taskName}" deleted`,
             icon:        <Trash2 size={16} color="var(--color-important)" />,
             barColor:    'var(--color-important)',
-            onExpire: () => deleteTask(taskId),
-            duration: 3000,
+            actionLabel: 'Undo',
+            onAction:    () => { dismissToast(); navigate('/tasks') },
+            onExpire:    () => deleteTask(taskId),
+            duration:    3000,
         })
     }
 
@@ -196,6 +198,22 @@ function TaskDetail() {
                 title="Task Details"
                 subtitle={" "}
                 onBack={() => navigate(-1)}
+                rightAction={
+                    (task.useAI || task.useTimer) ? (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                            {task.useAI && (
+                                <button onClick={() => navigate('/robo/chat', { state: { taskName: task.name }, replace: true })} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', color: 'var(--color-primary)' }}>
+                                    <MessageCircle size={20} />
+                                </button>
+                            )}
+                            {task.useTimer && (
+                                <button onClick={() => navigate('/timer', { state: { taskId: task.id }, replace: true })} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', color: 'var(--color-primary)' }}>
+                                    <TimerIcon size={20} />
+                                </button>
+                            )}
+                        </div>
+                    ) : null
+                }
             />
 
             {/* This container handles the scrolling and the side padding */}

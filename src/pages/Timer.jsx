@@ -112,7 +112,23 @@ export default function Timer() {
 
     // showTaskDrop is intentionally local — no reason to persist a dropdown's open state
     const [showTaskDrop, setShowTaskDrop] = useState(false)
-    const [pendingTaskId, setPendingTaskId] = useState(null)  // task switch awaiting confirmation
+    const [pendingTaskId, setPendingTaskId] = useState(null)        // task switch awaiting confirmation
+    const [pendingIncomingTaskId, setPendingIncomingTaskId] = useState(null) // deep-link reset awaiting confirmation
+
+    function applyIncomingTask(id) {
+        _stopInterval()
+        _flushTime()
+        useTimerStore.setState({
+            taskId:     id,
+            sessionSec: 0,
+            sessions:   0,
+            modeIdx:    0,
+            seconds:    MODES[0].minutes * 60,
+            running:    false,
+            startedAt:  null,
+            waitingForUser: false,
+        })
+    }
 
     // On mount: resume interval if the timer was running, and pre-select any task
     // passed via router state (e.g. tapping the timer icon from TaskDetail).
@@ -120,8 +136,12 @@ export default function Timer() {
         // Pre-select task from navigation state (TaskDetail → Timer)
         const incomingTaskId = location.state?.taskId
         if (incomingTaskId) {
-            _flushTime()
-            useTimerStore.setState({ taskId: incomingTaskId, sessionSec: 0 })
+            const { running: wasRunning, sessions: existingSessions } = useTimerStore.getState()
+            if (wasRunning || existingSessions > 0) {
+                setPendingIncomingTaskId(incomingTaskId)
+            } else {
+                applyIncomingTask(incomingTaskId)
+            }
         }
 
         // Resume interval if timer was already running (e.g. after page reload)
@@ -547,6 +567,23 @@ export default function Timer() {
                 )}
 
             </div>
+
+            {/* Deep-link reset confirmation — active session exists when arriving from a task */}
+            {pendingIncomingTaskId !== null && (
+                <>
+                    <FadeOverlay visible={true} />
+                    <ConfirmDialog
+                        icon={<RotateCcw size={24} color="var(--color-accent)" />}
+                        title="Reset Session?"
+                        message="You have an active session. Starting fresh will clear your session count and switch to Focus Time."
+                        confirmLabel="Reset & Switch"
+                        cancelLabel="Keep Going"
+                        confirmVariant="primary"
+                        onConfirm={() => { applyIncomingTask(pendingIncomingTaskId); setPendingIncomingTaskId(null) }}
+                        onCancel={() => setPendingIncomingTaskId(null)}
+                    />
+                </>
+            )}
 
             {/* Task-switch confirmation — only shown when timer is running */}
             {pendingTaskId !== null && (

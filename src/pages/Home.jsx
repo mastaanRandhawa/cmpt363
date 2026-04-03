@@ -192,14 +192,16 @@ function Home() {
                                             {recTask.priority ? `${recTask.priority.charAt(0).toUpperCase() + recTask.priority.slice(1)} Priority` : ''}
                                         </p>
                                         <div style={{
-                                            display: 'flex', alignItems: 'flex-start', gap: '6px',
-                                            background: 'var(--color-divider)', borderRadius: '20px',
-                                            padding: '7px 12px', marginBottom: '16px',
+                                            background: 'var(--color-divider)', borderRadius: '12px',
+                                            padding: '8px 12px', marginBottom: '16px',
+                                            display: 'flex', flexDirection: 'column', gap: '4px',
                                         }}>
-                                            <HelpCircle size={13} style={{ flexShrink: 0, marginTop: '1px' }} color="var(--color-text-muted)" />
-                                            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.4 }}>
-                                                {rec.reason}
-                                            </span>
+                                            {(rec.reasons ?? [rec.reason]).map((r, i) => (
+                                                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                    <span style={{ fontSize: '10px', color: 'var(--color-primary)', flexShrink: 0 }}>▸</span>
+                                                    <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.4 }}>{r}</span>
+                                                </div>
+                                            ))}
                                         </div>
                                         <div style={{ display: 'flex', gap: '8px' }}>
                                             <button
