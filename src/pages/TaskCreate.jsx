@@ -30,6 +30,7 @@ import RepeatPicker from '../components/RepeatPicker'
 import ConfirmDialog from '../components/ConfirmDialog'
 import FadeOverlay from '../components/FadeOverlay'
 import { priority as priorityMap, effort as effortMap } from '../data/chipColors.js'
+import Toggle from '../components/Toggle.jsx'
 
 const priorities = ['low', 'med', 'high']
 
@@ -953,32 +954,14 @@ function TaskCreate() {
                     </div>
 
                     {/* Toggle Switch */}
-                    <button
-                        onClick={() => setTimed(v => !v)}
+                    <Toggle
+                        checked={timed}
+                        onChange={setTimed}
+                        vPaddingEm={0.15}
                         style={{
-                            width: '48px',
-                            height: '26px',
-                            borderRadius: '999px',
-                            border: 'none',
-                            flexShrink: 0,
-                            cursor: 'pointer',
-                            background: timed ? 'var(--color-primary)' : 'var(--color-divider)',
-                            position: 'relative',
-                            transition: 'background 0.2s'
+                            fontSize: '22px',
                         }}
-                    >
-                        <div style={{
-                            position: 'absolute',
-                            top: '3px',
-                            left: timed ? '25px' : '3px',
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '50%',
-                            background: 'white',
-                            transition: 'left 0.2s',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-                        }} />
-                    </button>
+                    />
                 </div>
 
                 {/* AI suggestions toggle — edit mode, Level 3+ */}
@@ -1007,8 +990,9 @@ function TaskCreate() {
                                 <p className="label-bold" style={{ margin: 0, color: 'var(--color-text-main)' }}>AI SUGGESTIONS</p>
                                 <p className="caption" style={{ margin: 0, color: 'var(--color-text-secondary)' }}>Breakdown and Time Estimate</p>
                             </div>
-                            <button
-                                onClick={() => {
+                            <Toggle
+                                checked={aiSuggest}
+                                onChange={() => {
                                     const next = !useAI
                                     setUseAI(next)
                                     if (next) {
@@ -1021,30 +1005,7 @@ function TaskCreate() {
                                         setAiSnapshot(null)
                                     }
                                 }}
-                                style={{
-                                    width: '48px',
-                                    height: '26px',
-                                    borderRadius: '999px',
-                                    border: 'none',
-                                    flexShrink: 0,
-                                    cursor: 'pointer',
-                                    background: useAI ? 'var(--color-primary)' : 'var(--color-divider)',
-                                    position: 'relative',
-                                    transition: 'background 0.2s',
-                                }}
-                            >
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '3px',
-                                    left: useAI ? '25px' : '3px',
-                                    width: '20px',
-                                    height: '20px',
-                                    borderRadius: '50%',
-                                    background: 'white',
-                                    transition: 'left 0.2s',
-                                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                                }} />
-                            </button>
+                            />
                         </div>
                         {!useAI && subtasks.some(s => s.ai) && (
                             <p className="caption" style={{ margin: '10px 0 0', color: 'var(--color-text-secondary)' }}>
@@ -1082,32 +1043,10 @@ function TaskCreate() {
                                 <p className="label-bold" style={{ margin: 0, color: 'var(--color-text-main)' }}>AI SUGGESTIONS</p>
                                 <p className="caption" style={{ margin: 0, color: 'var(--color-text-secondary)' }}>Breakdown and Time Estimate</p>
                             </div>
-                            <button
-                                onClick={handleAiToggle}
-                                style={{
-                                    width: '48px',
-                                    height: '26px',
-                                    borderRadius: '999px',
-                                    border: 'none',
-                                    flexShrink: 0,
-                                    cursor: 'pointer',
-                                    background: aiSuggest ? 'var(--color-primary)' : 'var(--color-divider)',
-                                    position: 'relative',
-                                    transition: 'background 0.2s'
-                                }}
-                            >
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '3px',
-                                    left: aiSuggest ? '25px' : '3px',
-                                    width: '20px',
-                                    height: '20px',
-                                    borderRadius: '50%',
-                                    background: 'white',
-                                    transition: 'left 0.2s',
-                                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-                                }} />
-                            </button>
+                            <Toggle
+                                checked={aiSuggest}
+                                onChange={handleAiToggle}
+                            />
                         </div>
                     ) : (
                         <div style={{
