@@ -46,7 +46,7 @@ export const api = {
     clearTemplates:       ()           => req('DELETE', '/task-templates'),
 
     // ── ai ─────────────────────────────────────────────────────────────────────
-    breakdown:            (task, instructions) => req('POST',   '/ai/breakdown', { task, instructions }),
+    breakdown:            (task, instructions, subtaskContext = null) => req('POST',   '/ai/breakdown', { task, instructions, subtaskContext }),
     recommend:            (body)       => req('POST',   '/ai/recommend', body),
     chat:                 (body)       => req('POST',   '/ai/chat', body),
 }
