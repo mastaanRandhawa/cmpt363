@@ -3,9 +3,9 @@
 
 import { api } from './api'
 
-export async function getRecommendedTask({ tasks, moodIndex, streak }) {
+export async function getRecommendedTask({ tasks, moodIndex, streak, personalities = [] }) {
     try {
-        const result = await api.recommend({ tasks, moodIndex, streak })
+        const result = await api.recommend({ tasks, moodIndex, streak, personalities })
         return result  // { taskId, reason } or null
     } catch {
         return null

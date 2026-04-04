@@ -91,7 +91,7 @@ function Home() {
         setRecLoading(true)
         setRec(null)
         try {
-            const result = await getRecommendedTask({ tasks: incompleteTasks, moodIndex: moodToday, streak })
+            const result = await getRecommendedTask({ tasks: incompleteTasks, moodIndex: moodToday, streak, personalities: settings.aiPersonalities })
             setRec(result)
         } finally {
             setRecLoading(false)

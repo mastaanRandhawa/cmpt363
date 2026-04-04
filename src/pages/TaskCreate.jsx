@@ -20,6 +20,7 @@ import useTaskStore from '../data/useTaskStore'
 import useDebugStore from '../data/useDebugStore'
 import useNavGuardStore from '../data/useNavGuardStore'
 import useRoboStore, { levelFromXp } from '../data/useRoboStore'
+import useSettingsStore from '../data/useSettingsStore'
 import useDragSort from '../hooks/useDragSort'
 import { generateSubtasks } from '../data/taskBreakdown'
 import useTaskTemplateStore from '../data/useTaskTemplateStore'
@@ -58,8 +59,9 @@ function TaskCreate() {
     const updateTask = useTaskStore(s => s.updateTask)
     const tasks      = useTaskStore(s => s.tasks)
     const setDebug   = useDebugStore(s => s.set)
-    const xp         = useRoboStore(s => s.xp)
-    const level      = levelFromXp(xp)
+    const xp               = useRoboStore(s => s.xp)
+    const level            = levelFromXp(xp)
+    const aiPersonalities  = useSettingsStore(s => s.aiPersonalities)
 
     // edit mode
     const editId   = routeId || routerLocation.state?.editId || null
@@ -141,7 +143,7 @@ function TaskCreate() {
             .map(r => [r.current, r.current.getBoundingClientRect()])
             .sort(([aEl, {y: aY}], [bEl, {y: bY}]) => aY - bY)
             .map(([el, coords]) => el)
-        
+
         if (orderedErrors.length > 0) {
             // Flash "REQUIRED" labels.
             for (const el of orderedErrors) {
@@ -293,7 +295,7 @@ function TaskCreate() {
                 dismissed: updatedDismissed,
             }
 
-            const result = await generateSubtasks(task, aiInstructions || null, subtaskContext)
+            const result = await generateSubtasks(task, aiInstructions || null, subtaskContext, aiPersonalities)
             setAiOriginal(result)
             setAiPending(result.map(s => ({ ...s, id: s.id || crypto.randomUUID() })))
         } catch {
