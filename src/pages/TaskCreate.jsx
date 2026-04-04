@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import {
     Command,
@@ -118,6 +118,46 @@ function TaskCreate() {
         (!privateNotes && notes !== aiSnapshot.notes) ||
         aiInstructions !== aiSnapshot.aiInstructions
     )
+
+    // ─── auto scroll to error ─────────────────────────────────────────────
+    const canHighlightErrors = useRef(false)
+
+    const taskNameErrorRef = useRef(null)
+    const dateErrorRef = useRef(null)
+    const priorityErrorRef = useRef(null)
+    const effortErrorRef = useRef(null)
+
+    const errorRefs = [taskNameErrorRef, dateErrorRef, priorityErrorRef, effortErrorRef]
+    useEffect(() => {
+        if (canHighlightErrors.current !== true) {
+            return
+        }
+
+        canHighlightErrors.current = false
+
+        const orderedErrors = errorRefs
+            .filter(r => r.current != null)
+            .map(r => [r.current, r.current.getBoundingClientRect()])
+            .sort(([aEl, {y: aY}], [bEl, {y: bY}]) => aY - bY)
+            .map(([el, coords]) => el)
+        
+        if (orderedErrors.length > 0) {
+            // Flash "REQUIRED" labels.
+            for (const el of orderedErrors) {
+                el.classList.add('label-flashing')
+            }
+            setTimeout(() => {
+                for (const el of orderedErrors) {
+                    el.classList.remove('label-flashing')
+                }
+            }, 1300)
+
+            // Scroll to the first error.
+            const labelEl = orderedErrors[0]
+            labelEl.style.scrollMarginTop = '150px'
+            orderedErrors[0].scrollIntoView({ behavior: 'smooth' })
+        }
+    })
 
     // ─── unsaved changes guard ────────────────────────────────────────────────
     const isDirty = step === 'form' && (() => {
@@ -278,7 +318,13 @@ function TaskCreate() {
         if (!priority)    e.priority = 'Required'
         if (!effort)      e.effort   = 'Required'
         setErrors(e)
-        return Object.keys(e).length === 0
+        if (Object.keys(e).length === 0) {
+            return true
+        }
+
+        // Validation failed
+        canHighlightErrors.current = true;
+        return false
     }
 
     // ─── create / save ────────────────────────────────────────────────────────
@@ -459,7 +505,7 @@ function TaskCreate() {
                             TASK NAME <span style={{ color: 'var(--color-important)' }}>*</span>
                         </label>
                         {errors.name && (
-                            <span className="label-bold" style={{ color: 'var(--color-important)' }}>
+                            <span className="label-bold" style={{ color: 'var(--color-important)' }} ref={taskNameErrorRef}>
                 REQUIRED
             </span>
                         )}
@@ -481,7 +527,7 @@ function TaskCreate() {
                                 DATE <span style={{ color: 'var(--color-important)' }}>*</span>
                             </label>
                             {errors.date && (
-                                <span className="label-bold" style={{ color: 'var(--color-important)', marginLeft: '8px' }}>
+                                <span className="label-bold" style={{ color: 'var(--color-important)', marginLeft: '8px' }} ref={dateErrorRef}>
                     {errors.date}
                 </span>
                             )}
@@ -568,7 +614,7 @@ function TaskCreate() {
                             PRIORITY <span style={{ color: 'var(--color-important)' }}>*</span>
                         </label>
                         {errors.priority && (
-                            <span className="label-bold" style={{ color: 'var(--color-important)' }}>
+                            <span className="label-bold" style={{ color: 'var(--color-important)' }} ref={priorityErrorRef}>
                 REQUIRED
             </span>
                         )}
@@ -602,7 +648,7 @@ function TaskCreate() {
                             EFFORT <span style={{ color: 'var(--color-important)' }}>*</span>
                         </label>
                         {errors.effort && (
-                            <span className="label-bold" style={{ color: 'var(--color-important)' }}>
+                            <span className="label-bold" style={{ color: 'var(--color-important)' }} ref={effortErrorRef}>
                 REQUIRED
             </span>
                         )}
