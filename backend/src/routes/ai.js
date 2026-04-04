@@ -64,7 +64,7 @@ function mockBreakdown(task) {
 
 const EFFORT_LABELS = { 1: 'Very Low', 2: 'Low', 3: 'Medium', 4: 'High', 5: 'Very High' }
 
-function buildBreakdownPrompt(task, templates = []) {
+function buildBreakdownPrompt(task, templates = [], subtaskContext = null) {
     const lines = [`Task: ${task.name}`]
     if (task.due)         lines.push(`Due date: ${task.due}`)
     if (task.time)        lines.push(`Due time: ${task.time}`)
@@ -90,6 +90,31 @@ function buildBreakdownPrompt(task, templates = []) {
         lines.push('Use this to personalise your suggestions — favour subtasks the user kept or added, avoid ones they removed, and match their actual time experience.')
     }
 
+    if (subtaskContext) {
+        const { accepted = [], edited = [], userAdded = [], dismissed = [] } = subtaskContext
+        const hasExisting = accepted.length > 0 || edited.length > 0 || userAdded.length > 0
+        const hasDismissed = dismissed.length > 0
+
+        if (hasExisting) {
+            lines.push('')
+            lines.push('SUBTASKS ALREADY CONFIRMED BY THE USER (do not suggest duplicates or near-duplicates):')
+            for (const s of accepted)  lines.push(`  - "${s.label}"${s.estSubtaskTime ? ` (${s.estSubtaskTime}min)` : ''} [accepted from AI]`)
+            for (const s of edited)    lines.push(`  - "${s.label}"${s.estSubtaskTime ? ` (${s.estSubtaskTime}min)` : ''} [user edited an AI suggestion]`)
+            for (const s of userAdded) lines.push(`  - "${s.label}" [added by user]`)
+        }
+
+        if (hasDismissed) {
+            lines.push('')
+            lines.push('SUGGESTIONS THE USER ALREADY DISMISSED (do not re-suggest these):')
+            for (const s of dismissed) lines.push(`  - "${s.label}"`)
+        }
+
+        if (hasExisting || hasDismissed) {
+            lines.push('')
+            lines.push('Generate only NEW subtasks that complement what is already confirmed above.')
+        }
+    }
+
     return lines.join('\n')
 }
 
@@ -107,14 +132,19 @@ function parseAIBreakdown(text) {
     })).filter(s => s.label)
 }
 
-async function realBreakdown(task, templates) {
+async function realBreakdown(task, templates, subtaskContext) {
     const model  = getModel(`You are a productivity assistant that breaks down tasks into clear, actionable subtasks.
 
-Given a notes on a task, return a JSON array of subtasks. Each subtask must have:
+Given notes on a task, return a JSON array of subtasks. Each subtask must have:
 - "label": a short, concrete action starting with a verb (max ~60 characters)
 - "estSubtaskTime": realistic time estimate as a number
 
 Return 3–7 subtasks. Output only the JSON array, no explanation.
+
+If the prompt includes already-confirmed subtasks or dismissed suggestions, respect them:
+- Do not suggest anything already confirmed or near-duplicate to it.
+- Do not re-suggest anything the user dismissed.
+- Only return subtasks that are genuinely new and complementary.
 
 Example:
 [
@@ -122,7 +152,7 @@ Example:
   { "label": "Make a decision and place order", "estSubtaskTime": 10 }
 ]`)
 
-    const result = await model.generateContent(buildBreakdownPrompt(task, templates))
+    const result = await model.generateContent(buildBreakdownPrompt(task, templates, subtaskContext))
     return parseAIBreakdown(result.response.text())
 }
 
@@ -250,7 +280,7 @@ export function createAiRouter(prisma) {
      */
     r.post('/breakdown', async (req, res, next) => {
         try {
-            const { task } = req.body
+            const { task, subtaskContext = null } = req.body
             if (!task?.name) return res.status(400).json({ error: 'task.name required' })
 
             if (!genAI) {
@@ -262,7 +292,7 @@ export function createAiRouter(prisma) {
             const similar      = findSimilarTemplates(task.name, allTemplates)
 
             try {
-                const subtasks = await realBreakdown(task, similar)
+                const subtasks = await realBreakdown(task, similar, subtaskContext)
                 return res.json({ subtasks })
             } catch (aiErr) {
                 console.error('[ai/breakdown] AI failed, falling back to mock:', aiErr.message)

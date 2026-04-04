@@ -102,6 +102,7 @@ function TaskCreate() {
     const [aiOriginal, setAiOriginal]   = useState([])      // raw AI output for template saving
     const [aiInstructions, setAiInstructions] = useState(editTask?.aiInstructions ?? '')      // user directions to the AI
     const [useAI, setUseAI]               = useState(editTask?.useAI ?? false)              // edit mode: AI on/off for this task
+    const [aiDismissed, setAiDismissed]   = useState([])    // explicitly dismissed + skipped suggestions across all runs
 
     // ─── confirm step ─────────────────────────────────────────────────────────
     const [step, setStep]           = useState('form')
@@ -213,8 +214,19 @@ function TaskCreate() {
 
     useEffect(() => () => setDebug('TaskCreate', null), [])
 
+    // ─── scroll to top on step change ────────────────────────────────────────
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'instant' })
+    }, [step])
+
     // ─── AI suggestions ───────────────────────────────────────────────────────
     async function runAISuggestions() {
+        // Capture any pending suggestions that were neither accepted nor dismissed
+        // (still showing when re-run is triggered) — treat as implicitly skipped
+        const skipped = aiPending.map(s => ({ label: s.label }))
+        const updatedDismissed = [...aiDismissed, ...skipped]
+        setAiDismissed(updatedDismissed)
+
         setAiLoading(true)
         setAiPending([])
         const snap = { name, date, priority, effort, privateNotes, notes: privateNotes ? null : notes, aiInstructions }
@@ -231,7 +243,16 @@ function TaskCreate() {
                 notesArePrivate: privateNotes || undefined,
                 location,
             }
-            const result = await generateSubtasks(task, aiInstructions || null)
+
+            // Build context from what the user has already done with subtasks
+            const subtaskContext = {
+                accepted:  subtasks.filter(s => s.ai && s.wasAi).map(s => ({ label: s.label, estSubtaskTime: s.estSubtaskTime ?? null })),
+                edited:    subtasks.filter(s => !s.ai && s.wasAi).map(s => ({ label: s.label, estSubtaskTime: s.estSubtaskTime ?? null })),
+                userAdded: subtasks.filter(s => !s.wasAi).map(s => ({ label: s.label })),
+                dismissed: updatedDismissed,
+            }
+
+            const result = await generateSubtasks(task, aiInstructions || null, subtaskContext)
             setAiOriginal(result)
             setAiPending(result.map(s => ({ ...s, id: s.id || crypto.randomUUID() })))
         } catch {
@@ -250,22 +271,25 @@ function TaskCreate() {
             setAiPending([])
             setAiSubmitted(false)
             setAiSnapshot(null)
+            setAiDismissed([])
         }
     }
 
     function acceptPending(id) {
         const s = aiPending.find(p => p.id === id)
         if (!s) return
-        setSubtasks(prev => [...prev, s])
+        setSubtasks(prev => [...prev, { ...s, wasAi: true }])
         setAiPending(prev => prev.filter(p => p.id !== id))
     }
 
     function acceptAllPending() {
-        setSubtasks(prev => [...prev, ...aiPending])
+        setSubtasks(prev => [...prev, ...aiPending.map(s => ({ ...s, wasAi: true }))])
         setAiPending([])
     }
 
     function dismissPending(id) {
+        const s = aiPending.find(p => p.id === id)
+        if (s) setAiDismissed(prev => [...prev, { label: s.label }])
         setAiPending(prev => prev.filter(p => p.id !== id))
     }
 
@@ -344,6 +368,7 @@ function TaskCreate() {
     function commitEdit(id) {
         if (!editLabel.trim()) { cancelEdit(); return }
         setSubtasks(prev => prev.map(s =>
+            // Clear ai badge on edit, but preserve wasAi so we can still tell it was originally AI-suggested
             s.id === id ? { ...s, label: editLabel.trim(), ai: false } : s
         ))
         cancelEdit()
