@@ -64,7 +64,8 @@ function Chat() {
     const navigate   = useNavigate()
     const allTasks   = useTaskStore(s => s.tasks)
     const tasks      = useMemo(() => allTasks.filter(t => !t._softDeleted), [allTasks])
-    const aiAssistantName = useSettingsStore(s => s.aiAssistantName)
+    const aiAssistantName  = useSettingsStore(s => s.aiAssistantName)
+    const aiPersonalities  = useSettingsStore(s => s.aiPersonalities)
     const roboName = aiAssistantName || 'Robo'
 
     const [messages, setMessages] = useState(() => [{
@@ -102,7 +103,7 @@ function Chat() {
             .map(m => ({ role: m.role, content: m.text }))
 
         try {
-            const { reply } = await api.chat({ messages: history, tasks, roboName })
+            const { reply } = await api.chat({ messages: history, tasks, roboName, personalities: aiPersonalities })
             setMessages(prev => [...prev, {
                 id:        `a-${Date.now()}`,
                 role:      'assistant',

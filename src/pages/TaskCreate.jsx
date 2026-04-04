@@ -20,6 +20,7 @@ import useTaskStore from '../data/useTaskStore'
 import useDebugStore from '../data/useDebugStore'
 import useNavGuardStore from '../data/useNavGuardStore'
 import useRoboStore, { levelFromXp } from '../data/useRoboStore'
+import useSettingsStore from '../data/useSettingsStore'
 import useDragSort from '../hooks/useDragSort'
 import { generateSubtasks } from '../data/taskBreakdown'
 import useTaskTemplateStore from '../data/useTaskTemplateStore'
@@ -57,8 +58,9 @@ function TaskCreate() {
     const updateTask = useTaskStore(s => s.updateTask)
     const tasks      = useTaskStore(s => s.tasks)
     const setDebug   = useDebugStore(s => s.set)
-    const xp         = useRoboStore(s => s.xp)
-    const level      = levelFromXp(xp)
+    const xp               = useRoboStore(s => s.xp)
+    const level            = levelFromXp(xp)
+    const aiPersonalities  = useSettingsStore(s => s.aiPersonalities)
 
     // edit mode
     const editId   = routeId || routerLocation.state?.editId || null
@@ -231,7 +233,7 @@ function TaskCreate() {
                 notesArePrivate: privateNotes || undefined,
                 location,
             }
-            const result = await generateSubtasks(task, aiInstructions || null)
+            const result = await generateSubtasks(task, aiInstructions || null, aiPersonalities)
             setAiOriginal(result)
             setAiPending(result.map(s => ({ ...s, id: s.id || crypto.randomUUID() })))
         } catch {
