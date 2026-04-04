@@ -107,9 +107,9 @@ const useSettingsStore = create(
                     })
                 },
                 
-                aiBehaviour: "mentee",
+                aiBehaviour: "helper",
                 setAiBehaviour(value) {
-                    assertEnum(value, ['mentee', 'mentor'])
+                    assertEnum(value, ['helper', 'mentee', 'mentor'])
                     update({
                         aiBehaviour: value,
                     })

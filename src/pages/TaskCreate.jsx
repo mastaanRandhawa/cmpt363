@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import {
     Command,
@@ -30,6 +30,7 @@ import RepeatPicker from '../components/RepeatPicker'
 import ConfirmDialog from '../components/ConfirmDialog'
 import FadeOverlay from '../components/FadeOverlay'
 import { priority as priorityMap, effort as effortMap } from '../data/chipColors.js'
+import Toggle from '../components/Toggle.jsx'
 
 const priorities = ['low', 'med', 'high']
 
@@ -117,6 +118,46 @@ function TaskCreate() {
         (!privateNotes && notes !== aiSnapshot.notes) ||
         aiInstructions !== aiSnapshot.aiInstructions
     )
+
+    // ─── auto scroll to error ─────────────────────────────────────────────
+    const canHighlightErrors = useRef(false)
+
+    const taskNameErrorRef = useRef(null)
+    const dateErrorRef = useRef(null)
+    const priorityErrorRef = useRef(null)
+    const effortErrorRef = useRef(null)
+
+    const errorRefs = [taskNameErrorRef, dateErrorRef, priorityErrorRef, effortErrorRef]
+    useEffect(() => {
+        if (canHighlightErrors.current !== true) {
+            return
+        }
+
+        canHighlightErrors.current = false
+
+        const orderedErrors = errorRefs
+            .filter(r => r.current != null)
+            .map(r => [r.current, r.current.getBoundingClientRect()])
+            .sort(([aEl, {y: aY}], [bEl, {y: bY}]) => aY - bY)
+            .map(([el, coords]) => el)
+        
+        if (orderedErrors.length > 0) {
+            // Flash "REQUIRED" labels.
+            for (const el of orderedErrors) {
+                el.classList.add('label-flashing')
+            }
+            setTimeout(() => {
+                for (const el of orderedErrors) {
+                    el.classList.remove('label-flashing')
+                }
+            }, 1300)
+
+            // Scroll to the first error.
+            const labelEl = orderedErrors[0]
+            labelEl.style.scrollMarginTop = '150px'
+            orderedErrors[0].scrollIntoView({ behavior: 'smooth' })
+        }
+    })
 
     // ─── unsaved changes guard ────────────────────────────────────────────────
     const isDirty = step === 'form' && (() => {
@@ -277,7 +318,13 @@ function TaskCreate() {
         if (!priority)    e.priority = 'Required'
         if (!effort)      e.effort   = 'Required'
         setErrors(e)
-        return Object.keys(e).length === 0
+        if (Object.keys(e).length === 0) {
+            return true
+        }
+
+        // Validation failed
+        canHighlightErrors.current = true;
+        return false
     }
 
     // ─── create / save ────────────────────────────────────────────────────────
@@ -458,7 +505,7 @@ function TaskCreate() {
                             TASK NAME <span style={{ color: 'var(--color-important)' }}>*</span>
                         </label>
                         {errors.name && (
-                            <span className="label-bold" style={{ color: 'var(--color-important)' }}>
+                            <span className="label-bold" style={{ color: 'var(--color-important)' }} ref={taskNameErrorRef}>
                 REQUIRED
             </span>
                         )}
@@ -480,7 +527,7 @@ function TaskCreate() {
                                 DATE <span style={{ color: 'var(--color-important)' }}>*</span>
                             </label>
                             {errors.date && (
-                                <span className="label-bold" style={{ color: 'var(--color-important)', marginLeft: '8px' }}>
+                                <span className="label-bold" style={{ color: 'var(--color-important)', marginLeft: '8px' }} ref={dateErrorRef}>
                     {errors.date}
                 </span>
                             )}
@@ -567,7 +614,7 @@ function TaskCreate() {
                             PRIORITY <span style={{ color: 'var(--color-important)' }}>*</span>
                         </label>
                         {errors.priority && (
-                            <span className="label-bold" style={{ color: 'var(--color-important)' }}>
+                            <span className="label-bold" style={{ color: 'var(--color-important)' }} ref={priorityErrorRef}>
                 REQUIRED
             </span>
                         )}
@@ -601,7 +648,7 @@ function TaskCreate() {
                             EFFORT <span style={{ color: 'var(--color-important)' }}>*</span>
                         </label>
                         {errors.effort && (
-                            <span className="label-bold" style={{ color: 'var(--color-important)' }}>
+                            <span className="label-bold" style={{ color: 'var(--color-important)' }} ref={effortErrorRef}>
                 REQUIRED
             </span>
                         )}
@@ -953,32 +1000,14 @@ function TaskCreate() {
                     </div>
 
                     {/* Toggle Switch */}
-                    <button
-                        onClick={() => setTimed(v => !v)}
+                    <Toggle
+                        checked={timed}
+                        onChange={setTimed}
+                        vPaddingEm={0.15}
                         style={{
-                            width: '48px',
-                            height: '26px',
-                            borderRadius: '999px',
-                            border: 'none',
-                            flexShrink: 0,
-                            cursor: 'pointer',
-                            background: timed ? 'var(--color-primary)' : 'var(--color-divider)',
-                            position: 'relative',
-                            transition: 'background 0.2s'
+                            fontSize: '22px',
                         }}
-                    >
-                        <div style={{
-                            position: 'absolute',
-                            top: '3px',
-                            left: timed ? '25px' : '3px',
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '50%',
-                            background: 'white',
-                            transition: 'left 0.2s',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-                        }} />
-                    </button>
+                    />
                 </div>
 
                 {/* AI suggestions toggle — edit mode, Level 3+ */}
@@ -1007,8 +1036,9 @@ function TaskCreate() {
                                 <p className="label-bold" style={{ margin: 0, color: 'var(--color-text-main)' }}>AI SUGGESTIONS</p>
                                 <p className="caption" style={{ margin: 0, color: 'var(--color-text-secondary)' }}>Breakdown and Time Estimate</p>
                             </div>
-                            <button
-                                onClick={() => {
+                            <Toggle
+                                checked={aiSuggest}
+                                onChange={() => {
                                     const next = !useAI
                                     setUseAI(next)
                                     if (next) {
@@ -1021,30 +1051,7 @@ function TaskCreate() {
                                         setAiSnapshot(null)
                                     }
                                 }}
-                                style={{
-                                    width: '48px',
-                                    height: '26px',
-                                    borderRadius: '999px',
-                                    border: 'none',
-                                    flexShrink: 0,
-                                    cursor: 'pointer',
-                                    background: useAI ? 'var(--color-primary)' : 'var(--color-divider)',
-                                    position: 'relative',
-                                    transition: 'background 0.2s',
-                                }}
-                            >
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '3px',
-                                    left: useAI ? '25px' : '3px',
-                                    width: '20px',
-                                    height: '20px',
-                                    borderRadius: '50%',
-                                    background: 'white',
-                                    transition: 'left 0.2s',
-                                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                                }} />
-                            </button>
+                            />
                         </div>
                         {!useAI && subtasks.some(s => s.ai) && (
                             <p className="caption" style={{ margin: '10px 0 0', color: 'var(--color-text-secondary)' }}>
@@ -1082,32 +1089,10 @@ function TaskCreate() {
                                 <p className="label-bold" style={{ margin: 0, color: 'var(--color-text-main)' }}>AI SUGGESTIONS</p>
                                 <p className="caption" style={{ margin: 0, color: 'var(--color-text-secondary)' }}>Breakdown and Time Estimate</p>
                             </div>
-                            <button
-                                onClick={handleAiToggle}
-                                style={{
-                                    width: '48px',
-                                    height: '26px',
-                                    borderRadius: '999px',
-                                    border: 'none',
-                                    flexShrink: 0,
-                                    cursor: 'pointer',
-                                    background: aiSuggest ? 'var(--color-primary)' : 'var(--color-divider)',
-                                    position: 'relative',
-                                    transition: 'background 0.2s'
-                                }}
-                            >
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '3px',
-                                    left: aiSuggest ? '25px' : '3px',
-                                    width: '20px',
-                                    height: '20px',
-                                    borderRadius: '50%',
-                                    background: 'white',
-                                    transition: 'left 0.2s',
-                                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-                                }} />
-                            </button>
+                            <Toggle
+                                checked={aiSuggest}
+                                onChange={handleAiToggle}
+                            />
                         </div>
                     ) : (
                         <div style={{

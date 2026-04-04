@@ -4,38 +4,88 @@ import { ChevronRight, ChevronLeft } from 'lucide-react'
 import useOnboardingStore, { ONBOARDING_STEPS } from '../data/useOnboardingStore.js'
 
 // ── Constants ──────────────────────────────────────────────────────────────
-const OVERLAY_BG  = 'rgba(0, 0, 0, 0.80)'
+const OVERLAY_BG  = 'rgba(0, 0, 0, 0.50)'
 const CARD_W      = 320
 const CARD_H_EST  = 200   // estimated card height for positioning math
 const SPOTLIGHT_R = 16    // spotlight border-radius
+const SPOTLIGHT_BORDER_WIDTH = 1.5 // spotlight border width
+const SPOTLIGHT_SHADOW_SIZE = 3 // spotlight box-shadow inset size
 const PAD         = 8     // extra padding around each spotlight rect
 
 // ── Sub-components ─────────────────────────────────────────────────────────
 
+class SVGCoord {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    add(dx, dy) { return new SVGCoord(this.x + dx, this.y + dy) }
+    withX(x)    { return new SVGCoord(x, this.y) }
+    withY(y)    { return new SVGCoord(this.x, y) }
+
+    toString() {
+        return `${this.x} ${this.y}`
+    }
+}
+
 /** Four dark panels that surround the spotlight cutout */
-function DarkPanels({ sp, phoneH }) {
+function DarkPanels({ sp, phoneW, phoneH, offset: off = 0 }) {
     const style = (extra) => ({
         position:      'absolute',
-        background:    OVERLAY_BG,
         pointerEvents: 'all',
         ...extra,
     })
 
     if (!sp) {
-        return <div style={style({ inset: 0 })} />
+        return <div style={style({ inset: 0, background: OVERLAY_BG })} />
     }
 
+    const rad = SPOTLIGHT_R
+    const radCurve = off
+
+    const xy_topLeft = new SVGCoord(sp.x, sp.y)
+    const xy_topRight = new SVGCoord(sp.x + sp.w, sp.y)
+    const xy_botRight = new SVGCoord(sp.x + sp.w, sp.y + sp.h)
+    const xy_botLeft = new SVGCoord(sp.x, sp.y + sp.h)
+
     return (
-        <>
-            {/* Top */}
-            <div style={style({ top: 0, left: 0, right: 0, height: sp.y })} />
-            {/* Left */}
-            <div style={style({ top: sp.y, left: 0, width: Math.max(0, sp.x), height: sp.h })} />
-            {/* Right */}
-            <div style={style({ top: sp.y, left: sp.x + sp.w, right: 0, height: sp.h })} />
-            {/* Bottom */}
-            <div style={style({ top: sp.y + sp.h, left: 0, right: 0, bottom: 0 })} />
-        </>
+        <svg
+            style={style({ top: 0, left: 0, width: '100%', height: '100%' })}
+            xmlns="http://www.w3.org/2000/svg"
+        >
+            <path fill={OVERLAY_BG} d={[
+                // Below top left → Above top left
+                `M ${xy_topLeft.add(-off, rad)}`,
+                `S ${xy_topLeft.add(-radCurve, -radCurve)}, ${xy_topLeft.add(rad, -off)}`,
+
+                // Above top left → Above top right → Below top right
+                `L ${xy_topRight.add(-rad, -off)}`,
+                `S ${xy_topRight.add(radCurve, -radCurve)}, ${xy_topRight.add(off, rad)}`,
+                
+                // Below top right → Above bottom right → Below bottom right
+                `L ${xy_botRight.add(off, -rad)}`,
+                `S ${xy_botRight.add(radCurve, radCurve)}, ${xy_botRight.add(-rad, off)}`,
+
+                // Below bottom right → Below bottom left → Above bottom left
+                `L ${xy_botLeft.add(rad, off)}`,
+                `S ${xy_botLeft.add(-radCurve, radCurve)}, ${xy_botLeft.add(-off, -rad)}`,
+
+                // Above bottom left → below top left
+                `L ${xy_topLeft.add(-off, rad)}`,
+
+                // Below top left → absolute left
+                `L ${xy_topLeft.add(-off, rad).withX(0)}`,
+
+                // Counter-clockwise across entire phone dimensions to cut out above shape.
+                `L 0 ${phoneH}`,
+                `L ${phoneW} ${phoneH}`,
+                `L ${phoneW} ${phoneH}`,
+                `L ${phoneW} 0`,
+                `L 0 0`,
+                `L ${xy_topLeft.add(-off, rad).withX(0)}`,
+            ].join(' ')} />
+        </svg>
     )
 }
 
@@ -50,8 +100,8 @@ function SpotlightBorder({ sp }) {
             width:         sp.w,
             height:        sp.h,
             borderRadius:  SPOTLIGHT_R,
-            border:        '1.5px solid rgba(255,255,255,0.18)',
-            boxShadow:     `0 0 0 3px color-mix(in srgb, var(--color-primary) 45%, transparent), inset 0 0 24px color-mix(in srgb, var(--color-primary) 6%, transparent)`,
+            border:        `${SPOTLIGHT_BORDER_WIDTH}px solid rgba(255,255,255,0.18)`,
+            boxShadow:     `0 0 0 ${SPOTLIGHT_SHADOW_SIZE} color-mix(in srgb, var(--color-primary) 45%, transparent), inset 0 0 24px color-mix(in srgb, var(--color-primary) 6%, transparent)`,
             pointerEvents: 'none',
             zIndex:        1,
         }} />
@@ -266,12 +316,29 @@ function OnboardingOverlay() {
             const fr = frame.getBoundingClientRect()
             const er = el.getBoundingClientRect()
 
-            setSpotlight({
-                x: er.left - fr.left - PAD,
+            const spotlight = {
+                x: er.left - fr.left - PAD * 2,
                 y: er.top  - fr.top  - PAD,
                 w: er.width  + PAD * 2,
-                h: er.height + PAD * 2,
-            })
+                h: er.height + PAD,
+            }
+
+            // Compensate for CSS scale of phone frame.
+            let scaleStr = getComputedStyle(frame).getPropertyValue('--scale')
+            if (scaleStr == null || scaleStr === '') {
+                scaleStr = "1"
+            }
+
+            const scale = parseFloat(scaleStr)
+            if (!isNaN(scale) && scale !== 0) {
+                const scaleRecip = 1/scale
+                spotlight.x *= scaleRecip
+                spotlight.y *= scaleRecip
+                spotlight.w *= scaleRecip
+                spotlight.h *= scaleRecip
+            }
+
+            setSpotlight(spotlight)
         }, 150)
 
         return () => clearTimeout(id)
@@ -291,7 +358,7 @@ function OnboardingOverlay() {
                 pointerEvents: 'none',
             }}
         >
-            <DarkPanels sp={spotlight} phoneH={phoneDims.h} />
+            <DarkPanels sp={spotlight} phoneW={phoneDims.w} phoneH={phoneDims.h} />
             <SpotlightBorder sp={spotlight} />
             <TooltipCard
                 step={step}

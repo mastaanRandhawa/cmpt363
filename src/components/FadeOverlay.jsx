@@ -9,7 +9,7 @@
 // Usage:
 //   <FadeOverlay visible={deletePending} navigating={navigating} />
 
-function FadeOverlay({ visible, navigating, isModal = false }) {
+function FadeOverlay({ visible, navigating, isModal = true }) {
 // When navigating, we want to fade into the theme's background color
     // When just "dimming" for a modal, we use the theme's modal variable
     const backgroundColor = navigating
@@ -22,7 +22,7 @@ function FadeOverlay({ visible, navigating, isModal = false }) {
             position: isModal ? 'fixed' : 'absolute',
             inset: 0,
             background: backgroundColor,
-            zIndex: isModal ? 1000 : 100, // Higher z-index for modals
+            zIndex: isModal ? 2000 : 100, // Higher z-index for modals
             borderRadius: isModal ? 0 : 'inherit',
 
             // If it's a modal, we WANT pointer events to block clicking the background

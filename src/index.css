@@ -85,6 +85,14 @@ body {
   text-transform: uppercase;
 }
 
+@keyframes flashing {
+  50% { opacity: 0 }
+}
+.label-flashing {
+  animation: flashing 0.6s 2 ease;
+  animation-delay: 0.25s
+}
+
 /* Base icon class */
 .icon {
   display: inline-flex;

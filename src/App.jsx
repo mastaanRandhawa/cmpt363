@@ -292,6 +292,7 @@ function App() {
 
             {/* Phone frame */}
             <div
+                id="phone-frame"
                 data-phone-frame
                 style={{
                     width:  `${frameW}px`,
@@ -307,6 +308,7 @@ function App() {
                     position: 'relative',
                     display: 'flex',
                     flexDirection: 'column',
+                    "--scale": desktopScale,
                 }}
             >
                 {/* Status Bar */}
