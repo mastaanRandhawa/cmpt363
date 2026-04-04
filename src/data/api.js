@@ -1,4 +1,7 @@
-const BASE = '/api'
+const envBase = import.meta.env.VITE_API_BASE
+export const API_BASE = (envBase != null && String(envBase).trim() !== ''
+    ? String(envBase)
+    : 'http://localhost:3001/api').replace(/\/$/, '')
 
 async function req(method, path, body) {
     const opts = {
@@ -6,7 +9,7 @@ async function req(method, path, body) {
         headers: { 'Content-Type': 'application/json' },
     }
     if (body !== undefined) opts.body = JSON.stringify(body)
-    const res = await fetch(`${BASE}${path}`, opts)
+    const res = await fetch(`${API_BASE}${path}`, opts)
     if (res.status === 204) return null
     const json = await res.json()
     if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}`)

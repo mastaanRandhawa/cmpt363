@@ -6,7 +6,7 @@
 import useTaskStore from '../data/useTaskStore'
 import useToastStore from '../data/useToastStore'
 import useDebugStore from '../data/useDebugStore'
-import useAIStore from '../data/useAIStore'
+import useAIStore from '../data/useAiStore'
 import useTaskTemplateStore from '../data/useTaskTemplateStore'
 import { useState } from 'react'
 

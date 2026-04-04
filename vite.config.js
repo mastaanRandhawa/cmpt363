@@ -11,4 +11,11 @@ export default defineConfig({
       },
     },
   },
+  // Render Web Service: `npm start` → vite preview must listen on 0.0.0.0:$PORT
+  preview: {
+    host:         true,
+    port:         Number(process.env.PORT) || 4173,
+    strictPort:   true,
+    allowedHosts: ['cmpt363-frontend.onrender.com'],
+  },
 })

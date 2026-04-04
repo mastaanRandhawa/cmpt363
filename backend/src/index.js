@@ -17,7 +17,6 @@
  */
 import 'dotenv/config'
 import express, { Router } from 'express'
-import cors from 'cors'
 import { PrismaClient } from '@prisma/client'
 import { createResolveUser } from './middleware/resolveUser.js'
 import { createTasksRouter } from './routes/tasks.js'
@@ -30,10 +29,13 @@ const prisma = new PrismaClient()
 const app    = express()
 const port   = Number(process.env.PORT) || 3001
 
-app.use(cors({
-    origin:      process.env.CORS_ORIGIN || 'http://localhost:5173',
-    credentials: true,
-}))
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,X-User-Id')
+    if (req.method === 'OPTIONS') return res.sendStatus(204)
+    next()
+})
 app.use(express.json())
 
 app.get('/api/health', (_req, res) => {

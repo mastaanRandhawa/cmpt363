@@ -2,7 +2,7 @@
 // Pure helpers are kept as exports so taskBreakdown.js can still import them.
 
 import { create } from 'zustand'
-import { api } from './api'
+import { api, API_BASE } from './api'
 
 // ── pure helpers (exported for taskBreakdown.js) ──────────────────────────────
 
@@ -58,7 +58,7 @@ const useTaskTemplateStore = create((set, get) => ({
         try {
             const rows = await api.getSimilarTemplates('')
             // getSimilarTemplates with empty string returns empty; just prefetch all
-            const all = await fetch('/api/task-templates').then(r => r.json()).catch(() => [])
+            const all = await fetch(`${API_BASE}/task-templates`).then(r => r.json()).catch(() => [])
             const map = {}
             for (const t of all) map[t.normalizedKey] = t
             set({ templates: map })
