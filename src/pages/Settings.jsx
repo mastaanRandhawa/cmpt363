@@ -203,6 +203,7 @@ function Settings() {
                     <ListRow
                         label="Involvement Level"
                         description="How the AI will help you with your task management."
+                        right={<Chip label="COMING SOON" color="muted" />}
                     >
                         <SegmentedControl
                             options={[
@@ -218,11 +219,13 @@ function Settings() {
                     <ListRow
                         label="Behaviour"
                         description="How AI Assistant would behave."
+                        right={<Chip label="COMING SOON" color="muted" />}
                     >
                         <SegmentedControl
                             options={[
-                                { value: 'mentee', label: 'Mentee' },
-                                { value: 'mentor', label: 'Mentor' },
+                                { value: 'helper', label: 'Helper' },
+                                { value: 'mentee', label: 'Mentee', disabled: true },
+                                { value: 'mentor', label: 'Mentor', disabled: true },
                             ]}
                             value={settings.aiBehaviour}
                             onChange={settings.setAiBehaviour}
