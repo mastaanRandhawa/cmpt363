@@ -48,8 +48,23 @@ Our methods were based on three important pillars:
 
 RoboPlan doesn't just help users get things done — it helps them **get better at getting things done** by reducing cognitive load, minimizing planning friction, and building executive functioning skills through CBT-based gamification.
 
+## More Info
 
-## To Run:
+### "How is this different from a to-do list?"
+Robo learns from your behaviour — what subtasks you keep, remove, or add — and improves suggestions over time. The streak and XP system isn't cosmetic; it gates real features. And the AI recommendation actively factors in your mood, time of day, and urgency — not just due dates.
+
+### "What AI is powering this?"
+Google Gemini (via the Gemini API) handles the task breakdown, recommendations, and chat. The system prompt is task-aware — Robo always has your current task list in context, so advice is grounded in what you're actually working on.
+
+### "How does the streak work?"
+Complete at least one task per day and your streak grows. Each streak day adds 0.1× to your combo multiplier — a 5-day streak means XP rewards are 1.5× what they'd normally be. Miss a day and you reset to 1.0×.
+
+### "Can I trust the AI with sensitive notes?"
+Yes — tasks with **Private Notes** enabled have their notes excluded from the AI context entirely. The demo includes a *Therapy Session Prep* task that demonstrates this.
+
+
+## Demo
+### To Run:
 *Note* This requires both private database and API variables that are not provided in this repo.
 
 **Getting the Database seeded with existing tasks for demo**
@@ -82,3 +97,49 @@ npm run dev
 ```
 http://localhost:5173
 ```
+
+### What the Seed Looks Like
+| |                                       |
+|---|---------------------------------------|
+| **User** | demo                                  |
+| **Level** | 3 (375 / 500 XP — halfway to Level 4) |
+| **Streak** | 5 days                                |
+| **Mood** | Good 😊 (set today)                   |
+| **Notifications** | 1 unread ("Task completed 🎉")        |
+
+### Suggested Walkthrough
+
+#### New Task (Full AI Flow)
+| Field | Value                                                                                         |
+|---|-----------------------------------------------------------------------------------------------|
+| Name | `Prepare CMPT276 Presentation`                                                                |
+| Due | 5 days from today                                                                             |
+| Priority | High                                                                                          |
+| Effort | 3                                                                                             |
+| Notes | `10-minute presentation on usability findings. Needs slides, speaker notes, and a live demo.` |
+| AI Instructions | `Focus on slide structure and rehearsal steps. Keep it under 6 subtasks.`                     |
+| Manual subtask to add | `Rehearse with teammates`                                                                     |
+
+#### New Task (Simple, No AI)
+| Field | Value |
+|---|---|
+| Name | `Email group about meeting time` |
+| Due | Tomorrow |
+| Priority | Med |
+| Effort | 1 |
+
+#### Chat Prompts
+| Purpose | Message |
+|---|---|
+| On-topic help | `I'm really struggling to start the essay. Any advice?` |
+| Prioritisation | `What should I tackle first today?` |
+| Off-topic redirect demo | `What's a good recipe for pasta?` |
+| Subtask help | `Can you help me break down the midterm studying?` |
+
+#### Search / Filter Demos
+| Action | Input |
+|---|---|
+| Search | `CMPT` |
+| Filter by today | Tap **TODAY** pill |
+| Filter by priority | Tap **HIGH** pill |
+| See history | Tap **COMPLETED** pill |
