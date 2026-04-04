@@ -66,7 +66,7 @@ function Chat() {
     const tasks      = useMemo(() => allTasks.filter(t => !t._softDeleted), [allTasks])
     const aiAssistantName = useSettingsStore(s => s.aiAssistantName)
     const roboName  = aiAssistantName || 'Robo'
-    //const location  = useLocation()
+    const location  = useLocation()
     const taskName  = location.state?.taskName ?? null
     const aiPersonalities  = useSettingsStore(s => s.aiPersonalities)
 
