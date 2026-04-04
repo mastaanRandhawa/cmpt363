@@ -308,6 +308,7 @@ function App() {
                     position: 'relative',
                     display: 'flex',
                     flexDirection: 'column',
+                    "--scale": desktopScale,
                 }}
             >
                 {/* Status Bar */}

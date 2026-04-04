@@ -316,12 +316,29 @@ function OnboardingOverlay() {
             const fr = frame.getBoundingClientRect()
             const er = el.getBoundingClientRect()
 
-            setSpotlight({
-                x: er.left - fr.left - PAD,
+            const spotlight = {
+                x: er.left - fr.left - PAD * 2,
                 y: er.top  - fr.top  - PAD,
                 w: er.width  + PAD * 2,
-                h: er.height + PAD * 2,
-            })
+                h: er.height + PAD,
+            }
+
+            // Compensate for CSS scale of phone frame.
+            let scaleStr = getComputedStyle(frame).getPropertyValue('--scale')
+            if (scaleStr == null || scaleStr === '') {
+                scaleStr = "1"
+            }
+
+            const scale = parseFloat(scaleStr)
+            if (!isNaN(scale) && scale !== 0) {
+                const scaleRecip = 1/scale
+                spotlight.x *= scaleRecip
+                spotlight.y *= scaleRecip
+                spotlight.w *= scaleRecip
+                spotlight.h *= scaleRecip
+            }
+
+            setSpotlight(spotlight)
         }, 150)
 
         return () => clearTimeout(id)
