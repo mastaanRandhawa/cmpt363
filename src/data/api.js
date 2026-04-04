@@ -1,8 +1,7 @@
-// Default: deployed API. For local dev: VITE_API_BASE=/api in .env.local (Vite proxy → :3001).
 const envBase = import.meta.env.VITE_API_BASE
 export const API_BASE = (envBase != null && String(envBase).trim() !== ''
     ? String(envBase)
-    : 'https://cmpt363.onrender.com/api').replace(/\/$/, '')
+    : 'http://localhost:3001/api').replace(/\/$/, '')
 
 async function req(method, path, body) {
     const opts = {
