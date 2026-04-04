@@ -3,7 +3,8 @@ function SegmentedControl({
                               value,
                               onChange,
                               size = 'md',
-                              fullWidth = false
+                              fullWidth = false,
+                              canWrap = true,
                           }) {
     const isSmall = size === 'sm'
 
@@ -16,6 +17,7 @@ function SegmentedControl({
             gap: '4px',
             width: fullWidth ? '100%' : 'auto',
             boxSizing: 'border-box',
+            flexWrap: canWrap ? 'wrap' : null,
         }}>
             {options.map(option => {
                 const active = option.value === value
