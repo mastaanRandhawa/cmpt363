@@ -4,12 +4,12 @@
 import useAIStore from './useAIStore'
 import { api } from './api'
 
-export async function generateSubtasks(task, instructions, subtaskContext = null) {
+export async function generateSubtasks(task, instructions, subtaskContext = null, personalities =[]) {
     const { setLoading, setSuccess, setError } = useAIStore.getState()
     setLoading(`breakdown: ${task.name}`)
 
     try {
-        const { subtasks } = await api.breakdown(task, instructions, subtaskContext)
+        const { subtasks } = await api.breakdown(task, instructions, subtaskContext, personalities)
         setSuccess(JSON.stringify(subtasks, null, 2), subtasks)
         return subtasks
     } catch (err) {

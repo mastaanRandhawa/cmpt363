@@ -7,6 +7,12 @@ const genAI = process.env.GEMINI_API_KEY
     ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
     : null
 
+// ── Shared personality helper ─────────────────────────────────────────────────
+function personalityInstruction(personalities = []) {
+    if (!personalities || personalities.length === 0) return ''
+    return `\nPERSONALITY: The user has chosen these traits for you: ${personalities.join(', ')}. Let them shape your tone, word choice, and energy in every response.`
+}
+
 function getModel(systemInstruction) {
     return genAI.getGenerativeModel({
         model: 'gemini-3.1-flash-lite-preview',
@@ -132,8 +138,8 @@ function parseAIBreakdown(text) {
     })).filter(s => s.label)
 }
 
-async function realBreakdown(task, templates, subtaskContext) {
-    const model  = getModel(`You are a productivity assistant that breaks down tasks into clear, actionable subtasks.
+async function realBreakdown(task, templates, subtaskContext, personalities) {
+    const model  = getModel(`You are a productivity assistant that breaks down tasks into clear, actionable subtasks. Your personality is ${personalityInstruction(personalities)}.
 
 Given notes on a task, return a JSON array of subtasks. Each subtask must have:
 - "label": a short, concrete action starting with a verb (max ~60 characters)
@@ -223,11 +229,11 @@ function mockRecommend(tasks, moodIndex) {
     return { taskId: pick.id, reasons }
 }
 
-async function realRecommend(tasks, moodIndex, streak) {
+async function realRecommend(tasks, moodIndex, streak, personalities) {
     const model = getModel(`You are a productivity assistant helping a user decide what to work on right now.
 
 Pick the single best task given their mood, energy level, streak, due dates, and priorities.
-Consider: high priority + overdue = most urgent; tired/stressed = prefer lower effort tasks; morning = good for focused work; streak = keep momentum.
+Consider: high priority + overdue = most urgent; tired/stressed = prefer lower effort tasks; morning = good for focused work; streak = keep momentum.${personalityInstruction(personalities)}
 
 Respond with only a JSON object — no explanation outside it:
 { "taskId": "<exact id from the list>", "reasons": ["<short bullet point>", "<short bullet point>"] }
@@ -246,7 +252,7 @@ Each reason should be a short, direct phrase (not a full sentence). 2–3 bullet
 
 // ── chat helpers ──────────────────────────────────────────────────────────────
 
-function buildChatSystemPrompt(tasks, roboName = 'Robo') {
+function buildChatSystemPrompt(tasks, roboName = 'Robo', personalities = []) {
     const activeTasks = tasks.filter(t => t.status !== 'completed')
 
     const taskBlock = activeTasks.length > 0
@@ -255,13 +261,32 @@ function buildChatSystemPrompt(tasks, roboName = 'Robo') {
         ).join('\n')
         : 'No active tasks.'
 
-    return `You are ${roboName}, a task companion in RoboPlan. You're sharp, brief, and a little witty — like a clever friend who keeps you on track.
+    const personalityBlock = personalities.length > 0
+        ? `The user has chosen these personality traits for you: ${personalities.join(', ')}. Let them shape your tone, word choice, and energy in every message.`
+        : 'Be upbeat, witty but not exhausting, and casually encouraging.'
 
-RULES:
-- Only discuss topics connected to the user's tasks (direct help or indirect support counts).
-- Off-topic? Redirect with a quip that references their actual tasks. Never be blunt or preachy about it.
-- Keep replies short. No bullet walls, no essays. One or two punchy lines is ideal.
-- Use the user's actual task names to feel personal, not generic.
+    return `You are ${roboName}, an AI task companion inside RoboPlan — a personal productivity app.
+
+YOUR ROLE:
+Help the user manage and accomplish their active tasks. You have access to their current task list below.
+
+CORE RULES:
+1. Only help with topics that relate to the user's current tasks.
+2. If the message has no reasonable connection to any task, redirect them back to their list with personality — never bluntly or rudely.
+3. Keep replies concise and friendly. You are a companion, not an encyclopedia.
+4. Reference the user's actual task names when possible to feel personal.
+
+TASK RELEVANCE CHECK:
+Before responding, ask yourself: "Does this question connect to any task the user currently has?"
+- Direct match: question is literally about a task → help fully
+- Indirect match: question supports completing a task → help
+- No connection: question has nothing to do with any task → redirect with wit
+
+REDIRECT TONE:
+Be warm and funny, never dismissive. Reference their actual tasks so the redirect feels personal, not robotic.
+
+PERSONALITY:
+${personalityBlock}
 
 CURRENT ACTIVE TASKS:
 ${taskBlock}`
@@ -280,7 +305,7 @@ export function createAiRouter(prisma) {
      */
     r.post('/breakdown', async (req, res, next) => {
         try {
-            const { task, subtaskContext = null } = req.body
+            const { task, subtaskContext = null, personalities = []} = req.body
             if (!task?.name) return res.status(400).json({ error: 'task.name required' })
 
             if (!genAI) {
@@ -292,7 +317,7 @@ export function createAiRouter(prisma) {
             const similar      = findSimilarTemplates(task.name, allTemplates)
 
             try {
-                const subtasks = await realBreakdown(task, similar, subtaskContext)
+                const subtasks = await realBreakdown(task, similar, subtaskContext, personalities)
                 return res.json({ subtasks })
             } catch (aiErr) {
                 console.error('[ai/breakdown] AI failed, falling back to mock:', aiErr.message)
@@ -308,7 +333,7 @@ export function createAiRouter(prisma) {
      */
     r.post('/recommend', async (req, res, next) => {
         try {
-            const { tasks = [], moodIndex, streak } = req.body
+            const { tasks = [], moodIndex, streak, personalities = [] } = req.body
             if (!Array.isArray(tasks) || tasks.length === 0) return res.json(null)
 
             if (!genAI) {
@@ -317,7 +342,7 @@ export function createAiRouter(prisma) {
             }
 
             try {
-                const result = await realRecommend(tasks, moodIndex, streak)
+                const result = await realRecommend(tasks, moodIndex, streak, personalities)
                 return res.json(result)
             } catch (aiErr) {
                 console.error('[ai/recommend] AI failed, falling back to mock:', aiErr.message)
@@ -333,7 +358,7 @@ export function createAiRouter(prisma) {
      */
     r.post('/chat', async (req, res, next) => {
         try {
-            const { messages = [], tasks = [], roboName = 'Robo' } = req.body
+            const { messages = [], tasks = [], roboName = 'Robo', personalities = [] } = req.body
             if (!Array.isArray(messages) || messages.length === 0) {
                 return res.status(400).json({ error: 'messages[] required' })
             }
@@ -343,7 +368,7 @@ export function createAiRouter(prisma) {
             }
 
             try {
-                const model = getModel(buildChatSystemPrompt(tasks, roboName))
+                const model = getModel(buildChatSystemPrompt(tasks, roboName, personalities))
 
                 // Gemini uses 'model' for assistant; split history from current message
                 const geminiHistory = messages.slice(0, -1).map(m => ({
