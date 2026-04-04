@@ -26,11 +26,15 @@ function Toggle({
 
     thumbWidthEm = 0.9,
     thumbHeightEm = 0.9,
-    trackWidthEm = 2, // 200% of the font size
+    trackWidthEm = 2.2, // 250% of the font size
     hPaddingEm = 0.15,
-    vPaddingEm = 0.2,
+    vPaddingEm = 0.15,
     transitionTime = '0.2s',
     transitionFormula = 'ease-out',
+
+    style = {
+        fontSize: '22px',
+    },
 }) {
     const isControlled        = checked !== undefined
     const [on, setOn]         = useState(defaultOn)
@@ -53,7 +57,7 @@ function Toggle({
         height: `calc(1em + ${vPaddingEm}em)`,
         borderRadius: `calc(1em + ${vPaddingEm}em)`,
         transition: `background ${transitionTime} ${transitionFormula}`,
-        backgroundColor: 'var(--color-card)',
+        backgroundColor: 'var(--color-divider)',
         cursor: 'pointer',
     }
             
@@ -65,12 +69,12 @@ function Toggle({
         height: `${thumbHeightEm}em`,
         borderRadius: `calc(1em - ${vPaddingEm}em)`,
         transition: `background ${transitionTime} ${transitionFormula}, left ${transitionTime} ${transitionFormula}`,
-        backgroundColor: 'var(--color-primary)',
+        backgroundColor: 'white',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
     }
 
     if (isOn) {
-        trackStyle.backgroundColor = 'var(--color-divider)'
-        thumbStyle.backgroundColor = 'var(--color-primary-soft)'
+        trackStyle.backgroundColor = 'var(--color-primary)'
         thumbStyle.left = `${trackWidthEm - thumbWidthEm - hPaddingEm}em`
     }
 
@@ -81,6 +85,7 @@ function Toggle({
                 alignItems: 'center',
                 justifyContent: 'between',
                 gap: 4,
+                ...(style ?? {}),
             }}
         >
             {label && (

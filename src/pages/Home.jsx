@@ -91,7 +91,7 @@ function Home() {
         setRecLoading(true)
         setRec(null)
         try {
-            const result = await getRecommendedTask({ tasks: incompleteTasks, moodIndex: moodToday, streak })
+            const result = await getRecommendedTask({ tasks: incompleteTasks, moodIndex: moodToday, streak, personalities: settings.aiPersonalities })
             setRec(result)
         } finally {
             setRecLoading(false)
@@ -304,7 +304,7 @@ function Home() {
             </div>
 
             {/* ── FAB ────────────────────────────────────────────────────── */}
-            <div style={{ position: 'sticky', bottom: '16px', display: 'flex', justifyContent: 'flex-end', paddingRight: '20px', marginTop: 'auto', pointerEvents: 'none', zIndex: 500 }}>
+            <div style={{ position: 'sticky', bottom: '16px', display: 'flex', justifyContent: 'flex-end', paddingRight: '20px', marginTop: 'auto', pointerEvents: 'none', zIndex: 99 }}>
                 <button
                     onClick={() => navigate('/tasks/create')}
                     style={{

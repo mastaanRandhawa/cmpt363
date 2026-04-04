@@ -75,6 +75,7 @@ function Chat() {
     const personality     = aiBehaviour || null
     const location  = useLocation()
     const taskName  = location.state?.taskName ?? null
+    const aiPersonalities  = useSettingsStore(s => s.aiPersonalities)
 
     const [messages, setMessages] = useState(() => [{
         id:        'welcome',

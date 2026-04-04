@@ -107,12 +107,20 @@ const useSettingsStore = create(
                     })
                 },
                 
-                aiBehaviour: "mentee",
+                aiBehaviour: "helper",
                 setAiBehaviour(value) {
-                    assertEnum(value, ['mentee', 'mentor'])
+                    assertEnum(value, ['helper', 'mentee', 'mentor'])
                     update({
                         aiBehaviour: value,
                     })
+                },
+
+                aiPersonalities: [],
+                setAiPersonalities(value) {
+                    if (!Array.isArray(value)) {
+                        throw new Error('Invalid setting value: expected array')
+                    }
+                    update({ aiPersonalities: value })
                 },
                  }
         }

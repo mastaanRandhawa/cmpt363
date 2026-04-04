@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import {
     Command,
@@ -20,6 +20,7 @@ import useTaskStore from '../data/useTaskStore'
 import useDebugStore from '../data/useDebugStore'
 import useNavGuardStore from '../data/useNavGuardStore'
 import useRoboStore, { levelFromXp } from '../data/useRoboStore'
+import useSettingsStore from '../data/useSettingsStore'
 import useDragSort from '../hooks/useDragSort'
 import { generateSubtasks } from '../data/taskBreakdown'
 import useTaskTemplateStore from '../data/useTaskTemplateStore'
@@ -30,6 +31,7 @@ import RepeatPicker from '../components/RepeatPicker'
 import ConfirmDialog from '../components/ConfirmDialog'
 import FadeOverlay from '../components/FadeOverlay'
 import { priority as priorityMap, effort as effortMap } from '../data/chipColors.js'
+import Toggle from '../components/Toggle.jsx'
 
 const priorities = ['low', 'med', 'high']
 
@@ -57,8 +59,9 @@ function TaskCreate() {
     const updateTask = useTaskStore(s => s.updateTask)
     const tasks      = useTaskStore(s => s.tasks)
     const setDebug   = useDebugStore(s => s.set)
-    const xp         = useRoboStore(s => s.xp)
-    const level      = levelFromXp(xp)
+    const xp               = useRoboStore(s => s.xp)
+    const level            = levelFromXp(xp)
+    const aiPersonalities  = useSettingsStore(s => s.aiPersonalities)
 
     // edit mode
     const editId   = routeId || routerLocation.state?.editId || null
@@ -102,6 +105,7 @@ function TaskCreate() {
     const [aiOriginal, setAiOriginal]   = useState([])      // raw AI output for template saving
     const [aiInstructions, setAiInstructions] = useState(editTask?.aiInstructions ?? '')      // user directions to the AI
     const [useAI, setUseAI]               = useState(editTask?.useAI ?? false)              // edit mode: AI on/off for this task
+    const [aiDismissed, setAiDismissed]   = useState([])    // explicitly dismissed + skipped suggestions across all runs
 
     // ─── confirm step ─────────────────────────────────────────────────────────
     const [step, setStep]           = useState('form')
@@ -117,6 +121,46 @@ function TaskCreate() {
         (!privateNotes && notes !== aiSnapshot.notes) ||
         aiInstructions !== aiSnapshot.aiInstructions
     )
+
+    // ─── auto scroll to error ─────────────────────────────────────────────
+    const canHighlightErrors = useRef(false)
+
+    const taskNameErrorRef = useRef(null)
+    const dateErrorRef = useRef(null)
+    const priorityErrorRef = useRef(null)
+    const effortErrorRef = useRef(null)
+
+    const errorRefs = [taskNameErrorRef, dateErrorRef, priorityErrorRef, effortErrorRef]
+    useEffect(() => {
+        if (canHighlightErrors.current !== true) {
+            return
+        }
+
+        canHighlightErrors.current = false
+
+        const orderedErrors = errorRefs
+            .filter(r => r.current != null)
+            .map(r => [r.current, r.current.getBoundingClientRect()])
+            .sort(([aEl, {y: aY}], [bEl, {y: bY}]) => aY - bY)
+            .map(([el, coords]) => el)
+
+        if (orderedErrors.length > 0) {
+            // Flash "REQUIRED" labels.
+            for (const el of orderedErrors) {
+                el.classList.add('label-flashing')
+            }
+            setTimeout(() => {
+                for (const el of orderedErrors) {
+                    el.classList.remove('label-flashing')
+                }
+            }, 1300)
+
+            // Scroll to the first error.
+            const labelEl = orderedErrors[0]
+            labelEl.style.scrollMarginTop = '150px'
+            orderedErrors[0].scrollIntoView({ behavior: 'smooth' })
+        }
+    })
 
     // ─── unsaved changes guard ────────────────────────────────────────────────
     const isDirty = step === 'form' && (() => {
@@ -213,8 +257,19 @@ function TaskCreate() {
 
     useEffect(() => () => setDebug('TaskCreate', null), [])
 
+    // ─── scroll to top on step change ────────────────────────────────────────
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'instant' })
+    }, [step])
+
     // ─── AI suggestions ───────────────────────────────────────────────────────
     async function runAISuggestions() {
+        // Capture any pending suggestions that were neither accepted nor dismissed
+        // (still showing when re-run is triggered) — treat as implicitly skipped
+        const skipped = aiPending.map(s => ({ label: s.label }))
+        const updatedDismissed = [...aiDismissed, ...skipped]
+        setAiDismissed(updatedDismissed)
+
         setAiLoading(true)
         setAiPending([])
         const snap = { name, date, priority, effort, privateNotes, notes: privateNotes ? null : notes, aiInstructions }
@@ -231,7 +286,16 @@ function TaskCreate() {
                 notesArePrivate: privateNotes || undefined,
                 location,
             }
-            const result = await generateSubtasks(task, aiInstructions || null)
+
+            // Build context from what the user has already done with subtasks
+            const subtaskContext = {
+                accepted:  subtasks.filter(s => s.ai && s.wasAi).map(s => ({ label: s.label, estSubtaskTime: s.estSubtaskTime ?? null })),
+                edited:    subtasks.filter(s => !s.ai && s.wasAi).map(s => ({ label: s.label, estSubtaskTime: s.estSubtaskTime ?? null })),
+                userAdded: subtasks.filter(s => !s.wasAi).map(s => ({ label: s.label })),
+                dismissed: updatedDismissed,
+            }
+
+            const result = await generateSubtasks(task, aiInstructions || null, subtaskContext, aiPersonalities)
             setAiOriginal(result)
             setAiPending(result.map(s => ({ ...s, id: s.id || crypto.randomUUID() })))
         } catch {
@@ -250,22 +314,25 @@ function TaskCreate() {
             setAiPending([])
             setAiSubmitted(false)
             setAiSnapshot(null)
+            setAiDismissed([])
         }
     }
 
     function acceptPending(id) {
         const s = aiPending.find(p => p.id === id)
         if (!s) return
-        setSubtasks(prev => [...prev, s])
+        setSubtasks(prev => [...prev, { ...s, wasAi: true }])
         setAiPending(prev => prev.filter(p => p.id !== id))
     }
 
     function acceptAllPending() {
-        setSubtasks(prev => [...prev, ...aiPending])
+        setSubtasks(prev => [...prev, ...aiPending.map(s => ({ ...s, wasAi: true }))])
         setAiPending([])
     }
 
     function dismissPending(id) {
+        const s = aiPending.find(p => p.id === id)
+        if (s) setAiDismissed(prev => [...prev, { label: s.label }])
         setAiPending(prev => prev.filter(p => p.id !== id))
     }
 
@@ -277,7 +344,13 @@ function TaskCreate() {
         if (!priority)    e.priority = 'Required'
         if (!effort)      e.effort   = 'Required'
         setErrors(e)
-        return Object.keys(e).length === 0
+        if (Object.keys(e).length === 0) {
+            return true
+        }
+
+        // Validation failed
+        canHighlightErrors.current = true;
+        return false
     }
 
     // ─── create / save ────────────────────────────────────────────────────────
@@ -344,6 +417,7 @@ function TaskCreate() {
     function commitEdit(id) {
         if (!editLabel.trim()) { cancelEdit(); return }
         setSubtasks(prev => prev.map(s =>
+            // Clear ai badge on edit, but preserve wasAi so we can still tell it was originally AI-suggested
             s.id === id ? { ...s, label: editLabel.trim(), ai: false } : s
         ))
         cancelEdit()
@@ -458,7 +532,7 @@ function TaskCreate() {
                             TASK NAME <span style={{ color: 'var(--color-important)' }}>*</span>
                         </label>
                         {errors.name && (
-                            <span className="label-bold" style={{ color: 'var(--color-important)' }}>
+                            <span className="label-bold" style={{ color: 'var(--color-important)' }} ref={taskNameErrorRef}>
                 REQUIRED
             </span>
                         )}
@@ -480,7 +554,7 @@ function TaskCreate() {
                                 DATE <span style={{ color: 'var(--color-important)' }}>*</span>
                             </label>
                             {errors.date && (
-                                <span className="label-bold" style={{ color: 'var(--color-important)', marginLeft: '8px' }}>
+                                <span className="label-bold" style={{ color: 'var(--color-important)', marginLeft: '8px' }} ref={dateErrorRef}>
                     {errors.date}
                 </span>
                             )}
@@ -567,7 +641,7 @@ function TaskCreate() {
                             PRIORITY <span style={{ color: 'var(--color-important)' }}>*</span>
                         </label>
                         {errors.priority && (
-                            <span className="label-bold" style={{ color: 'var(--color-important)' }}>
+                            <span className="label-bold" style={{ color: 'var(--color-important)' }} ref={priorityErrorRef}>
                 REQUIRED
             </span>
                         )}
@@ -601,7 +675,7 @@ function TaskCreate() {
                             EFFORT <span style={{ color: 'var(--color-important)' }}>*</span>
                         </label>
                         {errors.effort && (
-                            <span className="label-bold" style={{ color: 'var(--color-important)' }}>
+                            <span className="label-bold" style={{ color: 'var(--color-important)' }} ref={effortErrorRef}>
                 REQUIRED
             </span>
                         )}
@@ -953,32 +1027,14 @@ function TaskCreate() {
                     </div>
 
                     {/* Toggle Switch */}
-                    <button
-                        onClick={() => setTimed(v => !v)}
+                    <Toggle
+                        checked={timed}
+                        onChange={setTimed}
+                        vPaddingEm={0.15}
                         style={{
-                            width: '48px',
-                            height: '26px',
-                            borderRadius: '999px',
-                            border: 'none',
-                            flexShrink: 0,
-                            cursor: 'pointer',
-                            background: timed ? 'var(--color-primary)' : 'var(--color-divider)',
-                            position: 'relative',
-                            transition: 'background 0.2s'
+                            fontSize: '22px',
                         }}
-                    >
-                        <div style={{
-                            position: 'absolute',
-                            top: '3px',
-                            left: timed ? '25px' : '3px',
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '50%',
-                            background: 'white',
-                            transition: 'left 0.2s',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-                        }} />
-                    </button>
+                    />
                 </div>
 
                 {/* AI suggestions toggle — edit mode, Level 3+ */}
@@ -1007,8 +1063,9 @@ function TaskCreate() {
                                 <p className="label-bold" style={{ margin: 0, color: 'var(--color-text-main)' }}>AI SUGGESTIONS</p>
                                 <p className="caption" style={{ margin: 0, color: 'var(--color-text-secondary)' }}>Breakdown and Time Estimate</p>
                             </div>
-                            <button
-                                onClick={() => {
+                            <Toggle
+                                checked={aiSuggest}
+                                onChange={() => {
                                     const next = !useAI
                                     setUseAI(next)
                                     if (next) {
@@ -1021,30 +1078,7 @@ function TaskCreate() {
                                         setAiSnapshot(null)
                                     }
                                 }}
-                                style={{
-                                    width: '48px',
-                                    height: '26px',
-                                    borderRadius: '999px',
-                                    border: 'none',
-                                    flexShrink: 0,
-                                    cursor: 'pointer',
-                                    background: useAI ? 'var(--color-primary)' : 'var(--color-divider)',
-                                    position: 'relative',
-                                    transition: 'background 0.2s',
-                                }}
-                            >
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '3px',
-                                    left: useAI ? '25px' : '3px',
-                                    width: '20px',
-                                    height: '20px',
-                                    borderRadius: '50%',
-                                    background: 'white',
-                                    transition: 'left 0.2s',
-                                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                                }} />
-                            </button>
+                            />
                         </div>
                         {!useAI && subtasks.some(s => s.ai) && (
                             <p className="caption" style={{ margin: '10px 0 0', color: 'var(--color-text-secondary)' }}>
@@ -1082,32 +1116,10 @@ function TaskCreate() {
                                 <p className="label-bold" style={{ margin: 0, color: 'var(--color-text-main)' }}>AI SUGGESTIONS</p>
                                 <p className="caption" style={{ margin: 0, color: 'var(--color-text-secondary)' }}>Breakdown and Time Estimate</p>
                             </div>
-                            <button
-                                onClick={handleAiToggle}
-                                style={{
-                                    width: '48px',
-                                    height: '26px',
-                                    borderRadius: '999px',
-                                    border: 'none',
-                                    flexShrink: 0,
-                                    cursor: 'pointer',
-                                    background: aiSuggest ? 'var(--color-primary)' : 'var(--color-divider)',
-                                    position: 'relative',
-                                    transition: 'background 0.2s'
-                                }}
-                            >
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '3px',
-                                    left: aiSuggest ? '25px' : '3px',
-                                    width: '20px',
-                                    height: '20px',
-                                    borderRadius: '50%',
-                                    background: 'white',
-                                    transition: 'left 0.2s',
-                                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-                                }} />
-                            </button>
+                            <Toggle
+                                checked={aiSuggest}
+                                onChange={handleAiToggle}
+                            />
                         </div>
                     ) : (
                         <div style={{
