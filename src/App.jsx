@@ -292,6 +292,7 @@ function App() {
 
             {/* Phone frame */}
             <div
+                id="phone-frame"
                 data-phone-frame
                 style={{
                     width:  `${frameW}px`,
