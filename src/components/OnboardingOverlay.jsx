@@ -131,7 +131,7 @@ function StepDots({ current, total }) {
 }
 
 /** The floating tooltip/action card */
-function TooltipCard({ step, stepData, total, sp, phoneW, phoneH, onNext, onPrev, onFinish }) {
+function TooltipCard({ step, stepData, total, sp, phoneW, phoneH, onNext, onPrev, onFinish, ref, className }) {
     const { tooltipSide, title, body, isLast } = stepData
 
     // Card x: centred in the phone
@@ -158,7 +158,7 @@ function TooltipCard({ step, stepData, total, sp, phoneW, phoneH, onNext, onPrev
     cardY = Math.max(58, Math.min(phoneH - CARD_H_EST - 16, cardY))
 
     return (
-        <div style={{
+        <div ref={ref} className={className} style={{
             position:      'absolute',
             left:          cardX,
             top:           cardY,
@@ -283,6 +283,7 @@ function OnboardingOverlay() {
     const [spotlight, setSpotlight] = useState(null)
     const [phoneDims, setPhoneDims] = useState({ w: 440, h: 956 })
     const [remeasureNumber, setRemeasureNumber] = useState(0)
+    const tooltipRef = useRef(null)
 
     // Navigate to the correct route when step changes
     useEffect(() => {
@@ -351,6 +352,23 @@ function OnboardingOverlay() {
         setSpotlight(spotlight)
     }, [active, step, remeasureNumber, window.innerWidth, window.innerHeight]) // eslint-disable-line
 
+    // Fade popup temporarily to mask jumping during layout change
+    const lastRoute = useRef(stepData?.route)
+    useEffect(() => {
+        if (tooltipRef.current == null) return
+        if (stepData.route === lastRoute.current) return
+        lastRoute.current = stepData.route
+
+        const el = tooltipRef.current
+        el.setAttribute('data-fade', 'out')
+
+        const id = setTimeout(() => {
+            el.setAttribute('data-fade', 'in')
+        }, 500)
+
+        return () => clearTimeout(id)
+    }, [active, step, tooltipRef])
+
     if (!active || !stepData) return null
 
     return (
@@ -377,6 +395,8 @@ function OnboardingOverlay() {
                 onNext={next}
                 onPrev={prev}
                 onFinish={finish}
+                className="onboarding-card"
+                ref={tooltipRef}
             />
         </div>
     )
