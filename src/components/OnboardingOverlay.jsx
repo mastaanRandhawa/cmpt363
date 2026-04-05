@@ -100,8 +100,8 @@ function SpotlightBorder({ sp }) {
             width:         sp.w,
             height:        sp.h,
             borderRadius:  SPOTLIGHT_R,
-            border:        `${SPOTLIGHT_BORDER_WIDTH}px solid rgba(255,255,255,0.18)`,
-            boxShadow:     `0 0 0 ${SPOTLIGHT_SHADOW_SIZE} color-mix(in srgb, var(--color-primary) 45%, transparent), inset 0 0 24px color-mix(in srgb, var(--color-primary) 6%, transparent)`,
+            border:        `${SPOTLIGHT_BORDER_WIDTH}px solid color-mix(in srgb, var(--color-accent) 75%, transparent`,
+            boxShadow:     `0 0 5px ${SPOTLIGHT_SHADOW_SIZE}px color-mix(in srgb, var(--color-accent) 35%, transparent), inset 0 0 24px color-mix(in srgb, var(--color-primary) 6%, transparent)`,
             pointerEvents: 'none',
             zIndex:        1,
         }} />
