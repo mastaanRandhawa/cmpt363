@@ -291,9 +291,7 @@ function App() {
             </div>
 
             {/* Phone frame */}
-            <div
-                id="phone-frame"
-                data-phone-frame
+            <div 
                 style={{
                     width:  `${frameW}px`,
                     height: `${frameH}px`,
@@ -307,7 +305,17 @@ function App() {
                     overflow: 'hidden',
                     position: 'relative',
                     display: 'flex',
+                    "--scale": desktopScale,
+                }}>
+            <div
+                id="phone-frame"
+                data-phone-frame
+                style={{
+                    position: 'relative',
+                    display: 'flex',
+                    width: '100%',
                     flexDirection: 'column',
+                    flex: '1 1 auto',
                     "--scale": desktopScale,
                 }}
             >
@@ -366,6 +374,7 @@ function App() {
                     <BottomNav />
                     <OnboardingOverlay />
                 </BrowserRouter>
+            </div>
             </div>
         </div>
     )

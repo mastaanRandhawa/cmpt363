@@ -328,10 +328,10 @@ function OnboardingOverlay() {
         const er = el.getBoundingClientRect()
 
         const spotlight = {
-            x: er.left - fr.left - PAD * 2,
+            x: er.left - fr.left - PAD,
             y: er.top  - fr.top  - PAD,
             w: er.width  + PAD * 2,
-            h: er.height + PAD,
+            h: er.height + PAD * 2,
         }
 
         // Compensate for CSS scale of phone frame.
