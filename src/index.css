@@ -93,6 +93,18 @@ body {
   animation-delay: 0.25s
 }
 
+.onboarding-card {
+  transition: opacity 0.25s ease-in;
+}
+.onboarding-card[data-fade=out] {
+  pointer-events: none;
+  transition: opacity 0s;
+  opacity: 0;
+}
+@keyframes flashing {
+  50% { opacity: 0 }
+}
+
 /* Base icon class */
 .icon {
   display: inline-flex;

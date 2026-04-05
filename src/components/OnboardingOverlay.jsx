@@ -100,8 +100,8 @@ function SpotlightBorder({ sp }) {
             width:         sp.w,
             height:        sp.h,
             borderRadius:  SPOTLIGHT_R,
-            border:        `${SPOTLIGHT_BORDER_WIDTH}px solid rgba(255,255,255,0.18)`,
-            boxShadow:     `0 0 0 ${SPOTLIGHT_SHADOW_SIZE} color-mix(in srgb, var(--color-primary) 45%, transparent), inset 0 0 24px color-mix(in srgb, var(--color-primary) 6%, transparent)`,
+            border:        `${SPOTLIGHT_BORDER_WIDTH}px solid color-mix(in srgb, var(--color-accent) 75%, transparent`,
+            boxShadow:     `0 0 5px ${SPOTLIGHT_SHADOW_SIZE}px color-mix(in srgb, var(--color-accent) 35%, transparent), inset 0 0 24px color-mix(in srgb, var(--color-primary) 6%, transparent)`,
             pointerEvents: 'none',
             zIndex:        1,
         }} />
@@ -131,7 +131,7 @@ function StepDots({ current, total }) {
 }
 
 /** The floating tooltip/action card */
-function TooltipCard({ step, stepData, total, sp, phoneW, phoneH, onNext, onPrev, onFinish }) {
+function TooltipCard({ step, stepData, total, sp, phoneW, phoneH, onNext, onPrev, onFinish, ref, className }) {
     const { tooltipSide, title, body, isLast } = stepData
 
     // Card x: centred in the phone
@@ -158,7 +158,7 @@ function TooltipCard({ step, stepData, total, sp, phoneW, phoneH, onNext, onPrev
     cardY = Math.max(58, Math.min(phoneH - CARD_H_EST - 16, cardY))
 
     return (
-        <div style={{
+        <div ref={ref} className={className} style={{
             position:      'absolute',
             left:          cardX,
             top:           cardY,
@@ -282,7 +282,8 @@ function OnboardingOverlay() {
 
     const [spotlight, setSpotlight] = useState(null)
     const [phoneDims, setPhoneDims] = useState({ w: 440, h: 956 })
-    const frameRef = useRef(null)
+    const [remeasureNumber, setRemeasureNumber] = useState(0)
+    const tooltipRef = useRef(null)
 
     // Navigate to the correct route when step changes
     useEffect(() => {
@@ -291,7 +292,18 @@ function OnboardingOverlay() {
         }
     }, [active, step]) // eslint-disable-line
 
-    // Measure target element after navigation + render settle
+    // Trigger a re-measure of target element after render settle
+    useEffect(() => {
+        const id = setTimeout(() => {
+            setRemeasureNumber(remeasureNumber + 1)
+        }, 150)
+
+        return () => {
+            clearInterval(id)
+        }
+    }, [active, step]) // eslint-disable-line
+
+    // Measure target element after navigation, viewport resize
     useEffect(() => {
         if (!active) return
         if (!stepData?.selector) {
@@ -304,45 +316,58 @@ function OnboardingOverlay() {
             return
         }
 
+        const frame = document.querySelector('[data-phone-frame]')
+        const el    = document.querySelector(stepData.selector)
+        if (!frame) return
+
+        setPhoneDims({ w: frame.offsetWidth, h: frame.offsetHeight })
+
+        if (!el) { setSpotlight(null); return }
+
+        const fr = frame.getBoundingClientRect()
+        const er = el.getBoundingClientRect()
+
+        const spotlight = {
+            x: er.left - fr.left - PAD,
+            y: er.top  - fr.top  - PAD,
+            w: er.width  + PAD * 2,
+            h: er.height + PAD * 2,
+        }
+
+        // Compensate for CSS scale of phone frame.
+        let scaleStr = getComputedStyle(frame).getPropertyValue('--scale')
+        if (scaleStr == null || scaleStr === '') {
+            scaleStr = "1"
+        }
+
+        const scale = parseFloat(scaleStr)
+        if (!isNaN(scale) && scale !== 0) {
+            const scaleRecip = 1/scale
+            spotlight.x *= scaleRecip
+            spotlight.y *= scaleRecip
+            spotlight.w *= scaleRecip
+            spotlight.h *= scaleRecip
+        }
+
+        setSpotlight(spotlight)
+    }, [active, step, remeasureNumber, window.innerWidth, window.innerHeight]) // eslint-disable-line
+
+    // Fade popup temporarily to mask jumping during layout change
+    const lastRoute = useRef(stepData?.route)
+    useEffect(() => {
+        if (tooltipRef.current == null) return
+        if (stepData.route === lastRoute.current) return
+        lastRoute.current = stepData.route
+
+        const el = tooltipRef.current
+        el.setAttribute('data-fade', 'out')
+
         const id = setTimeout(() => {
-            const frame = document.querySelector('[data-phone-frame]')
-            const el    = document.querySelector(stepData.selector)
-            if (!frame) return
-
-            setPhoneDims({ w: frame.offsetWidth, h: frame.offsetHeight })
-
-            if (!el) { setSpotlight(null); return }
-
-            const fr = frame.getBoundingClientRect()
-            const er = el.getBoundingClientRect()
-
-            const spotlight = {
-                x: er.left - fr.left - PAD * 2,
-                y: er.top  - fr.top  - PAD,
-                w: er.width  + PAD * 2,
-                h: er.height + PAD,
-            }
-
-            // Compensate for CSS scale of phone frame.
-            let scaleStr = getComputedStyle(frame).getPropertyValue('--scale')
-            if (scaleStr == null || scaleStr === '') {
-                scaleStr = "1"
-            }
-
-            const scale = parseFloat(scaleStr)
-            if (!isNaN(scale) && scale !== 0) {
-                const scaleRecip = 1/scale
-                spotlight.x *= scaleRecip
-                spotlight.y *= scaleRecip
-                spotlight.w *= scaleRecip
-                spotlight.h *= scaleRecip
-            }
-
-            setSpotlight(spotlight)
-        }, 150)
+            el.setAttribute('data-fade', 'in')
+        }, 500)
 
         return () => clearTimeout(id)
-    }, [active, step]) // eslint-disable-line
+    }, [active, step, tooltipRef])
 
     if (!active || !stepData) return null
 
@@ -370,6 +395,8 @@ function OnboardingOverlay() {
                 onNext={next}
                 onPrev={prev}
                 onFinish={finish}
+                className="onboarding-card"
+                ref={tooltipRef}
             />
         </div>
     )
