@@ -282,7 +282,7 @@ function OnboardingOverlay() {
 
     const [spotlight, setSpotlight] = useState(null)
     const [phoneDims, setPhoneDims] = useState({ w: 440, h: 956 })
-    const frameRef = useRef(null)
+    const [remeasureNumber, setRemeasureNumber] = useState(0)
 
     // Navigate to the correct route when step changes
     useEffect(() => {
@@ -291,7 +291,18 @@ function OnboardingOverlay() {
         }
     }, [active, step]) // eslint-disable-line
 
-    // Measure target element after navigation + render settle
+    // Trigger a re-measure of target element after render settle
+    useEffect(() => {
+        const id = setTimeout(() => {
+            setRemeasureNumber(remeasureNumber + 1)
+        }, 150)
+
+        return () => {
+            clearInterval(id)
+        }
+    }, [active, step]) // eslint-disable-line
+
+    // Measure target element after navigation, viewport resize
     useEffect(() => {
         if (!active) return
         if (!stepData?.selector) {
@@ -304,45 +315,41 @@ function OnboardingOverlay() {
             return
         }
 
-        const id = setTimeout(() => {
-            const frame = document.querySelector('[data-phone-frame]')
-            const el    = document.querySelector(stepData.selector)
-            if (!frame) return
+        const frame = document.querySelector('[data-phone-frame]')
+        const el    = document.querySelector(stepData.selector)
+        if (!frame) return
 
-            setPhoneDims({ w: frame.offsetWidth, h: frame.offsetHeight })
+        setPhoneDims({ w: frame.offsetWidth, h: frame.offsetHeight })
 
-            if (!el) { setSpotlight(null); return }
+        if (!el) { setSpotlight(null); return }
 
-            const fr = frame.getBoundingClientRect()
-            const er = el.getBoundingClientRect()
+        const fr = frame.getBoundingClientRect()
+        const er = el.getBoundingClientRect()
 
-            const spotlight = {
-                x: er.left - fr.left - PAD * 2,
-                y: er.top  - fr.top  - PAD,
-                w: er.width  + PAD * 2,
-                h: er.height + PAD,
-            }
+        const spotlight = {
+            x: er.left - fr.left - PAD * 2,
+            y: er.top  - fr.top  - PAD,
+            w: er.width  + PAD * 2,
+            h: er.height + PAD,
+        }
 
-            // Compensate for CSS scale of phone frame.
-            let scaleStr = getComputedStyle(frame).getPropertyValue('--scale')
-            if (scaleStr == null || scaleStr === '') {
-                scaleStr = "1"
-            }
+        // Compensate for CSS scale of phone frame.
+        let scaleStr = getComputedStyle(frame).getPropertyValue('--scale')
+        if (scaleStr == null || scaleStr === '') {
+            scaleStr = "1"
+        }
 
-            const scale = parseFloat(scaleStr)
-            if (!isNaN(scale) && scale !== 0) {
-                const scaleRecip = 1/scale
-                spotlight.x *= scaleRecip
-                spotlight.y *= scaleRecip
-                spotlight.w *= scaleRecip
-                spotlight.h *= scaleRecip
-            }
+        const scale = parseFloat(scaleStr)
+        if (!isNaN(scale) && scale !== 0) {
+            const scaleRecip = 1/scale
+            spotlight.x *= scaleRecip
+            spotlight.y *= scaleRecip
+            spotlight.w *= scaleRecip
+            spotlight.h *= scaleRecip
+        }
 
-            setSpotlight(spotlight)
-        }, 150)
-
-        return () => clearTimeout(id)
-    }, [active, step]) // eslint-disable-line
+        setSpotlight(spotlight)
+    }, [active, step, remeasureNumber, window.innerWidth, window.innerHeight]) // eslint-disable-line
 
     if (!active || !stepData) return null
 
