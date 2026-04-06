@@ -1,7 +1,7 @@
 const envBase = import.meta.env.VITE_API_BASE
 export const API_BASE = (envBase != null && String(envBase).trim() !== ''
     ? String(envBase)
-    : 'http://localhost:3001/api').replace(/\/$/, '')
+    : 'https://cmpt363.onrender.com/api').replace(/\/$/, '')
 
 async function req(method, path, body) {
     const opts = {
